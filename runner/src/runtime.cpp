@@ -141,7 +141,7 @@ static const std::pair<const char*, int> kBuiltinVars[] = {
     {"background_visible", BV_BACKGROUND_VISIBLE}, {"background_index", BV_BACKGROUND_INDEX},
     {"keyboard_lastkey", BV_KEYBOARD_LASTKEY}, {"keyboard_lastchar", BV_KEYBOARD_LASTCHAR}, {"os_type", BV_OS_TYPE},
     {"async_load", BV_ASYNC_LOAD}, {"fps", BV_FPS}, {"current_time", BV_CURRENT_TIME},
-    {"argument", BV_ARGUMENT}, {"argument_count", BV_ARGUMENT_COUNT}, {"instance_count", BV_INSTANCE_COUNT},
+    {"argument", BV_ARGUMENT}, {"argument_count", BV_ARGUMENT_COUNT}, {"instance_count", BV_INSTANCE_COUNT}, {"instance_id", BV_INSTANCE_ID},
     {"working_directory", BV_WORKING_DIRECTORY},
 };
 
@@ -635,6 +635,13 @@ bool Game::getBuiltin(int bv, Instance* i, int idx, Value& out) {
         case BV_FPS: out = Value(det ? 60.0 : fps); return true;
         case BV_CURRENT_TIME: out = Value(det ? frame * (1000.0 / 60.0) : (double)(nowMs() - startMs)); return true;
         case BV_INSTANCE_COUNT: { int c = 0; for (auto& p : insts) c += p->alive; out = Value((double)c); return true; }
+        // instance_id[k] (GMS1, solo lectura): id de la k-esima instancia viva, en orden de creacion; sin indice = [0].
+        // Los enemigos hacen owner = instance_id en su Create: antes no existia y daba 0 (con aviso de variable sin iniciar).
+        case BV_INSTANCE_ID: {
+            int k = idx < 0 ? 0 : idx % 32000;
+            for (auto& p : insts) if (p->alive && k-- == 0) { out = Value((double)p->id); return true; }
+            out = Value(-4.0); return true;   // noone
+        }
         case BV_WORKING_DIRECTORY: out = Value::str(""); return true;
         default: break;
     }
@@ -686,7 +693,7 @@ bool Game::setBuiltin(int bv, Instance* i, int idx, const Value& v) {
         case BV_KEYBOARD_LASTKEY: in.lastKey = v.ival(); return true;
         case BV_KEYBOARD_LASTCHAR: in.lastChar = v.toString(); return true;
         case BV_ROOM_WIDTH: case BV_ROOM_HEIGHT: case BV_OS_TYPE: case BV_ASYNC_LOAD: case BV_FPS: case BV_CURRENT_TIME:
-        case BV_INSTANCE_COUNT: case BV_ARGUMENT_COUNT: case BV_VIEW_CURRENT: case BV_WORKING_DIRECTORY: return true;
+        case BV_INSTANCE_COUNT: case BV_ARGUMENT_COUNT: case BV_VIEW_CURRENT: case BV_WORKING_DIRECTORY: case BV_INSTANCE_ID: return true;
         default: break;
     }
     if (bv >= BV_VIEW_VISIBLE && bv <= BV_VIEW_OBJECT) return viewVar(*this, bv, idx, nullptr, &v);
