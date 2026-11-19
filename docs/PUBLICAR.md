@@ -22,7 +22,7 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 4. Marca **Set as a pre-release**.
 5. Arrastra el VPK **sin código del juego**: `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo) (1,3 MB).
    - **No subas** `build\vita\vsvita.vpk` (15 MB): es la versión AOT y lleva código derivado del juego. Es solo para uso personal.
-   - Antes de publicar, el VPK de intérprete debe haberse probado en la Vita (arranque, conversión y una partida). Pendiente: ver la nota del final.
+   - Probado en la Vita el 19-11: arranca, carga la partida y se juega (Azudor 57–59 fps; sewer_11 ~34 fps).
 6. Pega las notas de abajo en la descripción y pulsa **Publish release**.
 
 ### Notas del release (copiar y pegar)
@@ -44,7 +44,7 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 - Recorrido de 245 salas: 211 sin ningún frame perdido; 0,32 % de frames perdidos en total.
 - Jefe Azudor, outer_slum_2 (430 instancias), sewer_11 y temple_5 a 60 fps.
 - Límite actual: cada enemigo activo cuesta ~0,9 ms; en las salas más pesadas caben 3–4 enemigos extra antes de bajar de 60.
-- **Este VPK es la versión de intérprete** (sin código del juego, por eso se puede compartir). Va más lento que la versión AOT en salas cargadas. La versión rápida se compila desde tu propia copia (ver README).
+- **Este VPK es la versión de intérprete** (sin código del juego, por eso se puede compartir). Medido en la Vita: el jefe Azudor va a 57–59 fps, pero las salas más cargadas (p. ej. sewer_11) bajan a ~34 fps. La versión rápida (AOT, 60 fps en esas salas) se compila desde tu propia copia (ver README).
 
 ### Problemas conocidos
 - Primera entrada a algunas salas: pausa de 0,3–0,7 s cargando texturas.
@@ -58,5 +58,6 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 ```
 
 ## Pendiente antes del Release
-- [ ] Probar `build\vita_noaot\vsvita.vpk` en la Vita: que arranque, convierta y llegue a jugar. Anotar sus fps en las notas, porque el intérprete es más lento que la versión AOT.
+- [x] Probar `build\vita_noaot\vsvita.vpk` en la Vita (19-11: arranca y se juega; Azudor 57–59 fps, sewer_11 ~34 fps).
+- [ ] Conversión desde cero con este VPK (se probó con la versión AOT, que usa el mismo código de conversión).
 - [ ] Revisar las notas con lo último que se haya medido (sección "Estado").

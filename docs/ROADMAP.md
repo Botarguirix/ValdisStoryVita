@@ -46,6 +46,7 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | 1.10 | Arreglado en el recorrido | ✅ | (a) El mezclador de audio bloqueaba el hilo principal 22–35 ms por sonido con muchas voces (ahora no espera; límite de 64 voces). (b) Tirón de 200–360 ms a los 2 s de entrar en algunas salas (la precarga de vecinas consultaba la memoria de vitaGL por cada tile). (c) `-Os` medido: 25 % más lento que `-O3`, descartado |
 | 1.11 | Quedan | ⬜ | Entradas en frío de 270–740 ms en algunas salas; hallow_2 crea ~190 instancias al entrar (574 ms); tirones sueltos de ~26 ms en sewer_14 y west_11 |
 | 1.12a | Variables por objeto (`varstore.h`) | ✅ | Medido en la Vita: −4 a −10 % de coste por frame (sewer_11 13,8 → 13,2 ms; +12 enemigos 24,9 → 22,6 ms). Menos de lo estimado: el acceso a variables no era lo principal. Huellas idénticas |
+| 1.12c | Caja de colisión cacheada en cada instancia + llamada directa a funciones integradas | ✅ | Medido en la Vita: collision_rectangle 7,8 → 5,0 % del tiempo, position_meeting 3,0 → 1,8 %; +24 enemigos 31,5 → 29,4 ms. Huellas idénticas |
 | 1.12b | Lectura/escritura directa de variables integradas (x, y, object_index...) en el código nativo | ✅ | Junto con 1.12a, medido en la Vita: −8 a −13 % (sewer_11 13,8 → 12,7 ms; +4 enemigos 18,3 → 16,5 ms, ya dentro de 60 fps; +12 enemigos 24,9 → 21,6 ms). Huellas idénticas |
 | 1.12 | Optimizar el coste por enemigo | ⬜ | Opciones: variables por objeto en posiciones fijas resueltas por el AOT (el gran salto, 20–40 % de la lógica estimado, trabajo grande); dibujo a 30 fps cuando la lógica no llega (el juego no se ralentiza, se ve menos fluido; opcional); atajos en `nme_crowding_script` (poco) |
 | 1.7 | Ataques sin animación o sprite (aviso del usuario) | 🖥️ | Dos causas: (a) el primer uso de una animación pedía su página en mitad del combate y no se dibujaba durante ~8 frames (visto en los registros de la Vita: "sin listar a tiempo 2" contra Azudor). Ahora se precarga la familia entera `anim_<nombre>_*` al cambiar de sprite, y los objetos variantes (siren_ice, shin_azudor, evil_dhistahn, ruckjahl, assassin_fire…) encuentran sus animaciones. (b) `anim_kudir` (6220 px) y `fx_life_blade` (4235 px) eran más anchas que el máximo de textura (4096): ahora se parten en trozos de frames enteros. Comprobado en PC con captura; falta verlo en la Vita |
@@ -84,7 +85,7 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 |---|---|---|
 | 5.1 | Instrucciones de instalación (README) | ✅ |
 | 5.2 | El VPK con AOT lleva código derivado del juego: solo para ti, no se comparte | — |
-| 5.3 | Versión sin AOT (intérprete), que podría compartirse sin el juego | ⬜ opcional; más lenta |
+| 5.3 | Versión sin AOT (intérprete), que podría compartirse sin el juego | ✅ `build/vita_noaot` (1,3 MB). Probada en la Vita: Azudor 57–59 fps, sewer_11 ~34 fps (lógica 2,4 veces más lenta que AOT). Es la del Release |
 | 5.4 | Icono y LiveArea propios, sin arte del juego | ⬜ |
 
 ## 6. Herramientas de prueba en la Vita
