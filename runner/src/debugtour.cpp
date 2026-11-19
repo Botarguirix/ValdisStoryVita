@@ -5,6 +5,8 @@
 //   stress.txt estres: "SALA CADA_FRAMES CUANTOS MAXIMO OBJ1 [OBJ2 ...]". En SALA crea CUANTOS enemigos cada
 //              CADA_FRAMES frames junto al jugador (alternando los objetos) hasta MAXIMO, y por cada tanda escribe una
 //              linea [estres] con el coste medido.
+//   monkey     botones al azar en las salas de juego (prueba de estabilidad de cada personaje)
+//   unlockchars  personajes desbloqueados en la seleccion (global.unlock_char = 1 en cada frame)
 //   godmode    el jugador no muere en combate: hp a 999999 en cada frame (un foso si puede matarlo; el
 //              recorrido sigue en la sala siguiente). OJO: el autoguardado puede guardar ese hp: restaurar las partidas. (Reiniciar tambien el contador "death"
 //              dejaba al jugador atrapado en un bucle de golpes que repetia un sonido sin parar.)
@@ -35,7 +37,7 @@ struct Stats {
 };
 const int kEntryFrames = 20;   // los primeros frames de cada sala/tanda se cuentan aparte (carga)
 
-bool gGod = false; int gVarHp = -1, gVarHpMax = -1, gVarDeath = -1, gObjPlayer = -1;
+bool gGod = false; bool gMonkey = false; bool gUnlockChars = false; int gVarUnlockChar = -1; int gVarHp = -1, gVarHpMax = -1, gVarDeath = -1, gObjPlayer = -1;
 // recorrido
 std::vector<std::string> gTour; int gTourFrames = 360; int gTourIdx = -1; int gTourAt = 0; Stats gTourSt; bool gTourOn = false;
 // estres
@@ -61,10 +63,35 @@ void logStats(const char* tag, const std::string& what, const Stats& s) {
          tag, lim, what.c_str(), s.frames, s.over, 100.0 * s.over / s.frames, cpu, s.cpuMax, s.stepSum / s.frames, s.stepMax,
          s.drawSum / s.frames, s.drawMax, s.frameMax, s.entryMax, s.maxInst);
 }
+
+// Monkey: botones al azar (moverse, saltar, atacar, magia, bloquear) para ejercitar el codigo de cada personaje en
+// todas las salas. Nunca pausa ni mapa. Mando: botones 0 salto, 1 bloqueo, 2 ataque, 3 ataque 2, 7 magia, 14/15
+// izquierda/derecha; teclado (PC): flechas, D, A, S, W.
+struct Monkey { int dir = 0, dirLeft = 0; int hold[8] = {}; } gMk;
+uint32_t mkRand() { gRand = gRand * 1103515245u + 12345u; return gRand >> 16; }
+void monkeyStep(Game& g) {
+    auto& in = g.in;
+    if (gMk.dirLeft-- <= 0) { gMk.dir = (int)(mkRand() % 3) - 1; gMk.dirLeft = 30 + (int)(mkRand() % 90); }
+    const int btn[5] = {0, 1, 2, 3, 7}; const int key[5] = {38, 65, 68, 87, 83};
+    const int chance[5] = {40, 120, 8, 30, 90};   // 1 de cada N frames empieza a pulsarlo
+    for (int k = 0; k < 5; k++) {
+        if (gMk.hold[k] > 0) gMk.hold[k]--;
+        else if (mkRand() % chance[k] == 0) gMk.hold[k] = 2 + (int)(mkRand() % (k == 1 ? 40 : 8));
+    }
+    // magia + bloqueo a la vez abre el menu de hechizos (general_control Step): nunca juntos
+    if (gMk.hold[1] > 0 && gMk.hold[4] > 0) gMk.hold[4] = 0;
+    auto setKey = [&](int kc, bool on) { in.down[kc] = on; in.pressed[kc] = on && !in.prev[kc]; in.released[kc] = !on && in.prev[kc]; };
+    for (int k = 0; k < 5; k++) { in.gpBtn[btn[k]] = gMk.hold[k] > 0; setKey(key[k], gMk.hold[k] > 0); }
+    in.gpBtn[14] = gMk.dir < 0; in.gpBtn[15] = gMk.dir > 0; in.gpAxis[0] = (float)gMk.dir;
+    setKey(37, gMk.dir < 0); setKey(39, gMk.dir > 0);
+}
 } // namespace
 
 void debugTourInit(Game& g, const std::string& saveDir) {
     gGod = fileExists(saveDir + "/godmode");
+    gMonkey = fileExists(saveDir + "/monkey");
+    gUnlockChars = fileExists(saveDir + "/unlockchars"); gVarUnlockChar = varByName(g, "unlock_char");
+    if (gUnlockChars) logf("[prueba] personajes desbloqueados (global.unlock_char = 1, variable %d)\n", gVarUnlockChar);
     gVarHp = varByName(g, "hp"); gVarHpMax = varByName(g, "hp_max"); gVarDeath = varByName(g, "death"); gObjPlayer = objByName(g, "player_wyatt");
     if (gGod) logf("[prueba] modo sin morir activo (hp=%d hp_max=%d jugador=%d)\n", gVarHp, gVarHpMax, gObjPlayer);
     if (FILE* f = std::fopen((saveDir + "/tour.txt").c_str(), "r")) {
@@ -90,6 +117,10 @@ void debugTourInit(Game& g, const std::string& saveDir) {
 }
 
 void debugTourBeforeStep(Game& g) {
+    if (gMonkey && !isMenuRoom(g.d.rooms[g.room].name)) monkeyStep(g);
+    // unlockchars: el juego pone global.unlock_char = 1 al desbloquear el lore 63 (general_control Step) y lo vuelve a 0
+    // en room_settings; aqui se mantiene a 1 para poder elegir a Gilda y Vladyn sin la partida completa
+    if (gUnlockChars && gVarUnlockChar >= 0) g.globals[gVarUnlockChar] = Value(1.0);
     if (gGod && gObjPlayer >= 0 && gVarHp >= 0)
         for (Instance* p : g.instancesOf(gObjPlayer)) if (p->alive) {
             p->vars[gVarHp] = Value(999999.0);   // el jugador no tiene hp_max (usa otros nombres): hp directo
