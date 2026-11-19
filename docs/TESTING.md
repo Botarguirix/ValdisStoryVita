@@ -9,6 +9,7 @@ Se activan creando archivos en `ux0:data/valdis/save/` (en PC, en la carpeta de 
 | `stress.txt` | Estrés: `SALA CADA_FRAMES CUANTOS MAXIMO OBJ1 [OBJ2 ...]`. En `SALA` crea enemigos junto al jugador por tandas y escribe una línea `[estres]` por tanda |
 | `unlockchars` | Los cuatro personajes en la selección (mantiene `global.unlock_char = 1`; el juego lo activa al desbloquear el lore 63) |
 | `monkey` | Botones al azar en las salas de juego: moverse, saltar, atacar, magia, bloquear (nunca magia + bloqueo juntos, que abre el menú de hechizos). Con `godmode` y `tour.txt` prueba el código de cada personaje en todas las salas |
+| `bossrush.txt` | Boss Rush de prueba: `SALA FRAMES JEFE1 JEFE2 ...` (p. ej. `arena_1 1800 azudor shu itahn ...`). Va a la sala y saca cada jefe junto al jugador; línea `[jefe]` con coste, frames perdidos, si sigue vivo y avisos nuevos. Con `monkey` y `godmode` hay combate real |
 | `godmode` | El jugador no muere en combate (`hp` a 999999 en cada frame). El autoguardado puede guardar ese valor |
 | `sampler` | Muestreador de perfiles: un hilo en el núcleo 2 anota cada 0,5 ms qué script y qué función integrada se ejecutan. Informe `[muestreo]` cada 10 s. Sin coste en el hilo principal |
 | `proffases` | Tiempo de cada fase del frame (casi sin coste) |

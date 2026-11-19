@@ -7,6 +7,9 @@
 //              linea [estres] con el coste medido.
 //   monkey     botones al azar en las salas de juego (prueba de estabilidad de cada personaje)
 //   unlockchars  personajes desbloqueados en la seleccion (global.unlock_char = 1 en cada frame)
+//   bossrush.txt  Boss Rush de prueba: "SALA FRAMES JEFE1 JEFE2 ...". Va a SALA y saca los jefes de uno en uno
+//              (FRAMES frames cada uno, con monkey y godmode tiene combate real). Linea [jefe] por cada uno: coste,
+//              frames perdidos, instancias, si sigue vivo y avisos nuevos.
 //   godmode    el jugador no muere en combate: hp a 999999 en cada frame (un foso si puede matarlo; el
 //              recorrido sigue en la sala siguiente). OJO: el autoguardado puede guardar ese hp: restaurar las partidas. (Reiniciar tambien el contador "death"
 //              dejaba al jugador atrapado en un bucle de golpes que repetia un sonido sin parar.)
@@ -20,6 +23,7 @@
 #include <cstdlib>
 
 namespace vs {
+extern long gWarnCount;   // vm.cpp: avisos distintos emitidos
 
 namespace {
 struct Stats {
@@ -85,11 +89,57 @@ void monkeyStep(Game& g) {
     in.gpBtn[14] = gMk.dir < 0; in.gpBtn[15] = gMk.dir > 0; in.gpAxis[0] = (float)gMk.dir;
     setKey(37, gMk.dir < 0); setKey(39, gMk.dir > 0);
 }
+
+// ---- Boss Rush de prueba
+struct BossRush { std::string room; int frames = 1800; std::vector<int> objs; int idx = -1, at = 0, room_ = -1; long warn0 = 0; Stats st; } gBR;
+bool gBROn = false;
+void bossRushInit(Game& g, const std::string& saveDir) {
+    FILE* f = std::fopen((saveDir + "/bossrush.txt").c_str(), "r");
+    if (!f) return;
+    char room[128], ob[128];
+    if (std::fscanf(f, "%127s %d", room, &gBR.frames) == 2) {
+        gBR.room = room; gBR.room_ = roomByName(g, room);
+        while (std::fscanf(f, "%127s", ob) == 1) { int o = objByName(g, ob); if (o >= 0) gBR.objs.push_back(o); else logf("[jefe] objeto desconocido: %s\n", ob); }
+    }
+    std::fclose(f);
+    gBROn = gBR.room_ >= 0 && !gBR.objs.empty();
+    if (gBROn) logf("[jefe] Boss Rush de prueba en %s: %d jefes, %d frames cada uno\n", room, (int)gBR.objs.size(), gBR.frames);
+}
+void bossRushStep(Game& g) {
+    if (!gBROn || g.pendingRoom >= 0) return;
+    const std::string& rn = g.d.rooms[g.room].name;
+    if (gBR.idx < 0) {   // primero a la sala del combate
+        if (isMenuRoom(rn) || g.frame < 60) return;
+        if (g.room != gBR.room_) { g.pendingRoom = gBR.room_; return; }
+        gBR.idx = 0; gBR.at = 0;
+    }
+    if (g.room != gBR.room_) { g.pendingRoom = gBR.room_; return; }   // si una puerta o una muerte lo saca, vuelve
+    if (gBR.at == 0 || g.frame - gBR.at >= gBR.frames) {
+        if (gBR.at != 0) {   // cerrar el jefe actual
+            int o = gBR.objs[gBR.idx], alive = 0;
+            for (Instance* i : g.instancesOf(o)) if (i->alive) alive++;
+
+            logStats("[jefe]", std::to_string(gBR.idx + 1) + "/" + std::to_string(gBR.objs.size()) + " " + g.d.objects[o].name +
+                     (alive ? " (sigue vivo)" : " (derrotado)") + " avisos nuevos " + std::to_string(gWarnCount - gBR.warn0), gBR.st);
+            for (Instance* i : g.instancesOf(o)) if (i->alive) g.destroyInstance(i, false);
+            gBR.idx++;
+            if (gBR.idx >= (int)gBR.objs.size()) { logf("[jefe] Boss Rush terminado\n"); gBROn = false; return; }
+        }
+        Instance* pl = gObjPlayer >= 0 ? g.firstOf(gObjPlayer) : nullptr;
+        double px = pl ? pl->x : g.roomW / 2.0, py = pl ? pl->y : g.roomH / 2.0;
+        int o = gBR.objs[gBR.idx];
+        gBR.warn0 = gWarnCount;
+        logf("[jefe] sale %s\n", g.d.objects[o].name.c_str());
+        g.createInstance(px + 220, py - 60, o, true);
+        gBR.at = g.frame; gBR.st = Stats{};
+    }
+}
 } // namespace
 
 void debugTourInit(Game& g, const std::string& saveDir) {
     gGod = fileExists(saveDir + "/godmode");
     gMonkey = fileExists(saveDir + "/monkey");
+    bossRushInit(g, saveDir);
     { extern int gDrawDebug; if (fileExists(saveDir + "/drawdebug")) gDrawDebug = 400; }
     gUnlockChars = fileExists(saveDir + "/unlockchars"); gVarUnlockChar = varByName(g, "unlock_char");
     if (gUnlockChars) logf("[prueba] personajes desbloqueados (global.unlock_char = 1, variable %d)\n", gVarUnlockChar);
@@ -118,6 +168,7 @@ void debugTourInit(Game& g, const std::string& saveDir) {
 }
 
 void debugTourBeforeStep(Game& g) {
+    bossRushStep(g);
     if (gMonkey && !isMenuRoom(g.d.rooms[g.room].name)) monkeyStep(g);
     // unlockchars: el juego pone global.unlock_char = 1 al desbloquear el lore 63 (general_control Step) y lo vuelve a 0
     // en room_settings; aqui se mantiene a 1 para poder elegir a Gilda y Vladyn sin la partida completa
@@ -168,6 +219,7 @@ void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) 
     }
     int inst = (int)g.insts.size();
     if (gTourOn && gTourIdx >= 0) gTourSt.add(stepMs, drawMs, frameMs, inst, g.frame - gTourAt < kEntryFrames);
+    if (gBROn && gBR.idx >= 0 && gBR.at > 0) gBR.st.add(stepMs, drawMs, frameMs, inst, g.frame - gBR.at < kEntryFrames);
     if (gStressOn && gStressAt >= 0) gStressSt.add(stepMs, drawMs, frameMs, inst, g.frame - gStressAt < kEntryFrames);
 }
 

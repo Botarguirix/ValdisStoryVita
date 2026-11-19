@@ -58,9 +58,11 @@ struct VStack {
 };
 static VStack gStack; // la VM corre solo en el hilo principal
 
+long gWarnCount = 0;   // avisos distintos emitidos (para el Boss Rush de prueba)
 void Game::warnOnce(const std::string& what) {
     for (auto& w : warnedFuncs) if (w == what) return;
     warnedFuncs.push_back(what);
+    gWarnCount++;
     logf("[aviso] %s\n", what.c_str());
 }
 

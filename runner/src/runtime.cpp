@@ -830,7 +830,15 @@ void Game::gotoRoom(int r, bool first) {
     }
     tD = profNow();
     if (first) for (Instance* i : orderedAlive()) if (i->alive) fireEvent(i, EV_OTHER, OTHER_GAMESTART);
-    if (rm.code >= 0) { Ctx c; call(rm.code, c, nullptr, 0); }
+    // Codigo de creacion de la sala: en GMS1 se ejecuta sobre una instancia "dummy" (id 0, sin objeto) donde las
+    // variables de instancia funcionan. Antes self era nulo y se perdian (arena_boss_script elige los jefes del modo
+    // Arena con variables propias: i, ii, a_min, boss_1...; tambien hall_3, hall_6, prison_16).
+    if (rm.code >= 0) {
+        static Instance* dummy = nullptr;
+        if (!dummy) { dummy = new Instance(); dummy->id = 0; dummy->obj = -1; dummy->vars.bind(-1); }
+        dummy->x = dummy->y = 0; dummy->alive = true;
+        Ctx c{dummy, dummy}; call(rm.code, c, nullptr, 0);
+    }
     for (Instance* i : orderedAlive()) if (i->alive) fireEvent(i, EV_OTHER, OTHER_ROOMSTART);
     preloadRoomPages();
 }
