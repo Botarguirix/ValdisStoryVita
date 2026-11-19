@@ -82,9 +82,12 @@ int gpuFreeMB() {
 }
 // el log del runner (vs::logf) vive en runtime.cpp; gfx no depende de el: se usa un puntero que fija el runtime
 void (*gLogHook)(const char*) = nullptr;
+static std::string gPendingLog;   // mensajes de init() anteriores al registro
+void flushLog() { if (gLogHook && !gPendingLog.empty()) { gLogHook(gPendingLog.c_str()); gPendingLog.clear(); } }
 static void gfxLog(const char* fmt, ...) {
     char b[512]; va_list ap; va_start(ap, fmt); std::vsnprintf(b, sizeof b, fmt, ap); va_end(ap);
-    if (gLogHook) gLogHook(b); else std::fputs(b, stdout);
+    if (gLogHook) gLogHook(b);
+    else { std::fputs(b, stdout); gPendingLog += b; }   // antes de que el runtime abra el registro: se guarda y se vuelca luego
 }
 
 static double nowMs() { return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
@@ -686,4 +689,4 @@ void endFrame() {
 
 // Relleno: vita-elf-create.exe (vitasdk) se cae con 0xC0000374 con ciertas distribuciones de direcciones del binario
 // (no depende del codigo). Si vuelve a fallar al convertir a vsvita.velf, cambia el tamano de este array.
-extern "C" __attribute__((used)) const char vs_pad_probe[8192] = {1};
+extern "C" __attribute__((used)) const char vs_pad_probe[12288] = {1};

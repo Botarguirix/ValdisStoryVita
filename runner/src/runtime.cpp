@@ -157,6 +157,7 @@ static SFrame frameFromTpag(const GameData& d, int tp) {
 bool Game::init(const std::string& dd, const std::string& gd, const std::string& sd, std::string& err) {
     gGame = this;
     gfx::gLogHook = [](const char* s) { logf("%s", s); };
+    gfx::flushLog();
     dataDir = dd; gameDir = gd; saveDir = sd;
     if (!d.load(dataDir + "/game.vsd", err)) return false;
     rng = new std::mt19937(det ? detSeed : (uint32_t)nowMs());

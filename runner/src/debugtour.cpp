@@ -90,6 +90,7 @@ void monkeyStep(Game& g) {
 void debugTourInit(Game& g, const std::string& saveDir) {
     gGod = fileExists(saveDir + "/godmode");
     gMonkey = fileExists(saveDir + "/monkey");
+    { extern int gDrawDebug; if (fileExists(saveDir + "/drawdebug")) gDrawDebug = 400; }
     gUnlockChars = fileExists(saveDir + "/unlockchars"); gVarUnlockChar = varByName(g, "unlock_char");
     if (gUnlockChars) logf("[prueba] personajes desbloqueados (global.unlock_char = 1, variable %d)\n", gVarUnlockChar);
     gVarHp = varByName(g, "hp"); gVarHpMax = varByName(g, "hp_max"); gVarDeath = varByName(g, "death"); gObjPlayer = objByName(g, "player_wyatt");

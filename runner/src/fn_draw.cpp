@@ -215,7 +215,15 @@ VS_FN(draw_background_part) {
     if (auto* f = bgFrame(g, a[0].ival())) g.drawFramePart(*f, a[1].num(), a[2].num(), a[3].num(), a[4].num(), a[5].num(), a[6].num(), 1, 1, 0xFFFFFF, 1);
     return Value();
 }
+int gDrawDebug = 0;   // save/drawdebug: anota las primeras llamadas a draw_background_part_ext (diagnostico)
 VS_FN(draw_background_part_ext) {
+    if (gDrawDebug > 0) {
+        gDrawDebug--;
+        auto* f = bgFrame(g, a[0].ival());
+        logf("[dibujo] sala %s bg %d pagina %d estado %d parte %.0f,%.0f %.0fx%.0f en %.0f,%.0f escala %.2f,%.2f alfa %.2f%s",
+             g.d.rooms[g.room].name.c_str(), a[0].ival(), f ? f->tex : -9, f ? gfx::pageState(f->tex) : -9, a[1].num(), a[2].num(), a[3].num(), a[4].num(),
+             a[5].num(), a[6].num(), a[7].num(), a[8].num(), a[10].num(), "\n");
+    }
     if (auto* f = bgFrame(g, a[0].ival())) g.drawFramePart(*f, a[1].num(), a[2].num(), a[3].num(), a[4].num(), a[5].num(), a[6].num(), a[7].num(), a[8].num(), bgr(a[9]), a[10].num());
     return Value();
 }

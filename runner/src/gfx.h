@@ -37,6 +37,7 @@ void roomStart();                    // el siguiente frame carga ya lo visible (
 struct Perf { int loads = 0, evictions = 0, draws = 0, uploadFails = 0, asyncLoads = 0, missing = 0; double waitMs = 0, loadMs = 0, readMs = 0, inflateMs = 0, uploadMs = 0, swapMs = 0; int gpuFreeMB = -1; };
 Perf& perf();                        // contadores acumulados; el llamador los resetea
 int gpuFreeMB();                     // memoria libre de vitaGL en MB (PC: -1)
+void flushLog();   // vuelca los mensajes guardados antes de tener gLogHook
 extern void (*gLogHook)(const char*); // destino de los avisos de gfx (el runtime lo apunta a logf)
 
 } // namespace gfx

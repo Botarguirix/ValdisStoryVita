@@ -15,6 +15,17 @@ int main(int argc, char** argv) {
             g.codes.size(), g.varNames.size(), g.functions.size(), g.scripts.size(), g.sounds.size(), g.tpages.size(), g.textures.size());
         size_t ins = 0; for (auto& c : g.codes) ins += c.ins.size();
         std::printf("instrucciones=%zu  primera room=%s\n", ins, g.rooms[g.roomOrder[0]].name.c_str());
+    } else if (mode == "bg" && argc > 3) {   // fondo N: pagina y rectangulo en el atlas
+        int b = std::atoi(argv[3]);
+        if (b >= 0 && b < (int)g.backgrounds.size()) {
+            auto& bg = g.backgrounds[b];
+            std::printf("%d %s tpag=%d\n", b, bg.name.c_str(), bg.tpag);
+            if (bg.tpag >= 0 && bg.tpag < (int)g.tpages.size()) {
+                auto& t = g.tpages[bg.tpag];
+                std::printf("  pagina %d (%dx%d) origen %u,%u tam %ux%u destino %u,%u %ux%u caja %ux%u\n", t.tex, g.textures[t.tex].w, g.textures[t.tex].h,
+                            t.sx, t.sy, t.sw, t.sh, t.tx, t.ty, t.tw, t.th, t.bw, t.bh);
+            }
+        }
     } else if (mode == "collisions") {
         for (auto& o : g.objects) for (auto& e : o.events) if (e.type == 4)
             std::printf("%s -> %s\n", o.name.c_str(), e.sub < g.objects.size() ? g.objects[e.sub].name.c_str() : "?");
