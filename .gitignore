@@ -1,0 +1,50 @@
+# Datos del juego y material derivado (copyright de Endless Fluff Games): nunca se suben
+/build/
+/decomp/
+/ref/
+/data/
+/extracted/
+/original/
+
+# Herramientas de terceros empaquetadas (se descargan aparte)
+/tools/utmt_cli/
+/tools/utmt_cli.zip
+
+# Builds, paquetes y binarios
+**/build*/
+**/CMakeFiles/
+CMakeCache.txt
+*.vpk
+*.self
+*.elf
+*.velf
+*.exe
+*.dll
+*.so
+*.a
+*.o
+*.obj
+*.bin
+*.zip
+
+# Partidas, logs, capturas, perfiles
+*.dat
+*.sav
+*.log
+*.jpg
+gmon.out
+
+# Python
+__pycache__/
+*.pyc
+
+# Local y credenciales
+tools/local.env
+.env
+.env.*
+*.pem
+*.key
+.claude/
+.codex/
+.vs/
+.vscode/

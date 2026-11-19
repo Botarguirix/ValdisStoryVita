@@ -1,0 +1,142 @@
+// Modos de prueba de rendimiento (archivos en la carpeta save/; no afectan al juego normal si no existen):
+//   tour.txt   recorrido: primera linea "FRAMES n" (opcional, 360 por defecto) y luego una sala por linea. Cuando se
+//              llega a una sala de juego, salta a cada sala de la lista y se queda n frames. Al salir de cada una
+//              escribe una linea [recorrido] con fps, peor frame, frames de mas de 16,7 ms e instancias.
+//   stress.txt estres: "SALA CADA_FRAMES CUANTOS MAXIMO OBJ1 [OBJ2 ...]". En SALA crea CUANTOS enemigos cada
+//              CADA_FRAMES frames junto al jugador (alternando los objetos) hasta MAXIMO, y por cada tanda escribe una
+//              linea [estres] con el coste medido.
+//   godmode    el jugador no muere en combate: hp a 999999 en cada frame (un foso si puede matarlo; el
+//              recorrido sigue en la sala siguiente). OJO: el autoguardado puede guardar ese hp: restaurar las partidas. (Reiniciar tambien el contador "death"
+//              dejaba al jugador atrapado en un bucle de golpes que repetia un sonido sin parar.)
+#include "debugtour.h"
+#include "runtime.h"
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <cstdlib>
+
+namespace vs {
+
+namespace {
+struct Stats {
+    int frames = 0, over = 0, maxInst = 0;
+    double cpuSum = 0, cpuMax = 0, stepSum = 0, stepMax = 0, drawSum = 0, drawMax = 0, frameMax = 0, entryMax = 0;
+    void add(double step, double draw, double frame, int inst, bool entry) {
+        double cpu = step + draw;
+        if (entry) { entryMax = std::max(entryMax, std::max(cpu, frame)); return; }
+        frames++; cpuSum += cpu; stepSum += step; drawSum += draw;
+        cpuMax = std::max(cpuMax, cpu); stepMax = std::max(stepMax, step); drawMax = std::max(drawMax, draw);
+        frameMax = std::max(frameMax, frame);
+        if (frame > 17.5) over++;   // un frame de vsync son 16,7 ms; >17,5 = se perdio al menos un refresco
+        maxInst = std::max(maxInst, inst);
+    }
+};
+const int kEntryFrames = 20;   // los primeros frames de cada sala/tanda se cuentan aparte (carga)
+
+bool gGod = false; int gVarHp = -1, gVarHpMax = -1, gVarDeath = -1, gObjPlayer = -1;
+// recorrido
+std::vector<std::string> gTour; int gTourFrames = 360; int gTourIdx = -1; int gTourAt = 0; Stats gTourSt; bool gTourOn = false;
+// estres
+struct StressCfg { std::string room; int every = 300, add = 2, max = 60; std::vector<int> objs; } gStress; bool gStressOn = false;
+int gStressCount = 0, gStressAt = -1, gStressNext = 0; Stats gStressSt; uint32_t gRand = 12345;
+
+bool isMenuRoom(const std::string& n) {
+    static const char* menus[] = {"start_game", "status_room", "control_room", "store_room", "spell_room", "eqp_room", "profile_room",
+                                  "lore_room", "char_room", "death_room", "after_life", "attract_room", "ship_room", "ending_room", "end_demo"};
+    for (const char* m : menus) if (n == m) return true;
+    return false;
+}
+int roomByName(Game& g, const std::string& n) { for (size_t r = 0; r < g.d.rooms.size(); r++) if (g.d.rooms[r].name == n) return (int)r; return -1; }
+int objByName(Game& g, const std::string& n) { for (size_t o = 0; o < g.d.objects.size(); o++) if (g.d.objects[o].name == n) return (int)o; return -1; }
+int varByName(Game& g, const char* n) { for (size_t v = 0; v < g.d.varNames.size(); v++) if (g.d.varNames[v] == n) return (int)v; return -1; }
+bool fileExists(const std::string& p) { if (FILE* f = std::fopen(p.c_str(), "r")) { std::fclose(f); return true; } return false; }
+
+void logStats(const char* tag, const std::string& what, const Stats& s) {
+    if (s.frames == 0) { logf("%s %s: sin frames medidos\n", tag, what.c_str()); return; }
+    double cpu = s.cpuSum / s.frames;
+    const char* lim = s.over == 0 ? "[OK]" : (s.stepSum > s.drawSum ? "[CPU-bound]" : "[CPU-bound dibujo]");
+    logf("%s %s %s | %d frames, %d perdidos (%.1f%%) | cpu media %.1f ms, max %.1f | logica %.1f/%.1f | dibujo %.1f/%.1f | peor frame %.1f ms | entrada %.0f ms | instancias %d\n",
+         tag, lim, what.c_str(), s.frames, s.over, 100.0 * s.over / s.frames, cpu, s.cpuMax, s.stepSum / s.frames, s.stepMax,
+         s.drawSum / s.frames, s.drawMax, s.frameMax, s.entryMax, s.maxInst);
+}
+} // namespace
+
+void debugTourInit(Game& g, const std::string& saveDir) {
+    gGod = fileExists(saveDir + "/godmode");
+    gVarHp = varByName(g, "hp"); gVarHpMax = varByName(g, "hp_max"); gVarDeath = varByName(g, "death"); gObjPlayer = objByName(g, "player_wyatt");
+    if (gGod) logf("[prueba] modo sin morir activo (hp=%d hp_max=%d jugador=%d)\n", gVarHp, gVarHpMax, gObjPlayer);
+    if (FILE* f = std::fopen((saveDir + "/tour.txt").c_str(), "r")) {
+        char w[128];
+        while (std::fscanf(f, "%127s", w) == 1) {
+            if (!std::strcmp(w, "FRAMES")) { int n; if (std::fscanf(f, "%d", &n) == 1) gTourFrames = std::max(60, n); continue; }
+            if (roomByName(g, w) >= 0) gTour.push_back(w); else logf("[recorrido] sala desconocida: %s\n", w);
+        }
+        std::fclose(f);
+        gTourOn = !gTour.empty();
+        if (gTourOn) logf("[recorrido] %d salas, %d frames cada una (%.0f min)\n", (int)gTour.size(), gTourFrames, gTour.size() * gTourFrames / 3600.0);
+    }
+    if (FILE* f = std::fopen((saveDir + "/stress.txt").c_str(), "r")) {
+        char room[128], ob[128];
+        if (std::fscanf(f, "%127s %d %d %d", room, &gStress.every, &gStress.add, &gStress.max) == 4) {
+            gStress.room = room;
+            while (std::fscanf(f, "%127s", ob) == 1) { int o = objByName(g, ob); if (o >= 0) gStress.objs.push_back(o); else logf("[estres] objeto desconocido: %s\n", ob); }
+            gStressOn = !gStress.objs.empty() && roomByName(g, room) >= 0;
+            if (gStressOn) logf("[estres] en %s: %d enemigos cada %d frames hasta %d (%d tipos)\n", room, gStress.add, gStress.every, gStress.max, (int)gStress.objs.size());
+        }
+        std::fclose(f);
+    }
+}
+
+void debugTourBeforeStep(Game& g) {
+    if (gGod && gObjPlayer >= 0 && gVarHp >= 0)
+        for (Instance* p : g.instancesOf(gObjPlayer)) if (p->alive) {
+            p->vars[gVarHp] = Value(999999.0);   // el jugador no tiene hp_max (usa otros nombres): hp directo
+        }
+    const std::string& rn = g.d.rooms[g.room].name;
+    if (gTourOn && g.pendingRoom < 0) {
+        bool start = gTourIdx < 0 && !isMenuRoom(rn) && g.frame > 60;
+        bool next = gTourIdx >= 0 && g.frame - gTourAt >= gTourFrames + kEntryFrames;
+        if (start || next) {
+            if (gTourIdx >= 0) logStats("[recorrido]", std::to_string(gTourIdx + 1) + "/" + std::to_string(gTour.size()) + " " + gTour[gTourIdx], gTourSt);
+            gTourIdx++;
+            if (gTourIdx >= (int)gTour.size()) { logf("[recorrido] terminado\n"); gTourOn = false; }
+            else { g.pendingRoom = roomByName(g, gTour[gTourIdx]); gTourAt = g.frame + 1; gTourSt = Stats{}; }
+        }
+    }
+    if (gStressOn && rn == gStress.room && !gTourOn) {
+        if (gStressAt < 0) { gStressAt = g.frame; gStressNext = g.frame + gStress.every; gStressSt = Stats{}; logf("[estres] empieza en %s\n", rn.c_str()); }
+        if (g.frame >= gStressNext && gStressCount < gStress.max) {
+            logStats("[estres]", "enemigos " + std::to_string(gStressCount), gStressSt);
+            Instance* pl = gObjPlayer >= 0 ? g.firstOf(gObjPlayer) : nullptr;
+            double px = pl ? pl->x : g.roomW / 2.0, py = pl ? pl->y : g.roomH / 2.0;
+            for (int k = 0; k < gStress.add && gStressCount < gStress.max; k++) {
+                gRand = gRand * 1103515245u + 12345u;
+                double dx = ((int)((gRand >> 16) % 500) - 250);
+                if (std::abs(dx) < 60) dx = dx < 0 ? -60 : 60;
+                int obj = gStress.objs[gStressCount % gStress.objs.size()];
+                g.createInstance(px + dx, py - 40, obj, true);
+                gStressCount++;
+            }
+            gStressNext = g.frame + gStress.every; gStressAt = g.frame; gStressSt = Stats{};
+        } else if (g.frame >= gStressNext && gStressCount >= gStress.max) {
+            logStats("[estres]", "enemigos " + std::to_string(gStressCount) + " (final)", gStressSt);
+            gStressOn = false;
+        }
+    }
+}
+
+void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) {
+    if (std::getenv("VS_VARSTATS") && g.frame == std::atoi(std::getenv("VS_VARSTATS"))) {   // TEMPORAL: variables por instancia
+        std::vector<std::pair<int,int>> per(g.d.objects.size(), {0, 0}); long tot = 0; int n = 0;
+        for (auto& p : g.insts) { per[p->obj].first++; per[p->obj].second += p->vars.size(); tot += p->vars.size(); n++; }
+        logf("[vars] %d instancias, media %.1f variables\n", n, n ? (double)tot / n : 0.0);
+        for (size_t o = 0; o < per.size(); o++) if (per[o].first) logf("[vars] %-22s x%3d  %5.1f vars\n", g.d.objects[o].name.c_str(), per[o].first, (double)per[o].second / per[o].first);
+    }
+    int inst = (int)g.insts.size();
+    if (gTourOn && gTourIdx >= 0) gTourSt.add(stepMs, drawMs, frameMs, inst, g.frame - gTourAt < kEntryFrames);
+    if (gStressOn && gStressAt >= 0) gStressSt.add(stepMs, drawMs, frameMs, inst, g.frame - gStressAt < kEntryFrames);
+}
+
+} // namespace vs
