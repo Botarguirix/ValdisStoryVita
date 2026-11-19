@@ -29,4 +29,5 @@ Se activan creando archivos en `ux0:data/valdis/save/` (en PC, en la carpeta de 
 
 - `tools/va.sh` ejecuta comandos del agente (configura `tools/local.env`). Nunca dos clientes a la vez.
 - `tools/deploy.sh` sube e instala el VPK. `tools/vita_input/*.json` son pulsaciones (`tools/va.sh input submit ...`; en el menú del título usar `hold_CROSS.json`).
+- **No leer `vsrunner.log` mientras el juego corre:** descargarlo cada minuto bloqueó la escritura del registro en la Vita (el juego siguió funcionando, pero el registro se quedó congelado). Descargarlo solo al cerrar el juego.
 - **Partidas:** nunca `fs trash` sobre una ruta que se vaya a reutilizar (la papelera del agente actúa tarde, por ruta, y borra el archivo nuevo). `fs move` no sobrescribe y `fs download` puede devolver una copia vieja: comprobar con `fs list`. `tools/restore_saves.sh <copia>` restaura de forma segura.

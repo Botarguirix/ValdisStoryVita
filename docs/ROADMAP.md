@@ -119,6 +119,7 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 ---
 
 ## 7. Reglas del proyecto (19-11)
+- **Criterio de rendimiento para la cuenta final:** objetivo 60 fps. En las salas más exigentes se acepta un **mínimo de 30 fps**. Como el juego avanza por frames, eso solo es aceptable si la lógica sigue a 60 pasos por segundo y lo que baja es el dibujo (si no, a 30 fps el juego va a la mitad de velocidad): requiere la opción de "dibujo a 30 fps cuando la lógica no llega" (1.12). Clasificación por sala: ✅ ≥ 58 fps · 🟡 30–58 fps (aceptable solo en salas exigentes) · ❌ < 30 fps.
 - **Prioridad:** estabilidad y terminar el juego 1:1 (igual que el original). Las partidas de la Vita no importan; para probar zonas finales se puede usar una partida avanzada.
 - **Las herramientas de prueba se conservan** (`warp.txt`, `tour.txt`, `stress.txt`, `godmode`, perfiles): al final serán una sección de **TRUCOS** dentro del juego.
 
