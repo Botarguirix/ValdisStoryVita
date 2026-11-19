@@ -57,8 +57,10 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 |---|---|---|
 | 2.1 | Wyatt: campaña completa | 🖥️ empezada |
 | 2.2 | Reina: campaña completa | ✅ hasta el jefe 1 |
-| 2.3 | Gilda y Vladyn (se desbloquean jugando) | ⬜ |
-| 2.4 | Todos los jefes y zonas, con una lista de salas probadas en la Vita | ⬜ (outer_slum 2, 4–10 ✅) |
+| 2.3 | Gilda y Vladyn (se desbloquean jugando) | 🖥️ elegibles con `unlockchars`; partida nueva + intro + recorrido de 245 salas con `monkey` y `godmode` sin cuelgues |
+| 2.3b | Prueba de estabilidad por personaje (PC, 19-11) | 🖥️ Wyatt, Reina, Vladyn y Gilda: partida nueva, intro del barco y recorrido de las 245 salas pulsando botones al azar: 0 cuelgues, 0 muertes, sin avisos nuevos. Falta repetirlo en la Vita |
+| 2.3c | Avisos pendientes de revisar | ⬜ Lecturas de variables en una instancia que no existe dentro de `nme_v_player_script`, `nme_v_feral_script`, `hermit_Step_0`, `pressure_switch_Step_0` y `save_player_script` (una vez por partida). En GMS1 eso sería un error: comprobar si es una diferencia del runner |
+| 2.4 | Todos los jefes y zonas, con una lista de salas probadas en la Vita | 🔶 Las 245 salas recorridas en la Vita (1.8); jefes en combate real: solo Azudor |
 | 2.5 | Guardar y cargar, autoguardado entre salas, finales | 🖥️ (carga ✅) |
 | 2.6 | Menús: hechizos, habilidades, objetos, mapa, opciones y lore | 🖥️ (pausa ✅) |
 | 2.7 | Audio: toda la música y los efectos, bucles, volumen de las opciones | 🖥️ |
