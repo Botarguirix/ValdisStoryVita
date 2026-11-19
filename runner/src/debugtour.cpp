@@ -28,11 +28,11 @@ extern long gWarnCount;   // vm.cpp: avisos distintos emitidos
 namespace {
 struct Stats {
     int frames = 0, over = 0, maxInst = 0;
-    double cpuSum = 0, cpuMax = 0, stepSum = 0, stepMax = 0, drawSum = 0, drawMax = 0, frameMax = 0, entryMax = 0;
+    double cpuSum = 0, cpuMax = 0, stepSum = 0, stepMax = 0, drawSum = 0, drawMax = 0, frameMax = 0, entryMax = 0, wallSum = 0;
     void add(double step, double draw, double frame, int inst, bool entry) {
         double cpu = step + draw;
         if (entry) { entryMax = std::max(entryMax, std::max(cpu, frame)); return; }
-        frames++; cpuSum += cpu; stepSum += step; drawSum += draw;
+        frames++; wallSum += frame; cpuSum += cpu; stepSum += step; drawSum += draw;
         cpuMax = std::max(cpuMax, cpu); stepMax = std::max(stepMax, step); drawMax = std::max(drawMax, draw);
         frameMax = std::max(frameMax, frame);
         if (frame > 17.5) over++;   // un frame de vsync son 16,7 ms; >17,5 = se perdio al menos un refresco
@@ -63,8 +63,9 @@ void logStats(const char* tag, const std::string& what, const Stats& s) {
     if (s.frames == 0) { logf("%s %s: sin frames medidos\n", tag, what.c_str()); return; }
     double cpu = s.cpuSum / s.frames;
     const char* lim = s.over == 0 ? "[OK]" : (s.stepSum > s.drawSum ? "[CPU-bound]" : "[CPU-bound dibujo]");
-    logf("%s %s %s | %d frames, %d perdidos (%.1f%%) | cpu media %.1f ms, max %.1f | logica %.1f/%.1f | dibujo %.1f/%.1f | peor frame %.1f ms | entrada %.0f ms | instancias %d\n",
-         tag, lim, what.c_str(), s.frames, s.over, 100.0 * s.over / s.frames, cpu, s.cpuMax, s.stepSum / s.frames, s.stepMax,
+    double steps = s.wallSum > 0 ? s.frames * 1000.0 / s.wallSum : 0;   // pasos de logica por segundo (60 = velocidad normal)
+    logf("%s %s %s | %.0f pasos/s | %d frames, %d perdidos (%.1f%%) | cpu media %.1f ms, max %.1f | logica %.1f/%.1f | dibujo %.1f/%.1f | peor frame %.1f ms | entrada %.0f ms | instancias %d\n",
+         tag, lim, what.c_str(), steps, s.frames, s.over, 100.0 * s.over / s.frames, cpu, s.cpuMax, s.stepSum / s.frames, s.stepMax,
          s.drawSum / s.frames, s.drawMax, s.frameMax, s.entryMax, s.maxInst);
 }
 
@@ -188,6 +189,9 @@ void debugTourBeforeStep(Game& g) {
             else { g.pendingRoom = roomByName(g, gTour[gTourIdx]); gTourAt = g.frame + 1; gTourSt = Stats{}; }
         }
     }
+    // estres: si se arranca en otra sala de juego (o una puerta lo saca), vuelve solo a la suya (como el Boss Rush)
+    if (gStressOn && !gTourOn && rn != gStress.room && !isMenuRoom(rn) && g.frame > 60 && g.pendingRoom < 0)
+        g.pendingRoom = roomByName(g, gStress.room);
     if (gStressOn && rn == gStress.room && !gTourOn) {
         if (gStressAt < 0) { gStressAt = g.frame; gStressNext = g.frame + gStress.every; gStressSt = Stats{}; logf("[estres] empieza en %s\n", rn.c_str()); }
         if (g.frame >= gStressNext && gStressCount < gStress.max) {

@@ -550,11 +550,19 @@ void stats(int& n, size_t& bytes) { n = 0; for (auto& t : gPages) n += t.loaded;
 
 void setScreen(int pw, int ph, int lw, int lh) { gPixW = pw; gPixH = ph; gLogW = lw; gLogH = lh; }
 
+// Modo descarte (dibujo a 30 fps cuando la logica no llega): el frame ejecuta toda la logica y los eventos Draw
+// (42 de 166 cambian variables: saltarlos rompia el 1:1), pero no se manda nada a la GPU ni se espera a la pantalla.
+// Las texturas se siguen buscando y marcando como usadas, para que el siguiente frame real no tenga que esperarlas.
+static bool gDiscard = false;
+void setDiscard(bool d) { gDiscard = d; }
+bool discarding() { return gDiscard; }
+
 void beginFrame() {
     gFrame++;
     // los datos de texturas subidas hace mas de 4 frames ya estan en la GPU
     while (!gUploadKeep.empty() && gUploadKeep.front().first + 4 < gFrame) gUploadKeep.erase(gUploadKeep.begin());
     pump();
+    if (gDiscard) return;
     glViewport(0, 0, gPixW, gPixH);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -562,6 +570,7 @@ void beginFrame() {
 
 void clear(uint32_t c) {
     flush();
+    if (gDiscard) return;
     glClearColor((c & 255) / 255.f, ((c >> 8) & 255) / 255.f, ((c >> 16) & 255) / 255.f, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -620,6 +629,7 @@ void setRepeat(bool r) { if (r != gRepeat) { flush(); gRepeat = r; } }
 
 void flush() {
     if (gBatch.empty()) return;
+    if (gDiscard) { gBatch.clear(); return; }
     int w, h; GLuint id = resolve(gBatchTex, w, h);
     Tex* t = gBatchTex == -1 ? nullptr : find(gBatchTex);
     glBindTexture(GL_TEXTURE_2D, id);
@@ -654,6 +664,7 @@ static void bindBatch(int tex, int verts) {
 
 void quad(int tex, const float xy[8], const float uvPix[8], const uint32_t c[4], float alpha) {
     int w, h; if (!resolve(tex, w, h)) return;
+    if (gDiscard) return;
     bindBatch(tex, 6);
     float iw = 1.f / w, ih = 1.f / h;
     Vtx v[4];
@@ -664,6 +675,7 @@ void quad(int tex, const float xy[8], const float uvPix[8], const uint32_t c[4],
 
 void tris(int tex, int n, const float* xy, const float* uv, const uint32_t* c, const float* a) {
     int w, h; if (!resolve(tex, w, h)) return;
+    if (gDiscard) return;
     bindBatch(tex, n);
     float iw = 1.f / w, ih = 1.f / h;
     for (int k = 0; k < n; k++) gBatch.push_back(mk(xy[k * 2], xy[k * 2 + 1], uv ? uv[k * 2] * iw : 0, uv ? uv[k * 2 + 1] * ih : 0, c[k], a[k]));

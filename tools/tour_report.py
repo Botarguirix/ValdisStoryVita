@@ -1,6 +1,6 @@
 import re, sys
 # Resume las lineas [recorrido] de un vsrunner.log: salas ordenadas por frames perdidos y coste
-pat = re.compile(r"\[recorrido\] \[(?P<tag>[^\]]+)\] (?P<i>\d+)/(?P<n>\d+) (?P<room>\S+) \| (?P<fr>\d+) frames, (?P<lost>\d+) perdidos \((?P<pct>[\d.]+)%\) \| cpu media (?P<cpu>[\d.]+) ms, max (?P<cpumax>[\d.]+) \| logica (?P<lg>[\d.]+)/(?P<lgmax>[\d.]+) \| dibujo (?P<dr>[\d.]+)/(?P<drmax>[\d.]+) \| peor frame (?P<worst>[\d.]+) ms \| entrada (?P<entry>\d+) ms \| instancias (?P<inst>\d+)")
+pat = re.compile(r"\[recorrido\] \[(?P<tag>[^\]]+)\] (?P<i>\d+)/(?P<n>\d+) (?P<room>\S+) \| (?:(?P<steps>[\d.]+) pasos/s \| )?(?P<fr>\d+) frames, (?P<lost>\d+) perdidos \((?P<pct>[\d.]+)%\) \| cpu media (?P<cpu>[\d.]+) ms, max (?P<cpumax>[\d.]+) \| logica (?P<lg>[\d.]+)/(?P<lgmax>[\d.]+) \| dibujo (?P<dr>[\d.]+)/(?P<drmax>[\d.]+) \| peor frame (?P<worst>[\d.]+) ms \| entrada (?P<entry>\d+) ms \| instancias (?P<inst>\d+)")
 rows = []
 for line in open(sys.argv[1], encoding='utf-8', errors='replace'):
     m = pat.search(line)

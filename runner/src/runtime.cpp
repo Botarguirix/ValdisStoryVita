@@ -25,8 +25,8 @@ void logf(const char* fmt, ...) {
     std::fputs(buf, stdout); std::fflush(stdout);
 #endif
     if (gGame) {
-        if (logPath.empty()) logPath = gGame->saveDir + "/vsrunner.log";
-        bgio::appendLog(logPath, buf); // en segundo plano: escribir en la tarjeta no bloquea el frame
+        if (logPath.empty() && !gGame->saveDir.empty()) logPath = gGame->saveDir + "/vsrunner.log";
+        if (!logPath.empty()) bgio::appendLog(logPath, buf); // en segundo plano: escribir en la tarjeta no bloquea el frame
     }
 }
 
@@ -157,8 +157,8 @@ static SFrame frameFromTpag(const GameData& d, int tp) {
 bool Game::init(const std::string& dd, const std::string& gd, const std::string& sd, std::string& err) {
     gGame = this;
     gfx::gLogHook = [](const char* s) { logf("%s", s); };
-    gfx::flushLog();
     dataDir = dd; gameDir = gd; saveDir = sd;
+    gfx::flushLog();   // despues de saber la carpeta de partidas (antes fijaba la ruta del registro a "/vsrunner.log")
     if (!d.load(dataDir + "/game.vsd", err)) return false;
     rng = new std::mt19937(det ? detSeed : (uint32_t)nowMs());
     startMs = nowMs();

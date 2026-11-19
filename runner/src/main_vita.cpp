@@ -181,6 +181,9 @@ static void samplerDump(vs::Game& g) {
     for (int k = 0; k < 3; k++) { gSampPh[k] = 0; gSampGml[k] = 0; }
 }
 
+static bool gDrawSkip = true;
+long gDiscardFrames = 0;   // frames sin dibujar (se informan en [perf])
+
 int main(int, char**) {
     { SceUID f = sceIoOpen("ux0:data/valdis/save/boot.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777); if (f >= 0) sceIoClose(f); }
     bootMark("main");
@@ -273,6 +276,11 @@ int main(int, char**) {
     }
     int roomEnterFrame = 0, lastRoom = -1;
     vs::debugTourInit(game, saveDir);   // save/tour.txt, stress.txt, godmode (pruebas de rendimiento)
+    {   // save/nodrawskip: desactiva el dibujo a 30 fps (para medir el coste real de cada frame)
+        SceIoStat ns; gDrawSkip = sceIoGetstat((saveDir + "/nodrawskip").c_str(), &ns) < 0;
+        vs::logf("[sistema] dibujo a 30 fps cuando la logica no llega: %s\n", gDrawSkip ? "activo" : "desactivado (save/nodrawskip)");
+    }
+    bool discardNext = false;
     uint64_t sampDumpAt = 0;
     {
         SceIoStat sst;
@@ -309,6 +317,11 @@ int main(int, char**) {
         game.in.gpAxis[0] = axis(pad.lx); game.in.gpAxis[1] = axis(pad.ly);
         game.in.gpAxis[2] = axis(pad.rx); game.in.gpAxis[3] = axis(pad.ry);
 
+        // Dibujo a 30 fps cuando la logica no llega (regla del proyecto: minimo 30 fps en las salas exigentes): si el
+        // frame anterior se paso del presupuesto, este ejecuta logica y eventos Draw pero no dibuja ni espera a la
+        // pantalla. Nunca dos seguidos. Asi el juego sigue a 60 pasos por segundo en vez de ir a camara lenta.
+        bool discard = gDrawSkip && discardNext;
+        gfx::setDiscard(discard);
         game.inputBeginFrame();
         vs::debugTourBeforeStep(game);
         uint64_t t0 = sceKernelGetProcessTimeWide();
@@ -321,7 +334,8 @@ int main(int, char**) {
         gSampPhase = 0;
         uint64_t t2 = sceKernelGetProcessTimeWide();
         if (sampDumpAt && t2 >= sampDumpAt) { samplerDump(game); sampDumpAt = t2 + 10000000; }
-        vglSwapBuffers(GL_FALSE);
+        if (!discard) vglSwapBuffers(GL_FALSE); else gDiscardFrames++;
+        discardNext = !discard && (t2 - t0) > 15500;
         gfx::perf().swapMs += (sceKernelGetProcessTimeWide() - t2) / 1000.0;   // espera a la GPU / vsync
         game.perfFrame((t1 - t0) / 1000.0, (t2 - t1) / 1000.0);
         { uint64_t tf = sceKernelGetProcessTimeWide(); vs::debugTourAfterFrame(game, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (tf - prevFrameT) / 1000.0); prevFrameT = tf; }

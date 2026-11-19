@@ -91,6 +91,7 @@ int main(int argc, char** argv) {
     std::string saveDir = argc > 3 ? argv[3] : "build/save";
     int detSeed = -1, hashEvery = 0; bool noAot = false; const char* samplePath = nullptr;
     int benchFrom = -1; double benchStep = 0, benchDraw = 0; long benchN = 0;
+    int discardEvery = 0;
     int maxFrames = -1; int scale = 1; bool turbo = false, prof = false, profCode = false; int budgetMB = 1024;
     std::vector<std::pair<int, std::string>> shots;
     std::vector<std::pair<int, int>> keyEvents; // frame, +key / -key
@@ -131,6 +132,7 @@ int main(int argc, char** argv) {
         else if (!std::strcmp(argv[i], "--frames") && i + 1 < argc) maxFrames = std::atoi(argv[++i]);
         else if (!std::strcmp(argv[i], "--scale") && i + 1 < argc) scale = std::atoi(argv[++i]);
         else if (!std::strcmp(argv[i], "--turbo")) turbo = true;
+        else if (!std::strcmp(argv[i], "--discard-every") && i + 1 < argc) discardEvery = std::atoi(argv[++i]);   // prueba: 1 de cada N frames sin dibujar
         else if (!std::strcmp(argv[i], "--prof")) prof = true;
         else if (!std::strcmp(argv[i], "--profcode")) profCode = true;                       // scripts/builtins mas caros                               // [perf] cada segundo
         else if (!std::strcmp(argv[i], "--budget") && i + 1 < argc) budgetMB = std::atoi(argv[++i]); // MB de texturas (Vita: 140)
@@ -234,6 +236,7 @@ int main(int argc, char** argv) {
         int dw, dh; SDL_GL_GetDrawableSize(win, &dw, &dh);
         gfx::setScreen(dw, dh, gWinW, gWinH);
         Uint64 d0 = SDL_GetPerformanceCounter();
+        gfx::setDiscard(discardEvery > 0 && game.frame % discardEvery == 0);
         game.draw();
         glFinish();
         double drawMs = (SDL_GetPerformanceCounter() - d0) * 1000.0 / freq;
