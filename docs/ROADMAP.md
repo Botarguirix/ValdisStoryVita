@@ -1,6 +1,6 @@
 # Valdis Story PSVITA — Roadmap (lo que falta)
 
-Actualizado: 2026-11-19 (noche; Release v0.5.0-alpha publicado). Objetivo: terminar el juego en la Vita con **todos los personajes** a **60 fps fijos**.
+Actualizado: 2026-11-20 (primera partida larga del usuario en la Vita: 42 min, hasta el jefe de hielo; menú de trucos). Objetivo: terminar el juego en la Vita con **todos los personajes** a **60 fps fijos**.
 
 Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendiente · 🔶 mejorado, pero queda algo
 
@@ -40,7 +40,7 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | 1.5 | Medir las zonas tardías | 🔶 | Medidas en la Vita las 12 salas más pesadas: lib_3, grave_13, skyway_3, outer_slum_11 y grave_2 van a 56–60 fps; temple_5 pasó de 53–54 a **60 fps** (lógica 15 → 8,6 ms con la caché de cajas de colisión) |
 | 1.5b | sewer_11 | ✅ | **60 fps fijos durante 33 s** (lógica 9,2 ms + dibujo 4,7 ms; antes 52–61 fps con dibujo 6,8 ms). Cambios: rejilla de colisiones por objeto en la fase de colisiones (cada enemigo probaba los ~320 `block_normal`; la fase bajó a ~0,9 ms) y memoria reutilizada en primitivas y orden de dibujo. Medido con Wyatt (antes con Reina, en otra posición): no es una comparación exacta |
 | 1.5c | Scripts gigantes (nme_v_demon 107 KB de código, nme_v_feral 90 KB) | 🔶 | La versión `-Os` (`build/vita_os`, código nativo de 36 a 21 MB) arranca bien en la Vita: el cuelgue de antes era el bloqueo de archivos del agente. Falta medir su rendimiento |
-| 1.6 | Sesión larga (30–60 min) para descartar fugas de RAM o VRAM | ⬜ | |
+| 1.6 | Sesión larga (30–60 min) para descartar fugas de RAM o VRAM | 🔶 | Partida del usuario (20-11, AOT, 42 min, outer_slum → grave → skyway_3): **0 cuelgues**. La VRAM se llena a los ~7 min y las texturas pasan a la RAM de vitaGL (98 → 39 MB libres): es la caché de texturas creciendo hasta su tope (140 MB, con 24 MB de reserva siempre libres), no una fuga; quedaban ~67 MB libres en total. El heap del juego sube de 49 a 73 MB (reservado 79 MB): vigilar en una sesión más larga |
 | 1.8 | Recorrido completo (245 salas, 6 s cada una, `save/tour.txt`) | ✅ | 211 salas sin ningún frame perdido; 0,32 % de frames perdidos en total. Las más cargadas: temple_9 (11,8 ms), temple_14, garden_4, outer_slum_2 y sewer_11 (~11 ms), con 2,4–5 ms de margen. Ojo: con el jugador quieto y los enemigos que haya en la sala al entrar |
 | 1.9 | Límite de enemigos (`save/stress.txt`, enemigos activos junto al jugador) | 🔶 | Cada enemigo activo cuesta ~0,6–1,1 ms de lógica en la Vita (~30 veces más que en PC: acceso a memoria). En sewer_11 (13,8 ms): +4 → 18,3 ms (empieza a bajar), +8 → 21 ms, +20 → 30 ms, +48 → ~20 fps. Regla: margen de la sala ÷ ~1 ms = enemigos activos extra antes de bajar de 60 |
 | 1.10 | Arreglado en el recorrido | ✅ | (a) El mezclador de audio bloqueaba el hilo principal 22–35 ms por sonido con muchas voces (ahora no espera; límite de 64 voces). (b) Tirón de 200–360 ms a los 2 s de entrar en algunas salas (la precarga de vecinas consultaba la memoria de vitaGL por cada tile). (c) `-Os` medido: 25 % más lento que `-O3`, descartado |
@@ -67,6 +67,10 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | 2.5 | Guardar y cargar, autoguardado entre salas, finales | 🖥️ (carga ✅) |
 | 2.6 | Menús: hechizos, habilidades, objetos, mapa, opciones y lore | 🖥️ (pausa ✅) |
 | 2.7 | Audio: toda la música y los efectos, bucles, volumen de las opciones | 🖥️ |
+| 2.8 | Partida real del usuario en la Vita (20-11) | ✅ Wyatt desde el principio hasta skyway_3 (jefe de hielo), 42 min, sin cuelgues; "bajón moderado de fps" en algunas salas (aceptable para el usuario) |
+| 2.9 | Pausa → Salir → volver al menú principal | ✅ Se quedaba en `quit_room`: el juego llama a `game_restart()` (reset_game_script) y el runner lo ignoraba. Ahora hace lo de GMS1: evento Game End, destruye todas las instancias (también las persistentes), olvida las salas persistentes, para el audio y vuelve a la primera sala con Game Start; las globales se conservan. En PC: vuelve al título y se puede volver a cargar la partida. **Vita (20-11): Map/Opt → Quit → Main Menu vuelve al título** |
+| 2.10 | Opción "GFX : Low" con fallos gráficos | ✅ El juego alterna `draw_enable_drawevent` un frame sí y otro no (salto de frames propio). El runner seguía dibujando la sala con los sprites por defecto en vez de los eventos Draw → parpadeos. Ahora ese frame no se dibuja ni se presenta (como GMS1) y se espera al resto del frame para mantener 60 pasos/s. Comprobado en la Vita con captura: imagen limpia. En la Vita no hace falta: el runner ya tiene su propio dibujo a 30 fps (1.12d) |
+| 2.11 | Juego en español | ⬜ El juego original **solo está en inglés** (no hay selector de idioma; ~10 000 frases escritas dentro del código). Se puede hacer una traducción de fans: el runner sustituiría cada frase al cargarla, desde un archivo de traducción. Habría que comprobar que la fuente del juego tenga á é í ó ú ñ ¿ ¡ (si no, dibujar esos caracteres). Ver 8.6 |
 
 ## 3. Estabilidad y memoria
 
@@ -128,8 +132,9 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 ## 8. Después de terminar el juego (alcanzables)
 | # | Idea | Notas |
 |---|---|---|
-| 8.1 | Menú de TRUCOS | Salto a cualquier sala, modo sin morir, contador de rendimiento, recorrido y estrés |
+| 8.1 | Menú de TRUCOS | ✅ **Hecho (20-11), adelantado a petición del usuario para probar más rápido.** SELECT lo abre (F2 en PC): modo dios, maná infinito, subir nivel, +5 puntos, personajes desbloqueados, ir a cualquier sala y contador de rendimiento. Ver `docs/TESTING.md`. Visto en la Vita con captura. Más adelante: recorrido y estrés desde el menú, editor de inventario (8.4) |
 | 8.2 | Modo "masterquest" | Enemigos nuevos o extra en varias salas. Límite: ~1 ms por enemigo activo en la Vita (sección 1.9); diseñar cada sala dentro de su margen |
 | 8.3 | "Randomizer" | Orden de objetos/enemigos aleatorio; depende de entender bien los scripts de progreso (globals de jefes y objetos) |
 | 8.4 | Editor de partida / trucos de inventario | Todos los objetos, armas, hechizos, habilidades, oro y nivel. El juego guarda todo en variables GML (~400 con prefijos `item_`, `wep_`, `skill_`, `spell_`, `talent_`, además de `g_item`) y en el `.dat` de la partida: el runner puede escribirlas igual que hace el modo sin morir con `hp`. Antes hay que mapear qué significa cada variable y respetar los límites del juego para no romper la progresión |
+| 8.6 | Traducción al español | Archivo de traducción (frase original → frase en español) que el runner aplica al cargar las cadenas del juego. El archivo no puede llevar el texto original en inglés si se publica: usar una huella de cada frase como clave. Mucho texto (~10 000 frases): hacerlo por zonas |
 | 8.5 | Modo **Boss Rush** | **Cada jefe en su propia sala** (Ragano en lab_6, etc.): al pasar a la siguiente pantalla se carga la sala del siguiente jefe. No usar la Arena del pueblo (sus NPC reaccionan al jefe y bajan el rendimiento). Pendiente: tabla jefe → sala (`vsdinfo roominst`), saltar escenas y puertas cerradas. Ya existe como herramienta de prueba (`save/bossrush.txt`, sección 6 y `docs/TESTING.md`); para jugarlo falta: menú, orden fijo, recuperar vida entre jefes y marcador. El propio juego tiene un modo Arena con jefes al azar (`arena_boss_script`) que sirve de base |

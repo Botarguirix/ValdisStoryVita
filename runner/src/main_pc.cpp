@@ -221,6 +221,20 @@ int main(int argc, char** argv) {
                 for (size_t o = 0; o < game.d.objects.size(); o++) if (game.d.objects[o].name == "player_wyatt")
                     for (auto* in : game.instancesOf((int)o)) { in->x = sp.x; in->y = sp.y; vs::geomTouchObj(in->obj); vs::gGeomEpoch++; }
             for (auto& [fr, k] : keyEvents) if (fr == game.frame) { if (k > 0) game.in.phys[k] = true; else game.in.phys[-k] = false; }
+            {   // menu de trucos: F2 (o VS_CHEATSEQ="iter:bits,..." para pruebas con capturas; mismos bits que en la Vita)
+                static long cheatIter = 0; static std::vector<std::pair<long, uint32_t>> seq; static bool seqRead = false;
+                if (!seqRead) { seqRead = true; if (const char* e = std::getenv("VS_CHEATSEQ")) { long it; unsigned bt; int n;
+                    while (std::sscanf(e, "%ld:%u%n", &it, &bt, &n) == 2) { seq.push_back({it, bt}); e += n; if (*e == ',') e++; else break; } } }
+                const Uint8* ks = SDL_GetKeyboardState(nullptr);
+                uint32_t cb = ks[SDL_SCANCODE_F2] ? 64u : 0u;
+                for (auto& [it, bt] : seq) if (it == cheatIter) cb |= bt;
+                cheatIter++;
+                if (vs::cheatsInput(game, cb)) { acc -= dt; steps++; continue; }
+            }
+            {   // VS_TESTRESTART=FRAME: llama a game_restart() en ese frame (prueba de "Salir" -> menu principal)
+                static int rf = std::getenv("VS_TESTRESTART") ? std::atoi(std::getenv("VS_TESTRESTART")) : -1;
+                if (rf > 0 && game.frame == rf) { game.restartRequested = true; rf = -1; }
+            }
             game.inputBeginFrame();
             vs::debugTourBeforeStep(game);
             Uint64 s0 = SDL_GetPerformanceCounter();
@@ -237,7 +251,8 @@ int main(int argc, char** argv) {
         gfx::setScreen(dw, dh, gWinW, gWinH);
         Uint64 d0 = SDL_GetPerformanceCounter();
         gfx::setDiscard(discardEvery > 0 && game.frame % discardEvery == 0);
-        game.draw();
+        bool noDraw = !game.drawEventsEnabled;   // draw_enable_drawevent(false): ese frame no se dibuja (GMS1)
+        if (!noDraw) game.draw();
         glFinish();
         double drawMs = (SDL_GetPerformanceCounter() - d0) * 1000.0 / freq;
         game.perfFrame(stepMs, drawMs);
@@ -247,8 +262,9 @@ int main(int argc, char** argv) {
         if (samplePath && benchFrom >= 0) { if (!gSampThread) startSampler(); gSampOn = game.frame >= benchFrom; }
 #endif
         if (game.prof) { game.profPhase[11] += (SDL_GetPerformanceCounter() - d0) * 1e6 / freq; if (game.profFrames >= 600) game.profDump(); }
-        for (auto& [fr, path] : shots) if (fr > 0 && game.frame >= fr) { saveBmp(path, dw, dh); std::printf("captura %s (frame %d, room %s)\n", path.c_str(), game.frame, game.d.rooms[game.room].name.c_str()); fr = -1; }
-        SDL_GL_SwapWindow(win);
+        static long renderN = 0; renderN++;   // --shot -N: captura en la imagen N (sirve con el juego en pausa: menu de trucos)
+        for (auto& [fr, path] : shots) if ((fr > 0 && game.frame >= fr) || (fr < 0 && renderN >= -fr)) { saveBmp(path, dw, dh); std::printf("captura %s (frame %d, room %s)\n", path.c_str(), game.frame, game.d.rooms[game.room].name.c_str()); fr = 0; }
+        if (!noDraw) SDL_GL_SwapWindow(win);
         fpsFrames++;
         if (now - fpsT > freq) {
             game.fps = fpsFrames; int np; size_t nb; gfx::stats(np, nb);

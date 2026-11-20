@@ -81,6 +81,7 @@ VS_FN(audio_sound_length) {
     if (ms > 20 || g.perfVerbose) logf("[audio] length %.1f ms %s\n", ms, path.c_str());
     return Value((double)len);
 }
+void audioResetForRestart() { audio::stopAll(); gMusicVoice = 0; gMusicGain = 1; }
 VS_FN(audio_emitter_create) { int e = gNextEmitter++ % 64; gEmitter[e] = 1; return Value((double)e); }
 VS_FN(audio_emitter_gain) { int e = a[0].ival(); if (e >= 0 && e < 64) gEmitter[e] = (float)a[1].num(); return Value(); }
 VS_FN(audio_emitter_position) { return Value(); }

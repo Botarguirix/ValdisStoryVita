@@ -88,7 +88,7 @@ label(1500, 340, 'Ataque 2 / Attack 2', 'Ataque secundario', sym=col('tri')); li
 label(1500, 455, 'Bloquear / Block', 'Cancelar / Cancel', sym=col('ci')); line((1444, 470), (1490, 480))
 label(1500, 570, 'Saltar / Jump', 'Aceptar / Accept', sym=col('x')); line((1376, 545), (1460, 595), (1490, 595))
 label(1120, 860, 'Atacar / Attack', None, 'r', sym=col('sq')); line((1256, 465), (1245, 465), (1245, 845), (1130, 845))
-label(1745, 860, 'START  ·  Menú / Menu', 'SELECT · libre / free', 'r'); line((1390, 785), (1390, 845), (1500, 845))
+label(1745, 860, 'START  ·  Menú / Menu', 'SELECT · Trucos / Cheats', 'r'); line((1390, 785), (1390, 845), (1500, 845))
 
 d.rounded_rectangle((65, 1000, 1735, 1080), radius=22, fill=(214, 228, 240))
 d.text((900, 1027), 'R + ○  ·  Menú de hechizos / Spell menu', font=font(26, True), fill=INK, anchor='mm')

@@ -138,7 +138,10 @@ void bossRushStep(Game& g) {
 }
 } // namespace
 
+std::string gSaveDir; double gLastStep = 0, gLastDraw = 0;
+void cheatsInit(Game& g);
 void debugTourInit(Game& g, const std::string& saveDir) {
+    gSaveDir = saveDir;
     gGod = fileExists(saveDir + "/godmode");
     gMonkey = fileExists(saveDir + "/monkey");
     bossRushInit(g, saveDir);
@@ -147,6 +150,7 @@ void debugTourInit(Game& g, const std::string& saveDir) {
     gUnlockChars = fileExists(saveDir + "/unlockchars"); gVarUnlockChar = varByName(g, "unlock_char");
     if (gUnlockChars) logf("[prueba] personajes desbloqueados (global.unlock_char = 1, variable %d)\n", gVarUnlockChar);
     gVarHp = varByName(g, "hp"); gVarHpMax = varByName(g, "hp_max"); gVarDeath = varByName(g, "death"); gObjPlayer = objByName(g, "player_wyatt");
+    cheatsInit(g);
     if (gGod) logf("[prueba] modo sin morir activo (hp=%d hp_max=%d jugador=%d)\n", gVarHp, gVarHpMax, gObjPlayer);
     if (FILE* f = std::fopen((saveDir + "/tour.txt").c_str(), "r")) {
         char w[128];
@@ -170,6 +174,7 @@ void debugTourInit(Game& g, const std::string& saveDir) {
     }
 }
 
+void cheatsStep(Game& g);
 void debugTourBeforeStep(Game& g) {
     bossRushStep(g);
     if (gMonkey && !isMenuRoom(g.d.rooms[g.room].name)) monkeyStep(g);
@@ -180,6 +185,7 @@ void debugTourBeforeStep(Game& g) {
         for (Instance* p : g.instancesOf(gObjPlayer)) if (p->alive) {
             p->vars[gVarHp] = Value(999999.0);   // el jugador no tiene hp_max (usa otros nombres): hp directo
         }
+    cheatsStep(g);
     const std::string& rn = g.d.rooms[g.room].name;
     if (gTourOn && g.pendingRoom < 0) {
         bool start = gTourIdx < 0 && !isMenuRoom(rn) && g.frame > 60;
@@ -223,10 +229,178 @@ void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) 
         logf("[vars] %d instancias, media %.1f variables\n", n, n ? (double)tot / n : 0.0);
         for (size_t o = 0; o < per.size(); o++) if (per[o].first) logf("[vars] %-22s x%3d  %5.1f vars\n", g.d.objects[o].name.c_str(), per[o].first, (double)per[o].second / per[o].first);
     }
+    gLastStep = gLastStep * 0.9 + stepMs * 0.1; gLastDraw = gLastDraw * 0.9 + drawMs * 0.1;
     int inst = (int)g.insts.size();
     if (gTourOn && gTourIdx >= 0) gTourSt.add(stepMs, drawMs, frameMs, inst, g.frame - gTourAt < kEntryFrames);
     if (gBROn && gBR.idx >= 0 && gBR.at > 0) gBR.st.add(stepMs, drawMs, frameMs, inst, g.frame - gBR.at < kEntryFrames);
     if (gStressOn && gStressAt >= 0) gStressSt.add(stepMs, drawMs, frameMs, inst, g.frame - gStressAt < kEntryFrames);
+}
+
+// ================================================================ menu de TRUCOS
+// Se abre con SELECT (libre en los controles del juego). Mientras esta abierto el juego queda en pausa (no avanza la
+// logica; los eventos Draw siguen dibujando la escena). Las opciones de encendido/apagado se guardan como archivos en
+// save/ (los mismos de las herramientas de prueba: godmode, unlockchars...), asi que siguen activas al volver a entrar.
+extern void (*gOverlayHook)(Game&);
+void overlayBegin(Game& g);
+void overlaySize(int& w, int& h);
+void overlayRect(float x1, float y1, float x2, float y2, uint32_t bgr, float alpha);
+void overlayText(Game& g, double x, double y, const std::string& s, double scale, uint32_t bgr, double alpha);
+
+namespace {
+bool gInfMana = false, gShowPerf = false;
+bool gMenuOpen = false, gBlockInput = false; uint32_t gPrevBtn = 0; int gSel = 0, gRepeat = 0;
+std::vector<int> gWarpRooms; int gWarpSel = 0; int gWarpTarget = -1;
+int gVarMp = -1, gVarSetMp = -1, gVarXp = -1, gVarXpMax = -1, gVarPStat = -1, gVarPSkill = -1;
+std::string gMsg; int gMsgFrames = 0;
+
+enum { C_GOD, C_MANA, C_LEVEL, C_POINTS, C_UNLOCK, C_WARP, C_PERF, C_CLOSE, C_COUNT };
+
+void setFlagFile(const char* name, bool on) {
+    std::string p = gSaveDir + "/" + name;
+    if (on) { if (FILE* f = std::fopen(p.c_str(), "w")) { std::fputs("1", f); std::fclose(f); } }
+    else std::remove(p.c_str());
+}
+Instance* player(Game& g) { return gObjPlayer >= 0 ? g.firstOf(gObjPlayer) : nullptr; }
+bool inGameplay(Game& g) { const std::string& n = g.d.rooms[g.room].name; return !isMenuRoom(n) && n != "quit_room" && player(g); }
+void say(const std::string& m) { gMsg = m; gMsgFrames = 150; logf("[trucos] %s\n", m.c_str()); }
+
+std::string label(Game& g, int k) {
+    auto onoff = [](bool b) { return std::string(b ? "SI" : "NO"); };
+    switch (k) {
+        case C_GOD: return "Modo dios (no mueres): " + onoff(gGod);
+        case C_MANA: return "Mana infinito: " + onoff(gInfMana);
+        case C_LEVEL: return "Subir un nivel";
+        case C_POINTS: return "+5 puntos de atributo y de habilidad";
+        case C_UNLOCK: return "Personajes desbloqueados: " + onoff(gUnlockChars);
+        case C_WARP: {   // la fuente del juego dibuja '_' como una flecha: se muestra con espacios
+            std::string n = gWarpRooms.empty() ? std::string("-") : g.d.rooms[gWarpRooms[gWarpSel]].name;
+            std::replace(n.begin(), n.end(), '_', ' ');
+            char cnt[32]; std::snprintf(cnt, sizeof cnt, "  (%d/%d)", gWarpSel + 1, (int)gWarpRooms.size());
+            return "Ir a sala: < " + n + " >" + cnt;
+        }
+        case C_PERF: return "Mostrar rendimiento: " + onoff(gShowPerf);
+        default: return "Cerrar";
+    }
+}
+
+void activate(Game& g, int k, int dir) {   // dir 0 = X; -1/+1 = izquierda/derecha
+    switch (k) {
+        case C_GOD: gGod = !gGod; setFlagFile("godmode", gGod); say(gGod ? "Modo dios activado" : "Modo dios desactivado"); break;
+        case C_MANA: gInfMana = !gInfMana; setFlagFile("infmana", gInfMana); say(gInfMana ? "Mana infinito activado" : "Mana infinito desactivado"); break;
+        case C_UNLOCK:
+            gUnlockChars = !gUnlockChars; setFlagFile("unlockchars", gUnlockChars);
+            say(gUnlockChars ? "Personajes desbloqueados en la seleccion de personaje" : "Personajes: como en la partida");
+            break;
+        case C_PERF: gShowPerf = !gShowPerf; setFlagFile("showperf", gShowPerf); break;
+        case C_LEVEL:
+            if (dir != 0) break;
+            if (!inGameplay(g) || gVarXp < 0 || gVarXpMax < 0) { say("Solo dentro de la partida"); break; }
+            g.globals[gVarXp] = Value(g.globals[gVarXpMax].num() + 1);   // el propio juego sube el nivel en el Step del jugador
+            say("Subes un nivel (maximo 20)");
+            break;
+        case C_POINTS:
+            if (dir != 0) break;
+            if (!inGameplay(g) || gVarPStat < 0 || gVarPSkill < 0) { say("Solo dentro de la partida"); break; }
+            g.globals[gVarPStat] = Value(g.globals[gVarPStat].num() + 5);
+            g.globals[gVarPSkill] = Value(g.globals[gVarPSkill].num() + 5);
+            say("+5 puntos de atributo y +5 de habilidad: gastalos en el menu de pausa");
+            break;
+        case C_WARP:
+            if (gWarpRooms.empty()) break;
+            if (dir != 0) { int n = (int)gWarpRooms.size(); gWarpSel = ((gWarpSel + dir) % n + n) % n; break; }
+            if (!inGameplay(g)) { say("Solo dentro de la partida"); break; }
+            gWarpTarget = gWarpRooms[gWarpSel]; g.pendingRoom = gWarpTarget; gMenuOpen = false; gBlockInput = true;
+            { std::string n = g.d.rooms[gWarpTarget].name; std::replace(n.begin(), n.end(), '_', ' ');
+              say("Viajando a " + n + " (si apareces en una pared, elige otra sala)"); }
+            break;
+        case C_CLOSE: if (dir == 0) { gMenuOpen = false; gBlockInput = true; } break;
+    }
+}
+
+void drawOverlay(Game& g) {
+    if (!gMenuOpen && !gShowPerf && gMsgFrames <= 0) return;
+    overlayBegin(g);
+    int W, H; overlaySize(W, H);
+    if (gShowPerf) {
+        char b[96]; std::snprintf(b, sizeof b, "%d fps | logica %.1f ms | dibujo %.1f ms", g.fps, gLastStep, gLastDraw);
+        overlayRect(W - 364.f, H - 28.f, W - 4.f, H - 4.f, 0, 0.6f);   // abajo a la derecha: arriba esta la vida
+        overlayText(g, W - 358.0, H - 26.0, b, 0.4, 0xFFFFFF, 1);
+    }
+    if (gMenuOpen) {
+        float x0 = W * 0.5f - 320, y0 = H * 0.5f - 200, x1 = W * 0.5f + 320, y1 = H * 0.5f + 200;
+        overlayRect(0, 0, (float)W, (float)H, 0, 0.45f);
+        overlayRect(x0, y0, x1, y1, 0x201010, 0.92f);
+        overlayRect(x0, y0, x1, y0 + 3, 0x00CCFF, 1);
+        overlayText(g, x0 + 20, y0 + 12, "TRUCOS", 0.6, 0x00CCFF, 1);
+        for (int k = 0; k < C_COUNT; k++) {
+            float y = y0 + 60 + k * 36;
+            if (k == gSel) overlayRect(x0 + 10, y - 4, x1 - 10, y + 28, 0x604020, 0.95f);
+            overlayText(g, x0 + 24, y, label(g, k), 0.45, k == gSel ? 0x00E0FF : 0xFFFFFF, 1);
+        }
+        overlayText(g, x0 + 20, y1 - 32, "X elegir - Izq/Der cambiar (L/R de 10 en 10) - O o SELECT cerrar", 0.35, 0xB0B0B0, 1);
+    }
+    if (gMsgFrames > 0) {
+        float y = H - 46.f;
+        overlayRect(0, y - 4, (float)W, y + 28, 0, 0.6f);
+        overlayText(g, 16, y, gMsg, 0.42, 0xFFFFFF, 1);
+    }
+}
+} // namespace
+
+void cheatsInit(Game& g) {
+    gInfMana = fileExists(gSaveDir + "/infmana");
+    gShowPerf = fileExists(gSaveDir + "/showperf");
+    gVarMp = varByName(g, "mp"); gVarSetMp = varByName(g, "set_mp");
+    gVarXp = varByName(g, "xp"); gVarXpMax = varByName(g, "xp_max");
+    gVarPStat = varByName(g, "point_stat"); gVarPSkill = varByName(g, "point_skill");
+    gWarpRooms.clear();
+    for (size_t r = 0; r < g.d.rooms.size(); r++) {
+        const std::string& n = g.d.rooms[r].name;
+        if (isMenuRoom(n) || n == "quit_room" || n == "intro_1" || n.compare(0, 5, "test_") == 0) continue;
+        if (g.d.rooms[r].insts.empty() && g.d.rooms[r].tiles.empty()) continue;
+        gWarpRooms.push_back((int)r);
+    }
+    gOverlayHook = drawOverlay;
+}
+
+void cheatsStep(Game& g) {
+    if (gInfMana && gVarMp >= 0 && gVarSetMp >= 0)
+        if (Instance* p = player(g)) p->vars[gVarMp] = g.globals[gVarSetMp];
+    // tras saltar de sala: si el jugador queda fuera de los limites de la sala, se le pone dentro
+    if (gWarpTarget >= 0 && g.room == gWarpTarget && g.pendingRoom < 0) {
+        if (Instance* p = player(g)) {
+            p->x = std::max(48.0, std::min(p->x, (double)g.roomW - 48));
+            p->y = std::max(48.0, std::min(p->y, (double)g.roomH - 96));
+        }
+        gWarpTarget = -1;
+    }
+    if (gMsgFrames > 0) gMsgFrames--;
+}
+
+bool cheatsInput(Game& g, uint32_t b) {
+    uint32_t pr = b & ~gPrevBtn; gPrevBtn = b;
+    auto clearPad = [&]() { for (bool& x : g.in.gpBtn) x = false; for (float& a : g.in.gpAxis) a = 0; };
+    if (!gMenuOpen) {
+        if (gBlockInput) { if (b == 0) gBlockInput = false; else { clearPad(); return false; } }
+        if (pr & 64) { gMenuOpen = true; gRepeat = 0; clearPad(); return true; }
+        return false;
+    }
+    clearPad();
+    if (gMsgFrames > 0) gMsgFrames--;
+    uint32_t dirs = b & 15, act = pr;   // repeticion al mantener una direccion
+    if (dirs) { if (++gRepeat > 24 && gRepeat % 4 == 0) act |= dirs; } else gRepeat = 0;
+    if (act & 1) gSel = (gSel + C_COUNT - 1) % C_COUNT;
+    if (act & 2) gSel = (gSel + 1) % C_COUNT;
+    if (act & 4) activate(g, gSel, -1);
+    if (act & 8) activate(g, gSel, +1);
+    if (gSel == C_WARP && !gWarpRooms.empty()) {
+        int n = (int)gWarpRooms.size();
+        if (pr & 128) gWarpSel = ((gWarpSel - 10) % n + n) % n;
+        if (pr & 256) gWarpSel = (gWarpSel + 10) % n;
+    }
+    if (gMenuOpen && (pr & 16)) activate(g, gSel, 0);
+    if (gMenuOpen && (pr & (32 | 64))) { gMenuOpen = false; gBlockInput = true; }
+    return true;   // el frame en que se cierra tampoco avanza
 }
 
 } // namespace vs

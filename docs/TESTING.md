@@ -1,4 +1,22 @@
-# Herramientas de prueba (futuro menú de TRUCOS)
+# Menú de TRUCOS y herramientas de prueba
+
+## Menú de TRUCOS (en el juego)
+
+**SELECT** abre el menú (SELECT no tiene uso en los controles del juego; en PC, **F2**). Mientras está abierto, el juego queda en pausa.
+
+| Opción | Efecto |
+|---|---|
+| Modo dios | No mueres en combate (`hp` a 999999 en cada frame; un foso sí puede matarte). Se guarda como el archivo `save/godmode` |
+| Maná infinito | El maná se rellena en cada frame (`mp = global.set_mp`). Archivo `save/infmana` |
+| Subir un nivel | Pone la experiencia al máximo y el propio juego sube el nivel (con su aviso y +1 punto de atributo y de habilidad). Máximo 20 |
+| +5 puntos | +5 puntos de atributo y +5 de habilidad, para gastar en el menú de pausa |
+| Personajes desbloqueados | Los cuatro personajes en la selección. Archivo `save/unlockchars` |
+| Ir a sala | Izquierda/derecha elige la sala (L/R saltan de 10 en 10) y X viaja. Solo dentro de la partida. Si el personaje queda fuera de la sala se le coloca dentro, pero puede aparecer dentro de una pared: elige otra sala |
+| Mostrar rendimiento | fps, lógica y dibujo en ms, abajo a la derecha. Archivo `save/showperf` |
+
+Las opciones de encendido y apagado se recuerdan entre sesiones (son los mismos archivos de las herramientas de prueba). **Ojo:** el autoguardado guarda lo que cambies (nivel, puntos, la vida del modo dios); las partidas de la Vita no importan para probar.
+
+## Herramientas de prueba (archivos)
 
 Se activan creando archivos en `ux0:data/valdis/save/` (en PC, en la carpeta de partidas que se pase al runner). Si no existen, el juego funciona normal. Al terminar el port pasarán a un menú de trucos dentro del juego (roadmap, sección 8).
 

@@ -843,6 +843,22 @@ void Game::gotoRoom(int r, bool first) {
     preloadRoomPages();
 }
 
+// game_restart() de GMS1: evento Game End, se destruyen TODAS las instancias (tambien las persistentes, sin evento
+// Destroy), se olvidan las salas persistentes guardadas y se vuelve a la primera sala con Game Start. Las variables
+// globales y las estructuras ds_* se conservan, igual que en GMS1. Lo usa "Salir" -> volver al menu principal
+// (reset_game_script); antes la peticion se ignoraba y el juego se quedaba en quit_room.
+void audioResetForRestart();   // fn_audio.cpp
+void Game::restartGame() {
+    logf("[room] game_restart desde %s (frame %d)\n", room >= 0 ? d.rooms[room].name.c_str() : "-", frame);
+    for (Instance* i : orderedAlive()) if (i->alive) fireEvent(i, EV_OTHER, OTHER_GAMEEND);
+    for (auto& p : insts) if (p) p->alive = false;
+    purgeDead();
+    savedRooms.clear();
+    roomPersistOverride.clear();
+    audioResetForRestart();
+    gotoRoom(d.roomOrder[0], true);
+}
+
 // Carga por adelantado las paginas de textura que la sala va a usar: fondos de tiles y los sprites de sus objetos
 // (anim_<objeto>_*: ataques, heridas... que si no se cargarian en mitad del combate).
 void Game::preloadRoomPages() {
@@ -1118,6 +1134,7 @@ void Game::step() {
     phase(9);
     purgeDead();
 
+    if (restartRequested) { restartRequested = false; pendingRoom = -1; restartGame(); }
     if (pendingRoom >= 0) { int r = pendingRoom; pendingRoom = -1; gotoRoom(r); }
     phase(10);
 }

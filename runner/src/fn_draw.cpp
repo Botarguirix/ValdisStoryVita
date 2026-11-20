@@ -5,6 +5,7 @@
 #include <cstring>
 
 namespace vs {
+extern void (*gOverlayHook)(Game&);   // capa del runner (menu de trucos), definida abajo
 
 int gWinW = 1024, gWinH = 576;
 
@@ -387,7 +388,25 @@ void Game::draw() {
         gfx::setCamera(0, 0, roomW, roomH, 0, 0, gWinW, gWinH, 0);
         drawScene();
     }
+    if (gOverlayHook) gOverlayHook(*this);
     gfx::endFrame();
+}
+
+// ---- capa propia del runner por encima del juego (menu de trucos): coordenadas de ventana, fuente del juego
+void (*gOverlayHook)(Game&) = nullptr;
+void overlayBegin(Game& g) { (void)g; gfx::setCamera(0, 0, gWinW, gWinH, 0, 0, gWinW, gWinH, 0); gfx::setBlend(0); }
+void overlaySize(int& w, int& h) { w = gWinW; h = gWinH; }
+void overlayRect(float x1, float y1, float x2, float y2, uint32_t bgr, float alpha) {
+    float xy[8] = {x1, y1, x2, y1, x2, y2, x1, y2}; float uv[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t cc[4] = {bgr, bgr, bgr, bgr};
+    gfx::quad(-1, xy, uv, cc, alpha);
+}
+void overlayText(Game& g, double x, double y, const std::string& s, double scale, uint32_t bgr, double alpha) {
+    if (gFonts.empty()) return;
+    int f = g.fontCur, ha = g.drawHalign, va = g.drawValign;
+    g.fontCur = 0; g.drawHalign = 0; g.drawValign = 0;
+    g.drawText(x, y, s, scale, scale, 0, bgr, bgr, bgr, bgr, alpha, -1, -1);
+    g.fontCur = f; g.drawHalign = ha; g.drawValign = va;
 }
 
 } // namespace vs

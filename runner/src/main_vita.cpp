@@ -323,15 +323,26 @@ int main(int, char**) {
         // pantalla. Nunca dos seguidos. Asi el juego sigue a 60 pasos por segundo en vez de ir a camara lenta.
         bool discard = gDrawSkip && discardNext;
         gfx::setDiscard(discard);
-        game.inputBeginFrame();
-        vs::debugTourBeforeStep(game);
+        uint32_t cb = 0;   // menu de trucos: SELECT lo abre
+        if (b & SCE_CTRL_UP) cb |= 1; if (b & SCE_CTRL_DOWN) cb |= 2; if (b & SCE_CTRL_LEFT) cb |= 4; if (b & SCE_CTRL_RIGHT) cb |= 8;
+        if (b & SCE_CTRL_CROSS) cb |= 16; if (b & SCE_CTRL_CIRCLE) cb |= 32; if (b & SCE_CTRL_SELECT) cb |= 64;
+        if (b & SCE_CTRL_LTRIGGER) cb |= 128; if (b & SCE_CTRL_RTRIGGER) cb |= 256;
+        bool cheatPause = vs::cheatsInput(game, cb);
         uint64_t t0 = sceKernelGetProcessTimeWide();
-        gSampPhase = 1;
-        game.step();
+        if (!cheatPause) {
+            game.inputBeginFrame();
+            vs::debugTourBeforeStep(game);
+            gSampPhase = 1;
+            game.step();
+        }
         uint64_t t1 = sceKernelGetProcessTimeWide();
         gfx::setScreen(960, 544, gWinW, gWinH);
         gSampPhase = 2;
-        game.draw();
+        // draw_enable_drawevent(false) (opcion "GFX : Low" del juego: lo alterna un frame si y otro no): en GMS1 ese
+        // frame no se dibuja nada ni se refresca la pantalla, se queda la imagen anterior. Antes se dibujaba la sala
+        // con los sprites por defecto en lugar de los eventos Draw -> parpadeos y graficos rotos.
+        bool noDraw = !game.drawEventsEnabled;
+        if (!noDraw) game.draw();
         gSampPhase = 0;
         uint64_t t2 = sceKernelGetProcessTimeWide();
         if (sampDumpAt && t2 >= sampDumpAt) { samplerDump(game); sampDumpAt = t2 + 10000000; }
@@ -347,8 +358,11 @@ int main(int, char**) {
                          game.d.rooms[game.room].name.c_str());
             }
         }
-        if (!discard) vglSwapBuffers(GL_FALSE); else gDiscardFrames++;
-        discardNext = !discard && (t2 - t0) > 15500;
+        if (noDraw) {   // sin dibujo ni vsync: esperar al resto del frame para que el juego siga a 60 pasos por segundo
+            uint64_t tn = sceKernelGetProcessTimeWide();
+            if (tn - t0 < 16600) sceKernelDelayThread((SceUInt)(16600 - (tn - t0)));
+        } else if (!discard) vglSwapBuffers(GL_FALSE); else gDiscardFrames++;
+        discardNext = !noDraw && !discard && (t2 - t0) > 15500;
         gfx::perf().swapMs += (sceKernelGetProcessTimeWide() - t2) / 1000.0;   // espera a la GPU / vsync
         game.perfFrame((t1 - t0) / 1000.0, (t2 - t1) / 1000.0);
         { uint64_t tf = sceKernelGetProcessTimeWide(); vs::debugTourAfterFrame(game, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (tf - prevFrameT) / 1000.0); prevFrameT = tf; }

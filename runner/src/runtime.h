@@ -231,6 +231,7 @@ public:
     std::vector<Instance*> orderedAlive(); // vivas, en orden de despacho de eventos de GMS1
     void updateViewsFollow();
     void preloadRoomPages();
+    void restartGame();
 
     // ---- loop
     bool init(const std::string& dataDir, const std::string& gameDir, const std::string& saveDir, std::string& err);
