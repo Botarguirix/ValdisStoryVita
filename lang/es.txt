@@ -31,7 +31,7 @@
 01dc01bf0ac74bcd	Sigo sin oír qué gano yo con esto.
 01e149f85d5ddf09	Esta ciudad se muere.
 01e643dd53721a55	¿Y tu alma? ¿No era eso lo que buscaban tus hijas?
-01faf69df1a6297b	Deberías ir allí. Quizá entre los dos podáis reunir información sobre este lugar.
+01faf69df1a6297b	Deberías ir allí. Quizá entre los dos puedan reunir información sobre este lugar.
 01fbd722351ede89	¡Oh, mierda!#¡Los demonios de Myrgato han llegado vivos hasta aquí!
 01fccc725177015a	Lo dejo en tus manos y en las de tu tripulación...
 022a17d592ec66d2	Sube el Alma del Portador de la Plaga a Nv.2.
@@ -39,7 +39,7 @@
 023030a5e15cdb19	Castigo Nv.2 / +3% poder de magia de luz
 026a4c9fee624a23	Bah,#demasiada gente.
 02b69d948235048f	Nunca habría buscado la verdad.
-02c4ec92ea1afddd	Celo:
+02c4ec92ea1afddd	Zeal:
 02cd344b519b926d	¡Eh, forastera! Aquí.
 02d1d75f8be6de9f	Wyatt, ¿eh?...#Suena bien, muy elegante.
 032c13736048bf35	Abajo
@@ -59,7 +59,7 @@
 03e0f571b711dde8	Le'Roy te hará un sombrero mágico al azar.#Los sombreros pueden caerse cuando te golpean.#(La probabilidad de perderlo depende de la suerte)
 03eafb61bd748277	Maldita sea...#... nos cierran el paso a cada momento.
 03f10ec5c4dd97da	¿Por qué los ancianos de esta ciudad creen que soy su recadero personal?
-040661ca99a4e40c	Por favor, prestadme vuestro poder.
+040661ca99a4e40c	Por favor, préstenme su poder.
 04217ae4a99788cb	Volumen 18.#-Sitheil-
 04242bfc62559215	La mayoría de los otros niños se volvieron locos. Los tenían atados todo el tiempo para que no se mataran.
 042e1a641f731ba5	+9 Ataque / +10% prob. de crítico
@@ -152,7 +152,7 @@
 08cb57534c4f1159	Sé que tiene pinta de problemática, pero no está con los demonios.#Al menos ya no.
 08ebb7264b7cc1fb	Ojo de Alagath
 090bd5cc96dfa23b	Eres bienvenido en Tagrum mientras no causes problemas, forastero.
-09164a07b5acfed8	Maná
+09164a07b5acfed8	Mp
 09174cad3c0c5228	 Arma reliquia angélica que se usa para mantener a raya al enemigo.# #(Desbloqueada para Gilda en Nueva partida)
 0918dce154cb7b11	Luego empezaron a exterminar a los Goibniu, que habían desarrollado técnicas para luchar contra dioses parecidas a las que yo usé hace miles de años.
 091d3d07b5b3076f	Aceptar
@@ -160,7 +160,7 @@
 091da5c92d2ef080	Laboratorio
 09205907b5b56cda	No
 0925d40340994a1d	No tenemos por qué luchar. Si me dejas pasar, no te haré daño.
-09274807b5bb6ea5	Vida
+09274807b5bb6ea5	Hp
 09311a07b5c37500	ARRIBA
 09313a07b5c3ab60	Arriba
 093a48ccb306c354	Nos trajo unas piezas de repuesto que necesitábamos no hace mucho.
@@ -269,12 +269,12 @@
 0ff12d33739de9df	Nunca he hecho nada de lo que me sugiere, así que estás a salvo. A menos que me hagas otra pregunta personal.
 0ffa7a521ed3d119	¿Y bien, vas a ofrecerme un té? Mataros da mucha sed.
 10134b272f32a356	¿Y tú?
-102762ec8317d4f3	-Saber-
+102762ec8317d4f3	-Lore-
 103a1f356ae8ff86	Divina
 107bae79c8369f5d	Espíritu de luz:
 1084af2be175134a	El daño de los golpes críticos aumenta con la Agilidad.
 108ebfeede79e959	Las 'Minas antiguas' están al oeste. Yo no me quedaría mucho por allí; es un sitio inestable.
-10a13df8d6a44f42	 ¡se ha reunido con tu tripulación!
+10a13df8d6a44f42	 ¡se ha reunido con tu Equipo!
 10d192a7a2e7f4e9	Esencia de un siervo de bajo rango de Alagath.
 10ea5d89a05ea729	Wyatt Goibniu (estilo normal)
 10ebcc4b48c808d5	Dime, ¿de verdad has venido aquí sin saber nada del Templo del Guardián?
@@ -310,7 +310,7 @@
 12dc88e3fa3746c7	<(Reina - Amigos)>
 12eaeb85cd830032	+15 min.
 1310339c28752755	Capa de mago
-131a413451d1156b	Yo iré a por Wyatt.#Tú deberías irte ya.
+131a413451d1156b	Yo iré por Wyatt.#Tú deberías irte ya.
 132e69a73ed83d80	Pergamino ninja
 1333133735fd85a2	Espada forjada con los restos de otras espadas.
 1343d698167b5c31	Los golpes mortales dan un 5% de poder mágico durante 10 segundos.
@@ -335,8 +335,8 @@
 148cf4a096b1e635	Vio cómo las tribus luchaban sin cesar en combates rituales por el derecho a los cotos de caza.
 1493ee074b7e6af0	Más daño de vacío en los ataques del brazo demoníaco.#(Afinidad oscura +1)
 149dbc31a8590504	A lo largo de su viaje, el hombre de Gyro hizo muchos aliados, y su grupo logró victorias clave en la guerra.
-14a9723969da3767	Parece que aquí abajo todos sois ángeles y demonios.
-14aebf9b2746d2db	¡Sigue matando a tus amiguitos demonios, así nos lo pones más fácil! ¡Qué idiotas sois los demonios!
+14a9723969da3767	Parece que aquí abajo todos son ángeles y demonios.
+14aebf9b2746d2db	¡Sigue matando a tus amiguitos demonios, así nos lo pones más fácil! ¡Qué idiotas son los demonios!
 14d2d250ff350768	+Nivel
 14f8103c3514e84d	No te dejarás domar.
 15434fa50e50164a	Segador feral
@@ -388,7 +388,7 @@
 1822ce85bfe0b2e9	¡Así que tú eras la bola de luz que vi caer del cielo! Por eso salí aquí.
 185996373e95bce5	Vaya, parece que no vuelves con las manos vacías. ¿Quién es ella?
 1888bfac19ea8eee	 (Arma reliquia Nv.1)
-188cdc996a01789c	¡Basta!#¡Os destruiré a los dos!
+188cdc996a01789c	¡Basta!#¡Los destruiré a los dos!
 188ff980d48a0ee7	Maldita sea...#... ¿seguro que no podemos hacer nada?
 189a1e9a43399dc4	Si encuentras alguna armadura angélica gastada, tráemela y te la dejaré como nueva.
 18a46419168e9fda	Iré allí ahora.#Ten cuidado, en esta ciudad pasa algo extraño.
@@ -402,12 +402,12 @@
 190cf5ff39d8f98a	...no mientras Reina dependa de mí.
 191d142850f34d26	Anciana Breyja
 192841a3b9586468	Esto estará funcionando en nada.#¿Y qué te trae por aquí abajo desde la superficie, jefe?
-192d6fdc61fdcdc8	Demoníaca
+192d6fdc61fdcdc8	Demonio
 193a02312c1c55ac	En los Jardines abandonados, al este, cruzando la pasarela, crece una rara hierba medicinal llamada Lágrima de la Señora.
 197b9183c834dcec	Encanta tu arma con magia divina durante un tiempo.
 19a35b012cc14e32	Un feral le dio de lleno. Ojalá pudiera hacer más, pero no tenemos recursos para ayudarle.
 19d223270fec29d0	Descenso infernal
-19d5b2e752cb45f1	La gente de Hrukk no se fiará de ti cuando vea tu pelo. Coge el paquete que tengo al lado y llévaselo.
+19d5b2e752cb45f1	La gente de Hrukk no confiará en ti cuando vea tu pelo. Toma el paquete que tengo al lado y llévaselo.
 19e0278d02c083ab	Necesitarás una Llave divina para llegar, pero hice destruir todas las llaves cuando aparecieron los demonios y los ángeles.
 19e041d1626d6244	(SUERTE) Ganas un 
 19e57c6b95b6f7b9	¡Contempla, Señora Oscura, te ofrezco sangre!
@@ -458,7 +458,7 @@
 1c8be4bd08f08779	Muñeca rota
 1c9a9c58f962fed8	Al golpear con el arma, -
 1c9aa258f963090a	Al golpear con el arma, +
-1ca50d132771ab3b	Pies, no me falléis ahora.
+1ca50d132771ab3b	Pies, no me fallen ahora.
 1cb254e86262be4a	Parece que Reina logró llevar las piezas de repuesto a Hrukk, pero ¿quién eres tú?
 1cb642ab31aaf8a1	% prob. de crítico si hay enemigos sangrando cerca.
 1cead4cec6ca1d4c	Siempre le dio envidia que un humano tuviera más rango que él.
@@ -476,7 +476,7 @@
 1de1a9d66281ede2	Bonus de tripulación: +
 1de9aeb72f598376	Adhesivo raro que se usa para forjar armas.
 1df02c2e6c952b71	¿En qué puedo ayudarte, listillo?
-1e06703076f6c184	Sí, os protegí a todos de la caída, pero también soy la responsable de que cayerais.
+1e06703076f6c184	Sí, los protegí a todos de la caída, pero también soy la responsable de que cayeran.
 1e0f705163961191	Lanza de hielo que estalla en los objetivos congelados y causa daño adicional.
 1e14541fe1e5d3c2	Plumas seráficas [Afinidad de luz +5]
 1e16827ccfa154be	Paso sombrío
@@ -491,7 +491,7 @@
 1e72aa81a9d17fde	Bah, no te tengo miedo. ¡Puedo contigo!
 1e7d1fc2c2494684	Golpes rápidos:
 1e855119b582c7d9	MÁX
-1e873e4b9d99690c	Juntos sois la única esperanza de restaurar el equilibrio.
+1e873e4b9d99690c	Juntos son la única esperanza de restaurar el equilibrio.
 1e87f6aa7ff0608d	Ganas furia con cada ataque. La furia añade daño de fuego a los ataques físicos.
 1e8aab5e7499772e	La Lágrima de la Señora, entendido. Volveré antes de que te des cuenta.
 1e9856dd284bbe0e	Tenacidad:
@@ -526,10 +526,10 @@
 20fb5805be46f0da	Rifle largo de Esperanda
 21035219147a0b12	Piezas de repuesto
 211c5f6ac40a138a	% poder mágico
-21386394b0afebec	¿Por qué os tienen aquí?
-215a2a13d70d8d22	Vamos, tío. Apártate.#No tengo tiempo para esto.
+21386394b0afebec	¿Por qué los tienen aquí?
+215a2a13d70d8d22	Vamos, amigo. Apártate.#No tengo tiempo para esto.
 217d8919eacd94d1	Segundo aliento:
-21905715d95b4173	Enfoque
+21905715d95b4173	Focus
 219aeb909088044b	-Sigue a Atalan-
 21ded3d583ead2a1	¡Silencio, Zeige! Está claro que lo que le pasó a Atalan habría sido mucho peor si ella no hubiera aparecido.
 21e315db73ca64f0	Vladyn, no podemos ofrecerte mucho...
@@ -577,7 +577,7 @@
 24bb8d641769c7cd	¿Quieres jugar conmigo?
 24bd26e2804b926a	Puede, pero estamos hartos de que nos usen como soldaditos de juguete.
 24d1af820807f82b	Jeje, me conoces demasiado bien.
-24da42a7c21a966c	Pero nunca tuviste nada que hacer contra una dragona. Mala suerte, chaval.
+24da42a7c21a966c	Pero nunca tuviste nada que hacer contra una dragona. Mala suerte, chico.
 24df5e51510b2e9b	Dudo que hayas tenido tiempo de hacerte lo bastante fuerte como para ser un desafío.#En fin...
 24edb383e36f41d5	 Una criatura espiritual perezosa con debilidad por las armas de fuego. Hacía de cañón principal del barco antes de la caída a Sitheil.
 24edf4ac2eba5012	El que está a mi lado es el jefe Wintersun.
@@ -597,7 +597,7 @@
 25a155555f2c2836	Destructor
 25c4e3812ed7c12d	Amuleto de maná
 25c9741ee3e6b38e	Nah... no hace falta.#Me quedo con los libros, por favor.
-25d4642522d02789	¡No os llevaréis el ojo de Alagath!
+25d4642522d02789	¡No se llevarán el ojo de Alagath!
 25f8fedfff1f65c9	Cadeyrn sabía que Reina tardaría en tener poder para enfrentarse a sus hermanas...
 261c3b0d194546d5	Calla, igual que cuando le supliqué que hiciera callar a los demonios de mi cabeza.
 26974b2b08166cb6	El poder de rayo de Axen se duplica si Aura voltaica está activa.
@@ -621,7 +621,7 @@
 27db18bfb1d92189	Pero no consiguen afianzarse en esa zona: demasiados ferales.
 27e8d32d31dd153c	Vaya, creo que es el primer caso registrado de manipulación de almas.
 27eae2ca56940933	No tengo ninguna duda de que puedes llevarnos a la victoria.
-27ee295aa1c7e020	¡Venga ya!#Alguien debería etiquetar las puertas que esconden horrores indescriptibles.
+27ee295aa1c7e020	¡No puede ser!#Alguien debería etiquetar las puertas que esconden horrores indescriptibles.
 28109bfb56e51b37	+2% prob. de crítico
 2815a0fd4d645c00	Perdió la voz hace muchos años. Lo hirieron protegiéndonos del ataque de los ferales.
 2829683d53732784	+3 Agi
@@ -743,9 +743,9 @@
 2f70105ce01d2e05	H-hola...
 2f7718b50933c8b0	Suerte
 2f8925ff818166db	Claudia me ha dicho que buscas a tus amigos, ¿no?
-2f97911723ffb867	Salmodia:
+2f97911723ffb867	Canto:
 2fca43e07c1a9608	Dispara una ráfaga con su cañón.
-2fdcf1ce6292d779	¡Ayyy, qué mono eres! Pero deberías irte de aquí. No es seguro.
+2fdcf1ce6292d779	¡Ayyy, qué lindo eres! Pero deberías irte de aquí. No es seguro.
 301af601780b0cb0	Una llave bendecida por Alagath que abre las puertas angélicas.
 30245202acbe832d	¿Qué?#¿Quién era?#¿Dónde está?
 302a0dd88e817f85	Los imperios se arruinaron a medida que aparecía más y más gente con grandes cantidades de energía espiritual.
@@ -761,7 +761,7 @@
 30977d9129fef9c6	¡Levántate, Atalan!
 309e927504430b01	Señora Oscura,#soy tu siervo en la vida y en la muerte.
 30a572adea583252	En la torre oí a los demonios hablar de algo llamado 'el ojo de Myrgato'.
-30a8866b267968b6	¿Pensáis luchar contra los dioses?#Suena a una buena forma de que os maten.
+30a8866b267968b6	¿Piensan luchar contra los dioses?#Suena a una buena forma de que los maten.
 30bb9421aa0ab544	La potencia de nuestras almas los atrajo a nuestro mundo.
 30ca04decd336222	La historia del hombre ya estaba manchada con la sangre de inocentes mucho antes de que aparecieran los dioses.
 30d95de3cd4c9163	Los efectos de Caminante espiritual se acumulan hasta 5 veces.
@@ -785,7 +785,7 @@
 324526124b7fceb9	Debe de ser otra de esas criaturas ferales.
 324c4a49f4d2526c	El reino de Saskia, rico en lagos y humedales, al suroeste.
 324db8c91d35409a	Esencia de un general del ejército de la oscuridad.
-325fcbcd2b6bf048	Los humanos no aprendéis, ¿eh? Os advertimos que no os cruzarais en nuestro camino.
+325fcbcd2b6bf048	Los humanos no aprenden, ¿eh? Les advertimos que no se cruzaran en nuestro camino.
 32609597e381ccda	Cerrado (requiere la Llave demoníaca)
 326f465512c9a73b	Indomable:
 327293f83fb5e57d	<(Global)>
@@ -810,10 +810,10 @@
 33a133bcf14b467c	+5 Ruina de armadura
 33a73077280332c9	Es la única forma de sobrevivir.
 33e9ea0e514ab852	Puedo hacerte una nueva Llave divina, pero tendrás que traerme Polvo divino y una Marca de Valdis.
-33f9e9b88f56e2e6	Qué mono, pero el anciano Trair, de Tagrum, me ha enviado con un paquete para vuestra anciana.
+33f9e9b88f56e2e6	Qué lindo, pero el anciano Trair, de Tagrum, me envió con un paquete para su anciana.
 340581adb430c309	Esas Goibniu estaban locas.#¿Desafiar a semidioses a un combate uno contra uno?
 340ab078069352c2	No será igual cuando viajes conmigo. Llamaremos mucho la atención.
-3434a0b8b3b42b8f	Desde luego. Siempre se pelean por las almas humanas, pero es raro que bajen aquí por los cuatro que quedáis en la ciudad.
+3434a0b8b3b42b8f	Desde luego. Siempre se pelean por las almas humanas, pero es raro que bajen aquí por los cuatro que quedan en la ciudad.
 3437680de1cab212	Un grupo de investigadores de todo el mundo se unió con la misión de encontrar al Juez.
 34681a92dd63fe20	Eh, eh, tranquilo, amigo. Creía que todos hacíamos trampas en la partida.
 346c6a2f6cb8b8a7	Tú habrías hecho lo mismo por mí.
@@ -850,7 +850,7 @@
 3678872ba8a48021	¿Ah, sí? ¿Y cómo exactamente has esquivado a los ángeles y a los ferales por el camino?
 36909bd93d0a6a06	¡FURIA DEL ALMA!
 369de7c0226f0e11	Cada muerte aumenta en 1 el daño de ataque/mágico. (Máx. 75)
-36a27241f2e52931	Os hablo para pediros ayuda.
+36a27241f2e52931	Les hablo para pedirles ayuda.
 36fa8c0c7eb67f51	¿Pero qué...?
 3715513ec66e25e2	¿Me creerías si te digo que no fui yo?
 3717dd7fa313c196	Sus guerreros eran feroces, y las batallas solían ser a muerte.
@@ -870,7 +870,7 @@
 384f2349207a6180	Es fácil ignorar su voluntad, pero es constante. Puede desgastar a las mentes débiles.
 3852c512a71c4f59	¿Puedo comerme también a esta, madre?
 385b85d074b5f171	... si ya no quieres viajar con nosotros, eres libre de irte.
-386620fe827f889c	Cuando llegue a las puertas del cielo y del infierno, los falsos dioses sabrán que la muerte ha venido a por ellos.
+386620fe827f889c	Cuando llegue a las puertas del cielo y del infierno, los falsos dioses sabrán que la muerte ha venido por ellos.
 3873f2fbbb06c2f8	Bláster:
 387d20831eae383a	... pero para cuando se den cuenta,#ya será demasiado tarde para ellos.
 3886b4cafc050522	-35% daño de ataque / Golpe doble / +daño aéreo / Flotar
@@ -892,7 +892,7 @@
 399bd3f25b53bb81	El escudo nulo se recarga mucho más rápido.
 39c3271da3ff80af	Volumen 10.#-Llenar un vacío-
 39c6937a36d0f5a7	Pescador Gully
-39c6fd19be8bae2a	¿Por qué cogí esa muñeca?
+39c6fd19be8bae2a	¿Por qué agarré esa muñeca?
 3a00e07b10ef8fcb	Bueno, lo tenemos. ¿Podemos buscar ya una forma de salir de esta ciudad?
 3a0f1b8d611b4a2a	¡Synthie!
 3a1525b4406ed657	 Tras recuperarse de lo ocurrido en Sitheil, Wyatt se ha entregado a ser el arma viviente de la nueva diosa de la muerte, Reina.
@@ -902,11 +902,11 @@
 3a44d3c37bbd2382	Resucitar a los muertos...#...esto empieza a sonarme mucho.
 3a6a87b5a64abcf7	 Huérfana criada en un monasterio alagathiano, Reina mostró un gran talento para manipular almas. El monasterio solo formaba a varones como zelotes y sacerdotes angélicos, pero hicieron una excepción con ella y empezaron a prepararla para ser la próxima niña dorada.# # Cientos de almas humanas se prepararon para fundirse en Reina, pero antes de que llegara ese día conoció a Wyatt, y desde entonces están juntos. 
 3a7acb20a733b5eb	Je...#...jajaja...
-3a8b324a3bb3f991	¡¡¡JAJAJAJAJA!!!#Ragano, me han dicho que te mandaron al quinto pino por cabrear a tu comandante.
+3a8b324a3bb3f991	¡¡¡JAJAJAJAJA!!!#Ragano, me dijeron que te mandaron lejísimos por hacer enojar a tu comandante.
 3a9a4f22dad81f58	Músculo:
 3aa4542e76fdfd98	Entiendo que lo confundierais con un demonio, pero no lo es...
 3ab08a592c857ada	Parece que nuestro mundo siempre ha estado plagado de guerras.
-3ab577643ee8bd3d	Seguro que está bien, el chaval tiene potencial. Espera a ver la mercancía que he conseguido, jeje.
+3ab577643ee8bd3d	Seguro que está bien, el chico tiene potencial. Espera a ver la mercancía que conseguí, jeje.
 3adda52018a56ef6	 Bastón)
 3af306e218426e6e	-Arena-
 3afa5a407a43bc8b	Alagath me bendecirá cuando le lleve el alma de una general demonio.
@@ -971,13 +971,13 @@
 3fde94185fa7a8e7	Bien, has vuelto. Uno de nuestros guardias de patrulla dice que unos ángeles intentan acampar en la biblioteca.
 3fe85b5de52bb676	¿Y a ti qué te pasa?#¿Ese demonio es tu hermano y tú eres una traidora?
 400ecc9d04227f8a	¡Alabado sea el nombre de Valdis!#¿Necesitas que mejore tu equipo?
-402ecbc13dda21e9	¡Qué susceptible!#Vale, pero no podrás pararme siempre.
+402ecbc13dda21e9	¡Qué susceptible!#Está bien, pero no podrás detenerme siempre.
 404f5e8947660c18	Mmm, estás listo para aprender mi técnica de remate de enfoque, Furia huracanada.
 4050a4566a93abbe	Eres como nosotros: has perdido la fe en tu dios.
 4051593dd6e33e6c	¿No te avergüenzas de aquello en lo que te has convertido?
 405181dea47e76f0	¿Sabes? En vez de traerte estos libros, podría darte un puñetazo en la cara.
 405c49b97b2161a8	La verdad es que me da igual.
-405d13c1cde53f5d	Contenedlos, no podemos dejar que se acerquen a Hrukk.
+405d13c1cde53f5d	Conténganlos, no podemos dejar que se acerquen a Hrukk.
 4072d2c01092f00d	Si dejo que tu alma vuelva con ella...
 407d2bc7f22cfe3b	No es demonio ni ángel. Es humano como nosotros, y por ahora es toda la confianza que necesitamos.
 4086871a197d469d	Puntuación:
@@ -1091,8 +1091,8 @@
 47e08885f9671c82	¿¡Has hablado con la anciana Breyja!?
 47eaa4d0e57ec409	¿Te escondes en lo alto de esta torre detrás de tus demonios menores y dices que el miedoso soy yo?
 47eb8adc94818578	Opciones/Mapa
-47fc75970f8172bf	Nunca debí coger esa muñeca.
-48047cdf97959766	Solo quieren vuestras almas humanas para engrosar sus filas.
+47fc75970f8172bf	Nunca debí agarrar esa muñeca.
+48047cdf97959766	Solo quieren sus almas humanas para engrosar sus filas.
 480a29dd92a0bb30	 Jolene es dos años menor que su hermano, Wyatt. De niños, Wyatt le destrozó el brazo derecho en un ataque de ira. Lo que queda de su brazo se mantiene dentro de un enorme guantelete de forja demoníaca.# # La mayoría de los demonios dicen que está loca y no sirve para el mando, pero nadie duda de su poder.
 4810338ab2515293	Me hieres, pero debí suponer que una rosa tendría espinas. Los demás se reúnen en una biblioteca, por debajo de este lugar.
 481ae11ec82068f9	¡Estás loco! Por algo huyeron los demonios cuando apareció.
@@ -1102,7 +1102,7 @@
 484c277049f350ee	Volumen 17.#-La fe recuperada-
 484c836b7f78a746	Un aluvión de golpes rápidos que reduce a polvo a tus enemigos.
 484fe39ff38175f9	Me voy de aquí, contigo o sin ti...
-4871a1e330acf8c9	Solo os ofrecieron la salvación para conseguir más almas.
+4871a1e330acf8c9	Solo les ofrecieron la salvación para conseguir más almas.
 487a3e5c42744555	Hace 22 años te saqué de aquí al cuidado de un ángel llamado Abaddon.
 48806647254c8f7e	Aumenta la recuperación de maná al salmodiar.#+10% daño de ataque y poder mágico por Amuleto mortal. 
 488082378439fb63	Emite un aura de otro mundo.
@@ -1153,7 +1153,7 @@
 4b6faaa8e4201e3a	Seguramente para esos bichos eres un manjar exquisito.
 4b72da08cb62a3b3	Wintersun dice que eres libre de hacer lo que quieras. No nos interpondremos en tu camino.
 4b7ef587d157db50	Valdis viajó lejos, al sur helado, para encontrar paz y soledad lejos del alcance del mundo.
-4bb14a5733bdff74	La gente de Hrukk no se fiará de ti, por motivos evidentes. Coge el paquete que tengo al lado y llévaselo.
+4bb14a5733bdff74	La gente de Hrukk no confiará en ti, por motivos evidentes. Toma el paquete que tengo al lado y llévaselo.
 4beec6d5ad458da3	No se odiaban ni se guardaban rencor.
 4c25dfe4aacf2c3f	Si los demonios no hubieran encontrado el templo, los sacrificios que se hicieron allí podrían haber acabado con esta guerra.
 4c309557a990ebd7	Nunca imaginé que te deberíamos la vida.
@@ -1194,10 +1194,10 @@
 4eb2067206a71af7	Oh, la anciana Breyja quería hablar contigo cuando volvieras. Deberías ir ya.
 4ef293dbdc6308cc	Mmm, criaturas con cantidades anormales de energía espiritual. Me recuerda a Chan y a Sir Tortitas.
 4f0bcd693367b60b	No deseo matar si se puede evitar.
-4f1c6ba019f5a91e	Ayudadme a sacar a lo que queda de la humanidad de esta era de sufrimiento.
+4f1c6ba019f5a91e	Ayúdenme a sacar a lo que queda de la humanidad de esta era de sufrimiento.
 4f275d6ee610b086	Esta mañana vimos algo caer sobre la pasarela central. Unos guardias salieron a ver qué era.
 4f2d57a38e3b2031	¡Qué pelo tan bonito tienes!
-4f5afcb48a94198d	Saber
+4f5afcb48a94198d	Lore
 4f5b5cce1268f123	No le des tiempo a tu rival a reaccionar. ¡Golpea hasta que no quede nada de él!
 4f62b88b6a75bc95	Uña del cuervo
 4f64a3b6c60396ec	¿Qué quieres decir con la voluntad de Myrgato?#¿Puede controlarte?
@@ -1248,7 +1248,7 @@
 52cfa1d198476806	Objeto
 52df62caef8ba72e	Aunque yo no tenía tu potencial, me eligieron como nuevo niño dorado.
 52e4cdc0401ed06d	Le recordaban a alguien que conoció hacía mucho.
-52ea8eb24b8f755d	Toma, coge este plátano.
+52ea8eb24b8f755d	Toma, agarra este plátano.
 532406a549193877	Lluvia negra que daña a los objetivos y les drena la vida.
 534a8a6cef92e364	Está vivo, pero no sé por cuánto tiempo. Ojalá pudiera hacer más, pero no tenemos recursos para ayudarle.
 535c00bab8fa8446	Gracias. Es el primer pueblo donde me siento bienvenido sin tener que hacerle un favor a nadie.
@@ -1351,7 +1351,7 @@
 59a699bafc8599fd	No lo sé.
 59b077e0c91bcd70	Estas criaturas, los ferales...#...no me dan buena espina.
 59b6cdca9cf8feba	+5% daño crítico
-59f16d51c7d18c68	Gráf. : Bajo
+59f16d51c7d18c68	GFX : Low
 59ffd5e26de6c9a4	Francotirador:
 5a0fff8efeb1b8b5	Los ataques cuerpo a cuerpo roban 1 de maná.#(Afinidad de luz +1)
 5a477ccdcbf34cc3	No soy amiga de ninguna de tus hijas.
@@ -1372,7 +1372,7 @@
 5b68528628533eb9	Es toda la información que tengo para ti.
 5b75ec59aac4cf90	No tenía miedo ni nada...#...lo tenía controlado.
 5b779dd7050fa756	Salgamos de aquí, Wyatt.
-5b9492d85a54e38a	Angélica
+5b9492d85a54e38a	Angel
 5b973586a2b66df3	Sí, lo que tú digas, viejo. Más vale que esa información valga la pena.
 5b9a1198266da99e	Wyatt, así que tú también caíste aquí.
 5bdd22abd72f3928	Tengo buen género.#¡Ven, echa un vistazo!
@@ -1387,7 +1387,7 @@
 5cab8669e1d2de22	Espera, ¿estabas durmiendo aquí?
 5cb2e53caf50bd1f	Golpe de furia (Nv.
 5cc9157d40a41e19	Debería asegurarme de que vuelve al pueblo.
-5cc9fa2551e99751	¡Cuando acabe contigo, iré a por él!
+5cc9fa2551e99751	¡Cuando acabe contigo, iré por él!
 5cd372491618e04e	Dudo que quieras decirme dónde estamos ahora mismo.
 5cf6a89c6e19f02c	Anciano, solo es un rasguño. He conocido a alguien en los Restos. ¡Es una humana de la superficie!
 5cfd1f2843fe1a53	Nuestra tripulación se reúne en la biblioteca del este. Ve hacia allí.
@@ -1400,12 +1400,12 @@
 5d51b8370dd4cf9a	Equipamiento de aventurero de Dusty
 5d68b4d88aad733a	Que así sea, Jolene.#Te dejo a Wyatt.
 5d6bb2de702978f1	Armadura de alma:
-5d781c7b97b33918	¡Maldita sea!#Creía que me había librado de vosotros.
+5d781c7b97b33918	¡Maldita sea!#Creía que me había librado de ustedes.
 5db0f590f492a659	Dijiste que ese hombre, Vladyn, es amigo tuyo, ¿no? Algunos guardias y yo le debemos la vida.
 5dc65e36f8c0fd12	-25% daño de ataque / +10% prob. de crítico / +daño por la espalda / +Cancelar habilidad
 5dca543e599e3125	Llave angélica
 5ddcc1103b08a430	Indica el daño físico base.
-5de00ed3a6150cdc	Os dije que no me molestarais mientras trabajo... espera un momento. ¿Quién eres tú, y qué pasa con ese pelo, señorita?
+5de00ed3a6150cdc	Les dije que no me molestaran mientras trabajo... espera un momento. ¿Quién eres tú, y qué onda con ese pelo, señorita?
 5de2c3e6fbe725a6	Te estaba esperando, Gilda.#Es hora de zanjar esto.
 5dfbf7475678573f	Sombrero al azar
 5e06dfc25b70ef9d	Soldado:
@@ -1428,7 +1428,7 @@
 5ff358638b67b345	No habría podido derrotar a los Dioses Tiranos sin la ayuda de los Guardianes del Saber...
 5ff68e971532c922	Eso...#... es un feral ENORME.
 6025cb0caa9c0154	Cerrado (requiere la Llave angélica)
-604f17feaf78033d	¿Os separaron del resto de la población?
+604f17feaf78033d	¿Los separaron del resto de la población?
 60536a7f185431f7	Resistencia:
 60889881480da8bc	Althea la Muerte Roja
 60896c120d352dd5	El pequeño reino de Gyro, al sur, salpicado de pueblos mineros y famoso por sus herreros. 
@@ -1439,13 +1439,13 @@
 610a6bfc42866f44	¡Atalan! ¿Cómo demonios has llegado hasta aquí?
 610faf2e2b13ff01	El rey libre Idahd ha caído enfermo, y la ciudad está revuelta por los rumores de que lo envenenaron.
 6124f059c90d2665	Toma mi sangre#antes de que perdamos la ciudad.
-615c4f646127ad82	¿Habéis visto alguna vez a un demonio o a un ángel ayudar a uno de los nuestros aquí abajo?
+615c4f646127ad82	¿Alguna vez han visto a un demonio o a un ángel ayudar a uno de los nuestros aquí abajo?
 616f33df12b3fbc0	Partida
 6189fbcafada6c35	Otra vez esa confianza. Romperte va a ser taaan placentero.
 619db9bec89b7820	Espada guerrera Purgatorio
 619e28257c942f27	Los ataques 'pesados' tienen 5 de ruina de armadura adicional.
 61b2d1db5ea53bae	La hoja maneja bien el maná, pero depende demasiado de la fuerza bruta. ¡Nada de finura!
-61d7b86ddd9dd316	Gracias, iré a por la Lágrima de la Señora.
+61d7b86ddd9dd316	Gracias, iré por la Lágrima de la Señora.
 61dc6a68de53ec75	Soy la anciana Breyja. Enséñanos el paquete del que hablaste.
 61ebafab9ec27811	Prohibido el contacto físico con el sexo opuesto.
 61efa80f5e843316	Archiespíritu feral
@@ -1592,7 +1592,7 @@
 697cdf51505fe166	¡Vladyn!#¡Estás despierto! ¿Cómo...?
 698a784878e7de2c	Decían que tenía una capacidad extraordinaria para manipular la energía de las almas...
 699b231bd08dad06	Desesperado:
-69acb041f0ca46da	Aunque no me hubieran pillado en los Restos, ya no queda mucho que encontrar ahí fuera.
+69acb041f0ca46da	Aunque no me hubieran atrapado en los Restos, ya no queda mucho que encontrar ahí fuera.
 69bf8c4e256720c2	Impresionante, acabar tú sola con un ogro.
 69c6460bca8c5c05	 maná para invocar)
 69d215dce82208ba	Soy una dragona, o al menos media dragona.
@@ -1600,7 +1600,7 @@
 6a0a51c6d9995f48	Para ellos, las almas humanas no son más que suciedad que hay que limpiar.
 6a17b042f2d5e37e	¿Así que mis palabras ni siquiera te han hecho reflexionar sobre tus actos?
 6a17e66b052e81a7	El Ancestral:
-6a20a3d79a48056a	Gráf. : Alto
+6a20a3d79a48056a	GFX : High
 6a293f7e4fc8289d	De tus hermanas. Reina, eres mi hija.
 6a4cf8e025ffb553	Afecta a varias propiedades.#Usa un punto de estado para subir la Suerte.
 6a4f9379e0904c68	-Sin datos-
@@ -1707,7 +1707,7 @@
 706d8041da75a171	Veneno
 7081213833ee4e2d	Aullido del cuervo [Afinidad oscura +10]
 708670670985f47e	Piedra oscura que se usa en sacrificios vivos.
-708d93391a4b36bb	Vale, ¿dónde está ese doctor?
+708d93391a4b36bb	Bueno, ¿dónde está ese doctor?
 709c28c40650aed6	+25% poder mágico.
 70d8338f15aec56e	R.Mágica
 710a893d8ae788f2	¡¡¡Grraaaaar!!!
@@ -1788,7 +1788,7 @@
 762e0034fc13029c	La velocidad de ataque de las armas reliquia aumenta al bajar el maná.#(0,25% por cada % de maná máx. perdido)
 763513549d3967de	Judicador:
 7647507abe470a94	Si alguien puede protegerla, es Wyatt.
-76519fb1d9732d7b	...¿qué, ahora mismo?#Vale.
+76519fb1d9732d7b	...¿qué, ahora mismo?#Está bien.
 767028311d06c9a7	Envías a otra marioneta a enfrentarse a mí.#¿Por qué no vienes tú misma, falsa diosa?
 7675d5ea83413499	Esa luz debía de ser algún tipo de magia protectora, pero ¿de dónde vino?
 76813002d9c586bf	Menú principal
@@ -1848,10 +1848,10 @@
 79e944c611d9aecf	Los golpes mortales con un arma reliquia recuperan el 20% del maná máx.
 7a15034e4aaafb8b	Me pareció un trato justo, pero los demás que iban conmigo no pensaban igual.
 7a1832a51c4238f2	Justo a tiempo, soldado. Necesitábamos refuerzos.
-7a187b50d118b4b2	, era de esperar que sobrevivieras. Esperaba no tener que soportar otro de tus patéticos intentos de ligar.
+7a187b50d118b4b2	, era de esperar que sobrevivieras. Esperaba no tener que soportar otro de tus patéticos intentos de coqueteo.
 7a204e8c48806e2c	Berserker:
 7a298946af68d36a	Luchaban sin cesar entre ellas, y sin embargo no hay ningún relato de que el Juez interviniera.
-7a30e0181761da7c	¿Por qué os tienen aquí en vez de ejecutaros?
+7a30e0181761da7c	¿Por qué los tienen aquí en vez de ejecutarlos?
 7a38c2f8fd2f0f84	Abandonó su exilio voluntario y se acercó a sus líderes.
 7a3cc02e010672a1	Los golpes mortales dan 0,25 de daño de ataque permanente, hasta tu nivel actual.
 7a3f330d0f6c0e0e	Puertas
@@ -2018,7 +2018,7 @@
 84c40dc752c0884e	+2 Fue / +2 Int 
 84d89e2b35a9caee	Anciano, ella es una...
 84e3cff7b2ad1500	Chaleco de gladiador
-84f1fa9acdeaaf99	Quieres ayudarles a luchar en esta guerra...#...los Goibniu sois demasiado a veces.
+84f1fa9acdeaaf99	Quieres ayudarles a luchar en esta guerra...#...los Goibniu son demasiado a veces.
 84f470720c2a7b08	Arma Goibniu que gana poder de quien la empuña.
 84f7362d5bec5223	 Estas gafas las fabricó un hombre tan absorto en su trabajo que perdió la noción de todo lo demás. Esa obsesión pasó a su obra cuando murió. Quien las lleva se concentra en lo que tiene delante, ignora el resto del mundo y queda vulnerable. Un golpe (normalmente un capón) rompe su concentración, pero no por mucho tiempo.# #-Creadas por Jay Greschner-
 84fb34b088effb3f	Habría venido antes, pero perdí la noción del tiempo luchando contra tantos ángeles.
@@ -2096,7 +2096,7 @@
 88e6d2775d755cfb	+Cancelar habilidad / +
 88e7a606baa3b02d	Adiós...#...abuelo.
 88fcfbd9dc4571be	Su retorcida red de espías y asesinos llegaba muy lejos.
-890c406a483752ff	No os salvarán. Solo quieren vuestras almas para aumentar su poder.
+890c406a483752ff	No los salvarán. Solo quieren sus almas para aumentar su poder.
 891de334396620e1	Arma
 89364fa25dd51339	¿Tienes algo para intercambiar?
 8949a2934b8d03d6	Interesante: esto narra lo que ocurrió cuando Valdis se asentó en esta región hace más de 600 años.
@@ -2114,7 +2114,7 @@
 8a31ffe4d8cd9d05	+10 R.Armadura / +5 Ataque
 8a342e2bdec52f2a	Probabilidad de que un ataque con arma lance Orden sagrada.#(Depende de la afinidad de luz)#(Afinidad de luz +1)
 8a4546a4133cd096	Un golpe mortal recupera una Cancelación de habilidad.
-8a50640eb9d7099a	No podía mantener a raya a mis hijas mucho más tiempo. Por suerte os acercasteis lo bastante a la ciudad para que notara vuestra presencia.
+8a50640eb9d7099a	No podía mantener a raya a mis hijas mucho más tiempo. Por suerte se acercaron lo suficiente a la ciudad para que notara su presencia.
 8a71d424f1e62f3e	Alma
 8a91a06217b3f4f8	Un chico Goibniu llamado Cadeyrn y un ángel muy raro llamado Abaddon.
 8aa5595c873489eb	Una especie en extinción. Haría mejor en sacrificaros a todos. Los tuyos no la han ayudado precisamente a ganar esta guerra.
@@ -2144,7 +2144,7 @@
 8c0eff95ca185754	Puñalada trasera:
 8c16be167effd475	Estos ferales son bastante interesantes.
 8c484fb7f47491f7	Cuánto has caído. Lloro por el futuro que pretendes crea...
-8c60c1bd20f6c50e	Os dije que no me molestarais mientras trabajo... espera un momento. ¿Cómo has pasado las puertas, señorita?
+8c60c1bd20f6c50e	Les dije que no me molestaran mientras trabajo... espera un momento. ¿Cómo pasaste las puertas, señorita?
 8c6622a3c191ab5d	A ver qué tenemos aquí.
 8c7212e46ecebec0	Cuando sentí que mi final se acercaba, envié a un Goibniu llamado Cadeyrn a buscarte y traerte de vuelta...
 8c8e5566822b336b	!#Davion bajó aquí buscando mercancía.
@@ -2164,14 +2164,14 @@
 8df109bbbc623fd1	Ataque de colmillo en barrena.
 8e10e53e587d5620	Yo no lo llamaría divertido...
 8e1f852c0d9c5720	Gracias a los forasteros nos hemos reencontrado con nuestra gente de Hrukk.
-8e234c314e621118	Precisamente por eso, Valdis siempre la mantuvo a distancia. Myrgato no podía pillarla por sorpresa.
+8e234c314e621118	Precisamente por eso, Valdis siempre la mantuvo a distancia. Myrgato no podía tomarla por sorpresa.
 8e2d20cdc972fb34	Daño de ataque:
 8e3498ddcbd5093b	¿Pelirrojito?
 8e35a38bbd5814d3	Acabar con la era de sufrimiento que los dioses han traído a este mundo.
 8e5585f6878ac37e	Wyatt, toma este 'Garfio de pared'.
 8e66615915334f6d	NUESTROS AMIGOS...#...EL ABUELO... ¡LOS HAS MATADO A TODOS!
 8e808413944eb26d	No sabíamos nada del plan para matar a Valdis...#... pero los humanos no fueron capaces de fiarse de nosotros.
-8e80adaf68794139	Os dije que no me molestarais mientras trabajo... espera un momento. ¿Quién eres tú, y qué pasa con ese pelo, jefe?
+8e80adaf68794139	Les dije que no me molestaran mientras trabajo... espera un momento. ¿Quién eres tú, y qué onda con ese pelo, jefe?
 8e8df56b2e7cc8b6	% de la vida máxima por esbirro.
 8e97f47fad973412	¿Y tu alma?#¿No era eso lo que buscaban Myrgato y Alagath?
 8eac814933fac0d9	Si morimos, moriremos por nosotros mismos.
@@ -2185,7 +2185,7 @@
 8f3e0f9100ef84ca	Mira, Rubita, tú no me caes bien y yo no te caigo bien. No finjas que te importa.
 8f76b2b78b16de2b	Has dominado mi técnica en muy poco tiempo.
 8f8b3acc8caa6596	...pero tenía conocimiento.
-8fb391279df9709d	Pues está pasando,#¡así que ayudadme a acabar con él!
+8fb391279df9709d	Pues está pasando,#¡así que ayúdenme a acabar con él!
 8fbf3e320b2e4e0e	Almas opuestas atrapadas en un conflicto eterno.
 8fc80efa88f13dd5	Géiser de poder
 8fe84c8cd3b605c0	Oh... parece que mi racha de buena suerte sigue intacta.
@@ -2330,7 +2330,7 @@
 982ed128fab664a9	Podría dejarte aquí con estos ángeles.
 9834fc834d154d20	La gente de aquí los llama ferales. Todavía no sé qué pensar de ellos.
 984575f6b3ce820d	Espero que me perdone por plantarle la lanza en la cara antes.
-9860be698602b58a	Mientras no me deis motivos para mataros, no tengo ningún problema con vosotros.
+9860be698602b58a	Mientras no me den motivos para matarlos, no tengo ningún problema con ustedes.
 986cb8888ec94bb9	... y Alagath me concederá una gran bendición cuando le lleve el alma de un general demonio.
 98702f70ae32cdfc	 / AGI: ???
 987551f569d57a27	La única esperanza de que Atalan escape a nuestro destino es que vaya contigo.
@@ -2358,7 +2358,7 @@
 99d9975d1fa13a54	Llevo cinco años con gente intentando matarme solo por haber nacido.
 99e1a08ad2ee2b6f	+2 Suerte / +1 Int 
 9a09e43b0289a900	Siento decepcionarte, pero dejé de ser una marioneta hace mucho.
-9a0a7510bc025638	¿Davion también está aquí abajo? Vale, busquémoslo antes de que se meta en líos.
+9a0a7510bc025638	¿Davion también está aquí abajo? Bueno, busquémoslo antes de que se meta en líos.
 9a15153b0c67a23d	La mitad de mi sangre es demoníaca,#pero la otra mitad es Goibniu.
 9a2670a11e7ab760	¡¿Qué?!#¿Por qué estás tan seguro?
 9a3a16c7cf36bda3	Lanza dos bumeranes que vuelven en arco.
@@ -2372,7 +2372,7 @@
 9b30d72fa8c0641e	¿Conoces a este hombre?
 9b35c0c76d5e9088	Mis exploradores dicen que también has dado muchos problemas a los demonios.
 9b3faa2d3ec52073	Los rumores sobre tu potencial no iban desencaminados. ¡Supongo que tendré que deshacerme de ti!
-9b43b7468d6aa2ae	¿Por qué los ángeles os interponéis en mi camino a cada paso? ¡No tendré piedad!
+9b43b7468d6aa2ae	¿Por qué los ángeles se interponen en mi camino a cada paso? ¡No tendré piedad!
 9b5269f7409bf0aa	Espada del sacrificio Purgatorio
 9b5639de9c2951ad	No sé cómo agradecerte que salvaras a mi hija. Es lo único que me queda para seguir adelante aquí abajo.
 9b57b2f9c473edac	Yo también me alegro de verte, hermano mayor.
@@ -2415,14 +2415,14 @@
 9de820b7869bb65d	¡Estos restos parecen recientes!#¿Has estado alimentándote de algo aquí abajo?
 9de90ab478c5a739	¡Eh, espera! Si lo ves, ¿podrías...?#Oh, déjalo.
 9deb44dd3114d7d8	¡Tus palabras no valen nada para mí!
-9e04d8f4b9283523	Venga ya, es broma, ¿no?#¡Gilda, espera!
+9e04d8f4b9283523	Vamos, es broma, ¿no?#¡Gilda, espera!
 9e17f013c1aa6cf6	Seguro que sabes cuidarte sola, pero ahora no es el momento.
 9e2f3799a625aae9	Ahora estoy segura de que los demás también están aquí.
 9e41b064820bddb4	Me aferré al sueño todo lo que pude...
 9e46be2130e5e55d	Esta nube negra parece interesante. Me gustaría verla algún día.
 9e59a7427b71c99e	Se cree que puede mirarme por encima del hombro porque trabajo con armaduras demoníacas. No es más que un cobarde.
 9e6b5831ab5c385c	Torcedor de almas:
-9ec0633842e54cc6	¿Qué os dan de comer últimamente?
+9ec0633842e54cc6	¿Qué les dan de comer últimamente?
 9eccf438edd1eef3	Valdis me dijo que buscara a los Guardianes del Saber. Dijo que era nuestra única oportunidad de ganar esta guerra.
 9edd5d530d9f7066	Prepararé el antídoto ahora mismo.
 9f149ce6fa1a91d3	Aumenta la vida máx. en 50.#(Modo Enfoque) Más armadura y resistencia mágica.
@@ -2515,7 +2515,7 @@ a4b6c35911b50100	AZUDOR y DHISTAHN
 a4bc064f2206469d	El impulso de evasión a través de enemigos les causa un poco de daño.
 a4c25050cf89ebdd	Postura de la tortuga se acumula hasta 3 veces.#En modo Enfoque, cancelar habilidades es gratis.
 a4dabf1071704ac2	La 'era de los dioses tiranos' fue antes de la llegada de Valdis. Es un hallazgo raro; se sabe poco de esa época.
-a4df3b07f1b92b46	Guardián de las pasarelas...#...devorador de carne...#...ahora viene a por ti.
+a4df3b07f1b92b46	Guardián de las pasarelas...#...devorador de carne...#...ahora viene por ti.
 a5185d5970bc88d8	Los eruditos acudían a la ciudad para estudiar los cristales de maná de la región.
 a51aad1d965e8b0e	Desviar:
 a5317cb2f810abd6	Invocar banshee
@@ -2549,7 +2549,7 @@ a70abf5f12dbd640	¡Wyatt!#Creo que estaré bien ahora que estás aquí.
 a70db4a37359c454	Sustancia mágica para fabricar objetos divinos.
 a73acf2b4b3d122b	¿Tu pueblo?#¿Cuánta gente ha sobrevivido aquí abajo?
 a741287d52d2630b	Escucha, chiquilla: atacaron mi barco, no sé cómo acabé aquí y tengo la sensación de que no soy la única...
-a7460bd418753985	Espíritus de los guardianes caídos, escuchadme.
+a7460bd418753985	Espíritus de los guardianes caídos, escúchenme.
 a75535ab6d8daa91	Las Cancelaciones de habilidad se regeneran poco a poco durante un combo.
 a758528d0eb4c023	Cambiar equipo
 a75fe5f40450954f	Garra de halcón:
@@ -2589,7 +2589,7 @@ a96e9b874001f8be	¡Te arrepentirás de burlarte de mí!
 a97cb8d20a01c532	Pulsa el botón para 'Abajo'
 a995fbbddff4375d	Código del caballero, decimocuarto voto: hasta una estrella pequeña brilla en la oscuridad. No olvides llevar contigo esa esperanza.
 a9a67dff821fbbd1	Parece que no tiene fin. ¿Sabes por qué los dos bandos envían soldados aquí abajo?
-a9a6abb8e33e986f	Ahora debéis marcharos de aquí.
+a9a6abb8e33e986f	Ahora deben irse de aquí.
 a9ac5a196c9d2fca	Iré allí ahora. Ven a verme si necesitas mi ayuda.
 a9b73e1c2d3c2ae5	A ver, Libro de los dioses antiguos, volumen 16.#-Exilio ártico-
 a9be9f345f3a99cf	¿No te has dado cuenta? Algo aquí abajo ha vuelto blanco el pelo de todos. Nadie sabe exactamente por qué.
@@ -2685,7 +2685,7 @@ aebd9463f8e7c1a7	Creé a tus hermanas por desesperación. Quería que asumieran 
 aed429f581cdee91	Vaya, y yo que creía que mi hermano era divertido. Eh, Atalan, ¿crees que se llevarían bien?
 af076c59e07d489c	El daño de todos los ataques por la espalda aumenta un 25%.#(Afinidad oscura +1)
 af08958d66f8d1ea	Nuestro verdadero poder viene de cómo trabajamos juntos.
-af0acb4c7d5f5248	Aunque supongo que no debería emocionarme tanto por darle una paliza a un crío. No queda bien.
+af0acb4c7d5f5248	Aunque supongo que no debería emocionarme tanto por darle una paliza a un niño. No se ve bien.
 af6bccc250811204	Ya no se los veía como intocables. No era fácil, pero se los podía matar.
 afb910caee2473e3	 Un tótem oscuro que absorbe el sufrimiento que lo rodea.# #(Desbloqueado para Reina en Nueva partida)
 afc583316ae014bd	Crea un pilar de hielo justo delante.
@@ -2700,7 +2700,7 @@ b07810ad4cba6243	Me alegra que estés bien. Hay una biblioteca en el este; los d
 b080badce01450a4	Esos ángeles eran unos blandos.
 b083ac94f31e5f3e	Fue/Agi/Int aumentan en 1/3 de la Suerte.
 b0a202b7a56b31e7	Enfoque maestro:
-b0a76835c29c10f4	¿Vladyn, un demonio? Entiendo que os confundierais.
+b0a76835c29c10f4	¿Vladyn, un demonio? Entiendo que lo confundieran.
 b0b6aaef9ce2e5c1	Oh, qué bien. Me estaba aburriendo en este puesto. Hace mucho que no derrito carne.
 b0cce3402e6bc2d7	 Un especialista en combate táctico de la región de Iqor. Conocido sobre todo por su papel en la ocupación de Greyvale, donde él y otros veinte caballeros frenaron el avance de quinientos demonios mientras los habitantes de la ciudad escapaban.
 b11a94b30aed54a7	Le haré este último favor a mi hermana y acabaré contigo aquí.
@@ -2710,7 +2710,7 @@ b19eef929b62f8ca	¡En nombre de la Señora Oscura, te haré pedazos!
 b1a05ed95b4e2b3b	El daño aumenta con la longitud del combo.
 b1c0f6866450e79f	Bloqueado por un mecanismo
 b1c189a297224444	¡Qué bonito!
-b1c2cb5ed8fe0391	¡Sacadla de aquí!#Yo los contendré.
+b1c2cb5ed8fe0391	¡Sáquenla de aquí!#Yo los contendré.
 b1d3c8139f5e157b	Eso suena a problema.
 b1dc8a8c7fcbc2f9	Alma del Celador:
 b1e89db07b68475c	No te concedí ningún poder, solo potencial.
@@ -2780,7 +2780,7 @@ b5219a2f70444d11	Los ataques ignoran toda la armadura si tu vida está por debaj
 b5268e23d18c363e	Gran aumento del poder de toda la magia de luz.
 b55a8ea19b3d24f5	+5 maná máx. por nivel. Puñetazos/patadas ganan los efectos del arma.
 b55b97b94b27633f	(Global)
-b55eb9cce93fbba2	¡No, no, no!#Mientras le deba la vida a esa pelirroja asquerosa, estoy a vuestro servicio.
+b55eb9cce93fbba2	¡No, no, no!#Mientras le deba la vida a esa pelirroja asquerosa, estoy a su servicio.
 b5680187ce42a8c4	Deja que yo me ocupe...
 b56ce667cb51ea48	Saco lleno de piezas de metal que te dio el anciano de Tagrum.
 b584d18cd0bc7826	Guardián
@@ -2802,7 +2802,7 @@ b6de1adb7bd23099	Flores bonitas
 b709e94ce3531b58	Esperaba que no nos encontráramos así, Reina.
 b72f68b470a0fb85	Causa un daño de fuego enorme y quemaduras.
 b730e0a376b9a296	Habilidad
-b73da51f653e0552	 disparo(s) de perdición
+b73da51f653e0552	 Doom Shot(s)
 b76bd5c903944de3	¡Puaj, qué asco!#¿Qué eres tú?
 b76bd62936143580	Pasarela C.
 b76ee171adce504b	... y ahora me ha entrado hambre.
@@ -2814,7 +2814,7 @@ b7d16bee15dab885	Ya has hecho bastante, forastero. Te agradecemos que ayudaras a
 b8016dc5c41bfbfd	Aunque desaparecieron de la ciudad con años de diferencia, a los dos se les vio por última vez camino del Santuario.
 b8141bd10d40bcdc	Puntos de vida:
 b81d144604df3857	Por encima de este lugar hay una salida.
-b850f10dd242dace	Se acabó, no pienso coger más muñecas monas.
+b850f10dd242dace	Se acabó, no pienso agarrar más muñecas lindas.
 b857c7879b45fe07	% daño por la espalda
 b865540d7a4c5c1c	Seguro que no me decepcionas.#Haré que te abran la puerta.
 b8827bc87682fe78	Manawar feral
@@ -2964,7 +2964,7 @@ c3d84ea0c1e7937d	Mmm...
 c3eb2bbe0d57b6a6	¿Cómo está?
 c3f7e540e7932c02	Cerrado (requiere la Llave de la biblioteca)
 c3f96eb529506800	Nacido del hierro:
-c3fc940dd2738a69	Envié a los ferales a atacar vuestro barco y traeros hasta mí.
+c3fc940dd2738a69	Envié a los ferales a atacar su barco y traerlos hasta mí.
 c41bb15d5faf4a12	Tiene que ser aquí. Si no lo es, no tengo provisiones para volver a cruzar el desierto.
 c4256dad7adb5349	Diles que te envía el anciano Trair; puede que así te dejen entrar. Con suerte encontrarás allí información sobre tus compañeros.
 c43056396265cb4a	Sí, anciano.
@@ -2988,7 +2988,7 @@ c51639801de3acc8	Con el tiempo, las fuerzas combinadas de Tsufu y Scaradunna res
 c527db3929c6a870	Los ángeles de aquí abajo son duros. Tenemos que reforzar tu entrenamiento. Ven a verme luego.
 c5329e163b2720b1	¿Volver al menú principal?
 c5565d1a0d5bb52e	Fue/Int/Agi y Suerte se reinician y se convierten en puntos de estado.
-c58e752ab016e05e	¿Cuál era ella?#Todos los ángeles me parecéis iguales.
+c58e752ab016e05e	¿Cuál era ella?#Todos los ángeles me parecen iguales.
 c5aa79e09e723478	Reina Gaius (estilo avanzado)
 c5c330ca22e845c0	Amuleto del cruzado
 c5cbe6f851519c17	Aunque los nuevos imperios compartían muchas fronteras con los antiguos...
@@ -3032,7 +3032,7 @@ c7c2a8fedad9983d	Almas que has tomado para ganar poder.
 c7caa054570848c9	Últimamente hay ferales rondando por la pasarela central.
 c7d829cddd1ce012	Hoces seráficas
 c7e48b279e0974f0	Mi querida hermana, he hecho lo necesario para que te salves como los demás.
-c7ed177e3d83d781	¡Subir en las piedras elevadoras es divertido! Una vez me caí, pero un guardia me cogió.
+c7ed177e3d83d781	¡Subirse a las piedras elevadoras es divertido! Una vez me caí, pero un guardia me atrapó.
 c80b6a456adfa6ef	Ya te lo he dicho: mi corazón es de otro. ¿Por qué no puedes alegrarte por mí?
 c81ba72bf007837f	Atuendo del errante
 c849e10006fbb1c5	Mesmer el Hipnotizador
@@ -3043,7 +3043,7 @@ c8929a0dd09fd7fc	Ni de lejos tanto como el gigantesco que protege este lugar.#..
 c89ff7c2e7e4127b	Me han contado quién eres.#¡El hijo de un general demonio!
 c8c218225135aee1	+4% prob. de crítico / +5 R.Armadura
 c8dda23249b90a63	A ver, Libro de los dioses antiguos, volumen 11.#-La era de los dioses tiranos-
-c90b5ff4a69133d4	R. Arm.
+c90b5ff4a69133d4	A. Ruin
 c90cb2f3501e4406	Habíamos seguido al buque de guerra demoníaco hasta el mar del Sur, bajo el yermo helado.
 c9361df473ffdd51	En Sitheil se hizo tradición erigir estatuas de las Goibniu que habían derrotado a semidioses.
 c93947ebe99241c2	Estás perdido. Los experimentos sirvieron para mostrarnos lo fuerte que puede ser la corrupción de Myrgato.
@@ -3128,7 +3128,7 @@ cd7de01a6cb2e451	¡Maldita sea!#Creía que me había librado de ti.
 cd85a1a371f9231d	Aumenta el daño de ataque un 5%.
 cd8dbe4114c4d098	En la ciudad se desarrolló una tecnología que no existía en ningún otro lugar del mundo...
 cd99dbe641cee573	Si alguien puede salir de esta ciudad, es el hijo de Cadeyrn.
-cdac025e7ca38f56	¿Supongo que a ninguno de los dos os apetece arreglar esto con una partida de cartas?
+cdac025e7ca38f56	¿Supongo que a ninguno de los dos les apetece arreglar esto con una partida de cartas?
 cdb9c1dd7b099558	¿De verdad esperas que creamos que piensas luchar contra los dioses?
 cdc5b81544ea6040	Anciano, no es nada. Habría sido mucho peor si Gilda no hubiera aparecido. No es tan peligrosa como parece. Es...
 cdca449ec164482c	El daño del lanzagranadas aumenta al bajar la vida.#(Modo Enfoque) Da un 10% de daño de ataque a los disparos.
@@ -3183,7 +3183,7 @@ d11248400dcbf242	Todos los hechizos cuestan un 10% menos de maná.#(Afinidad de 
 d113fd30d5d6d246	La barrera sobre esta ciudad no durará mucho cuando yo muera.
 d1349514b0291f38	No pierdas el tiempo aquí.
 d13c6b1797be94ac	Siento decirte que no hemos visto a nadie de tu barco... pero quizá podamos ayudarnos mutuamente.
-d14b0efc530426fd	¿Has bajado hasta aquí y no sabes dónde estás? Los ángeles sois más tontos de lo que parecéis.
+d14b0efc530426fd	¿Bajaste hasta aquí y no sabes dónde estás? Los ángeles son más tontos de lo que parecen.
 d174c7c744fea784	TIEMPO(
 d1791361ec0c8434	Parece que tendremos que acortar nuestro baile. Sigue con vida, chico; me encantaría romper esa espada tuya algún día.
 d19ef684ee6b5c99	Fuego
@@ -3252,7 +3252,7 @@ d587d6e36d89a136	Sacrificio
 d58b57e9507c21ce	Puntuaciones del modo Goibniu
 d58ffb4035330f94	Tú eres la llamada Reina, ¿no?#Los monjes tenían mucha fe en ti.
 d5b0d09edee31d20	 prob. de alteración
-d5b4415e39bdffe3	-Matadioses-
+d5b4415e39bdffe3	-God Slayer-
 d5c198dfae909f76	Arco y daga de asesinos expertos.
 d5fb03f59fc059aa	Has matado a muchos ángeles, cosa admirable, pero no podemos dejar que sigas.
 d5fc6592c1facea9	En esos momentos#sentía la voluntad de Myrgato recorriéndome.
@@ -3296,7 +3296,7 @@ d829d819c85e0c9a	Dicen que esta estatua fue una persona de verdad.
 d845a323cb8106a6	Vladyn desbloqueado
 d845b19c33dbace2	Hemos excavado la reliquia, pero necesito más tiempo para entender cómo funciona.
 d84b176ad66f85f4	 Con su nueva divinidad, Reina recorre el mundo en busca de las almas de los guerreros Goibniu caídos.# # Con cada uno que resucita gana un nuevo general que la ayuda a dirigir su ejército, cada vez mayor, en la lucha contra sus hermanas.
-d85b03b11c969f92	Sinceramente, no me importa en absoluto. Pero oye, ¿habéis visto por aquí a un pelirrojo con una espada enorme?
+d85b03b11c969f92	Sinceramente, no me importa en absoluto. Pero oye, ¿han visto por aquí a un pelirrojo con una espada enorme?
 d873a927f1ec9662	% daño crítico
 d87a471e89072430	 Armadura/+
 d87da3f361e18507	Eh, tengo otra parte del tomo.
@@ -3321,15 +3321,15 @@ d9d64ec23acd465f	Al hombre de Gyro le encomendaron una misión especial para int
 d9e0bfc23d069228	Cada 6.º disparo tiene más probabilidad y daño crítico.
 d9ecedc2950114a9	Si encuentras otras estaciones de tranvía, solo tienes que resincronizar la ruta.
 d9fae697adbd3b33	Por encima de este lugar hay una salida.#Reina...#...sabrá qué h...
-d9fb6d1dde1523a0	...pero la guerra para la que necesitaréis nuestra ayuda no es la que libráis contra Myrgato y Alagath.
+d9fb6d1dde1523a0	...pero la guerra para la que necesitarán nuestra ayuda no es la que libran contra Myrgato y Alagath.
 da04d7fef73c7d88	El mal no te creó; te dejó libre para sembrar la ruina en el mundo.
 da1a8b47452ea20c	Armadura acorazada
 da1d2c90a423c251	Después de mi tiempo con los Goibniu, recordé lo que amaba de este mundo.
 da1d738c98ab14ef	Aumenta la regeneración de maná.
-da34690e196134ad	Más te vale que esta llave funcione, o volveré a por ti.
+da34690e196134ad	Más te vale que esta llave funcione, o volveré por ti.
 da3c62e71493e451	Garfio del brazo demoníaco
 da4e5ca2a78f573b	min.
-da59767ef68b0aed	¡Hagáis lo que hagáis, rápido!#El agua sube muy deprisa.
+da59767ef68b0aed	¡Hagan lo que hagan, rápido!#El agua sube muy deprisa.
 da5d9a47f67a5ce6	 Armadura/Resistencia durante 3 segundos tras lanzar un hechizo.
 da6791f4f5e37d9b	Una tela fina, muy suave al tacto.
 da7834a5634266a2	Dijiste que atacaron tu barco. ¿Fueron demonios?
@@ -3348,7 +3348,7 @@ db23967a5c8d48c6	Has usado la Llave esqueleto.
 db27859ea2fdc27e	Suerte:
 db2ac0d70e9c3a56	Potenciar:
 db81cb1f80ea315b	Plegaria de monje
-db89b93b094dfe3b	¿Tenías miedo, sabiendo que iba a por ti todos estos años?
+db89b93b094dfe3b	¿Tenías miedo, sabiendo que iba por ti todos estos años?
 db9a152f89d11909	25% de probabilidad en golpes críticos de que el disparo explote, cause daño y sangrado.
 dbc444cdb93d3670	¡No te diré nada, chico, y eres tú quien morirá hoy aquí!
 dbc8b7e41d135da3	Escudo de batalla recupera vida y aumenta la armadura/resistencia aliada.
@@ -3412,8 +3412,8 @@ df47728a68c23e36	Lanzar un hechizo en sigilo aumenta su daño un 50%
 df5011328f8cb503	Nunca había visto un ángel así. ¿Qué está pasando en esta ciudad?
 df54fe2f71221fb7	Buen trabajo poniendo otra vez en marcha el tranvía.
 df58274e6a568837	Gran juicio [Afinidad de luz +6]
-df5afa00ad8e1140	P. completa
-df7255f3fea315fc	Los humanos no aprendéis, ¿eh? Os advertimos que no os acercarais a nuestro... espera, ¿quién eres tú?
+df5afa00ad8e1140	Full Screen
+df7255f3fea315fc	Los humanos no aprenden, ¿eh? Les advertimos que no se acercaran a nuestro... espera, ¿quién eres tú?
 df7b644487e91eae	Entrar en la Arena de combate
 df84eba2186e0668	Eres de fiar, forastero.
 df944f48903b538b	Esa noche ayudó a los aldeanos a recoger sus cosas y huir del valle antes de que llegaran más ángeles...
@@ -3434,7 +3434,7 @@ e07e86077127cd1e	Parece que se ha revelado una nueva diosa.
 e08b80e7d94985d1	Me alegra oírlo:#la moral no debe tener ningún papel en tu función.
 e0a40d2be38676b7	Espíritu de ángel menor
 e0b1fac53a3a5647	-10 Armadura/-10 Resistencia
-e0b75f19922bd915	Doctor
+e0b75f19922bd915	Doc
 e0de5e147ccfb11f	Vaya, eso no se ve todos los días.#¡Un megaángel! 
 e0eb487c9f9b5e30	Aumenta la vida máx. un 10%.
 e0f93c82cb2509ca	Puedes correr en sigilo.#(Modo Enfoque) Los ataques críticos tienen un 20% de probabilidad de recuperar una Cancelación de habilidad.
@@ -3513,7 +3513,7 @@ e6eca6c6ca8e9658	Si fuera más joven, iría contigo. Ahora mi deber es con la ge
 e6ecd45a28565ed2	Esencia de un siervo de alto rango de Myrgato.
 e6f859023e5a1bce	Recuperas el 1% de la vida máx. por segundo si Caminante espiritual está al máximo.#+15 de resistencia en modo Enfoque.
 e7110e3e9f470399	Me alegra ver que estás bien. Estoy reuniendo a la tripulación en una biblioteca al este.
-e7237fa3ba2af6e7	Sir Tortitas
+e7237fa3ba2af6e7	Sir Pancakes
 e7317816dab1717f	-Alma fantasma-
 e742c8617af32304	Gracias, voy enseguida.
 e76f054922ee2e19	Diles que vienes conmigo y te dejarán entrar.
@@ -3521,14 +3521,14 @@ e7786f46ac0e1a80	Estallido de alma
 e793827748fcd26b	Yo era general del Ejército Oscuro y me usó de cebo. Perdí a todo mi regimiento en una emboscada que ella sabía que estaba allí.
 e7a40276552d968e	Los demás sitios con calefactores que funcionan están ocupados por ángeles o demonios.
 e7b74ad6303e1124	Ishk está al oeste. Puedes ir por las alcantarillas o subir por la pasarela oeste.
-e7bd99db031003e4	 Un demonio felino cascarrabias, muy hábil con la magia oscura. Le debe la vida a Wyatt desde que lo salvó de unos templarios hace dos años.# # Si no fuera por el estricto código de honor de su pueblo, habría dejado la tripulación hace mucho... quizá. Al menos eso dice él.
+e7bd99db031003e4	 Un demonio felino arisco y malhumorado, muy hábil con la magia oscura. Le debe la vida a Wyatt desde que lo salvó de unos templarios hace dos años.# # Si no fuera por el estricto código de honor de su pueblo, habría dejado la tripulación hace mucho... quizá. Al menos eso dice él.
 e7cde8565c87cba2	Lo necesitarás para llegar al Distrito del Mausoleo, al este de aquí.
 e7d0f03027c5f2a4	Sanguijuela:
 e7d9fa2c56794249	Qué grosero.
 e7e4a85417017294	¿Y les creíste?#Jajaja...
 e7e8e5ee51d47d31	+25% de XP
 e7eb22b57c37d4d3	Bloquear justo cuando impacta un ataque aturde al atacante.
-e7f5d7c60bed6e48	¿Qué os pasa a las ratas?#Si queréis morir, os complaceré.
+e7f5d7c60bed6e48	¿Qué les pasa a las ratas?#Si quieren morir, los complaceré.
 e7fa5982b49baa84	Escucha, el anciano me ha enviado a buscarte.
 e806254b5974467e	La biblioteca está al este, debajo de los Jardines. Si vas ahora, seguramente la alcances.
 e82329cca715431d	Linterna de hechizos
@@ -3538,7 +3538,7 @@ e83719907d8050af	No te preocupes por mí. Salgo a rebuscar fuera del pueblo desd
 e847a0ab3f6e32b6	Valdis...#...¡estás viva!
 e854479a3cead48e	TIEMPO: 
 e85d906562a20c82	¿De qué estás hablando?
-e8697a1e7338fd98	, llevaba tiempo esperando pillarte a solas.
+e8697a1e7338fd98	, llevaba tiempo esperando agarrarte a solas.
 e8a08a93560bc01b	% vel. de ataque / +
 e8ac6080de000ed2	 Armadura/Modo Enfoque con vida crítica
 e8ad5d6cfce7f01f	Cuidado dónde pisas...
@@ -3549,7 +3549,7 @@ e93b7e466059abe4	¿Tu pueblo?#¿Quieres decir que aquí abajo vive más gente?
 e941b41da00aaf73	Otra cosa: una chica rara de Hrukk dijo que quería verte. Que fueras a la estación del tranvía.
 e947f067b2af0ea0	¡Espera, al menos dime dónde estamos!
 e958d4ce9dc2b741	Combate:
-e96f39eb43ea69cb	...#vale, entonces.
+e96f39eb43ea69cb	...#bueno, entonces.
 e9815355ba2747c3	Puede que me creas una traidora, pero fueron Myrgato y Alagath quienes traicionaron primero a la humanidad.
 e99f9546e03dc8f5	Supongo que eso nos viene bien, pero me habría gustado evitar a esas cosas.
 e9a510f2fccf38d4	+10% poder de magia de luz / +14 R.Mágica
@@ -3563,7 +3563,7 @@ ea172ab4f2153824	¿Tú pusiste aquel escudo mágico durante la caída?
 ea23657c9a7af98a	Hemos logrado mantener a raya a los demonios, pero no sé por cuánto tiempo.
 ea2d5bd47454a8ab	Está bien, me iré, pero ¿al menos puedo preguntar dónde estoy?
 ea331520ee0d02f1	 Un hábil herrero de armas que resultó nacer demonio. Suele ocultar sus rasgos demoníacos para no llamar la atención.# # Prefiere pasar el tiempo trasteando en su taller antes que sembrar la ruina en nombre de Myrgato.
-ea3741a5147c42ae	Eres un demonio;#supuse que es lo que hacéis.#Un error comprensible, de verdad.
+ea3741a5147c42ae	Eres un demonio;#supuse que es lo que hacen.#Un error comprensible, de verdad.
 ea3b2478f55aeed9	Pues ven conmigo. Estamos reuniendo a la tripulación en una biblioteca al este.
 ea48754e016c3c08	Inteligencia:
 ea4f6c9df260d3e7	Bueno, si insistes.
@@ -3572,7 +3572,7 @@ ea9be85630d6563d	No veo a Reina ni a los demás. Debería ir a buscarlos; tienen
 eaa48df7440aec3b	...planeaban fundir cientos de almas con la mía.
 eabe16592b72ca23	Reintentar desde el último punto de control.
 eaf773b557789e76	La gente de aquí los llama ferales. Todavía no sé qué pensar de ellos.
-eafb7239c83aca84	Otro más ha venido a por el alma de la madre...
+eafb7239c83aca84	Otro más ha venido por el alma de la madre...
 eafbbae09614e940	Soldado ángel
 eb14fc3bfd1b557f	... mientras yo las guarde.
 eb3a5d9e349f4c44	No me preocupo. Es una de esas cosas que no hago. ¡Sígueme el ritmo!
@@ -3625,7 +3625,7 @@ ede727365f90506e	Sin datos
 ee0ba7b6a0d36e42	Habilidad basada en Fue
 ee16c9b9dcac3611	Estrella del norte:
 ee1e40a424e3e992	Libro de los dioses antiguos, volumen 5.#-El guerrero del odio-
-ee24009101a5dc54	Mmm, es un salto largo. Tendré que coger carrerilla.
+ee24009101a5dc54	Mmm, es un salto largo. Tendré que tomar impulso.
 ee32014880b072ab	Sea lo que sea, se lo debo.#Puede que haya una forma de salvarlo que mi padre no mencionó.
 ee3397be9b44aaea	% Atq
 ee6b29eaff297cfe	¿No podemos hacer nada?
@@ -3657,7 +3657,7 @@ efdfe5fc1ee7d810	Probablemente.
 efec279e45f3a6e0	Esto nunca debió pasarte a ti. Lo siento, pero tengo que terminar lo que dejé a medias.
 efef3735ed460436	Los hechizos consumen vida en vez de maná.
 f00670828f430862	Normalmente consigo evitar a los demonios y a los ángeles. Quizá esta vez me he descuidado.
-f00c26e927c8a910	Personas...#... si lo sois o no, no es asunto mío.
+f00c26e927c8a910	Personas...#... si lo son o no, no es asunto mío.
 f01058bbf66a93c0	La gente de aquí los llama ferales. Nunca había visto nada igual.
 f01bd372c515d395	ABAJO
 f04921b354d4d511	Aquí parece que estamos a salvo.
@@ -3709,7 +3709,7 @@ f31a98551d0600e4	-Pulsa  [
 f34f7633041da194	¡Tu medidor de Enfoque está lleno!#Pulsa [
 f357f46059f4599c	Marca ígnea
 f35cbf0baf87ac8c	Magia
-f37698f58a7ef2c5	Te aseguro que la vale.#Haré que te abran la puerta. Venga, en marcha.
+f37698f58a7ef2c5	Te aseguro que la vale.#Haré que te abran la puerta. Vamos, en marcha.
 f3808f9aeefd4f27	¡Gilda!#¿Qué haces TÚ aquí?
 f3de75e034093b14	¡No toleraré tus insultos, demonio!
 f3e022667597eb8c	Dhistahn el Judicador
@@ -3776,10 +3776,10 @@ f7f1e3302a960452	Vengo de la superficie; soy un forastero, o eso me llama todo e
 f7f52b4c43e4234f	Ahora eres parte de nuestra tripulación...
 f8126c4d50bb1992	Una chica de Hrukk está arreglando un aparato que nos permitirá viajar a los otros pueblos. Deberías ir a verla a la estación del tranvía.
 f815877593d600db	+10% de prob. de alteración
-f82ac2ca97a65237	Espera, ¿cuál de vosotros es Wintersun?
+f82ac2ca97a65237	Espera, ¿cuál de ustedes es Wintersun?
 f868a9d92be11787	Castigo
 f86cebb1beaf294b	Una piedra mágica refinada que a veces alimenta grandes máquinas que solo hay en Sitheil.
-f86d9d33ce1225d8	Ya son dos veces que los forasteros nos ayudan. Reina dijo que vuestro grupo buscaba a un demonio.
+f86d9d33ce1225d8	Ya son dos veces que los forasteros nos ayudan. Reina dijo que su grupo buscaba a un demonio.
 f873f01e61e46e01	 Esta excéntrica sombrerera llegó de algún modo a Sitheil buscando materiales raros para su oficio. Nadie sabe si conoce las propiedades mágicas de los sombreros que hace.
 f8921f248162bc2f	Me alegra ver que estás bien. Ve a la biblioteca del este; los demás están allí.
 f8a7ae18a299bcb9	Esto estará funcionando en nada.#¿Y tú qué eres, una demonio renegada, señorita?
@@ -3819,7 +3819,7 @@ fae0bd2899b904b1	Soy demasiado mayor para jugar con juguetes. No sé en qué est
 faf160135c906dce	¿Estás listo para aprender mi técnica definitiva?
 faf48bce646221a9	Bonus de civiles: +
 faf94736e3110b9d	Lágrima de la Señora
-faff951ca50375cf	Necesito que uno de vosotros concentre su maná para estabilizarlo.
+faff951ca50375cf	Necesito que uno de ustedes concentre su maná para estabilizarlo.
 fb0960784731d90c	Reliquia que usaban los monjes de Valdis.#Si tu vida llega a 0, recuperas el 50% de la vida máx.#Las pociones se rellenan junto a los guardianes sagrados.
 fb12936c0f49bc1e	Podría servirme. Me lo quedo.
 fb168c84d51c263b	Mira qué tenemos aquí...#...si es la rata.#Te estaba esperando.
@@ -3830,7 +3830,7 @@ fb4fb01564b23f1f	El anciano dijo que te encontraría aquí, en la biblioteca.
 fb5172914f8ba0d8	Vaya, qué miedo das.#Abre los ojos, niña, vas desarmada.#No tienes ninguna oportunidad contra mí.
 fb6d299a8c536128	Deberías buscarlo por todas partes; merece la pena probar en la biblioteca.
 fbc9b2b0b9b5ff3f	¡Dar por hecho que estoy en desventaja será tu último error!
-fbd93bd1288bd5f8	Desde luego, eres una cotilla.
+fbd93bd1288bd5f8	Desde luego, eres una chismosa.
 fbd95877818c679d	El ojo de Myrgato...
 fbe0a3c793f1c50b	Ogro demonio
 fbe8dd8e9742d8e8	Soy Reina,#hija de Valdis#y nueva diosa de la muerte.
@@ -3838,7 +3838,7 @@ fbedeaa00d15dbed	(Modo Enfoque) Gran aumento de la regeneración de maná.
 fbee898e9640dd44	¿Es verdad que Zeige iba a entregarnos a los ángeles?
 fbf25de617fabfe2	Que conste que yo ni había nacido cuando pasó todo esto.
 fbf6cd6e781e692f	Prenda que suelen llevar magos y brujos. Está rasgada y habrá que coserla antes de usarla.
-fbf7ab45552e866b	¡¿Qué?!#¿De verdad los de la ciudad os habéis olvidado de nosotros?
+fbf7ab45552e866b	¡¿Qué?!#¿De verdad los de la ciudad se olvidaron de nosotros?
 fc052582bd2a7ce2	Dime, ¿qué planeaban hacer los ángeles con las almas de tu monasterio?
 fc07e45224f07296	¡Entendido, gracias!
 fc0f281b39ce385d	¡Tu arrogancia será tu fin!
@@ -3875,7 +3875,7 @@ fdd17320ce0ded2e	No hay duda: eres un verdadero demonio.#Solo es cuestión de ti
 fdd38388b672f700	Pluma del cuervo [Afinidad oscura +3]
 fde79b8eeda70b37	¡Hablas!
 fdf462e9546b0bbf	La noticia del descubrimiento de la expedición se extendió rápidamente por el mundo.
-fe16a18d746b61f2	Ya veo por qué nadie hablaba de gente viviendo aquí abajo. Todos sois ángeles y demonios.
+fe16a18d746b61f2	Ya veo por qué nadie hablaba de gente viviendo aquí abajo. Todos ustedes son ángeles y demonios.
 fe21eec518c1f668	¿Por qué lo dices?
 fe347078bab2cee8	Habilidad basada en Agi y Suerte
 fe4ed2041e156ad9	Ojo, Vladyn: los dragones se comen a su pareja cuando terminan con ella.
@@ -3898,12 +3898,12 @@ ff491d562eb94193	Tráeme cualquier armadura demoníaca que encuentres. ¡Podemos
 ff652ce1d8dd24d6	Tras cancelar una habilidad, el daño de tu siguiente disparo aumenta con la Agilidad.
 ff69c83336d2a8ee	Nunca le rezaron para que les diera nada ni para que aliviara su sufrimiento.
 ff7c842eda593b82	... ah, está bien. Pero no te separes de mí.
-ff8744e741778a97	Sí, lo pillo. Te traigo el martillo y me cuentas lo que quiero saber.#Más vale que valga la pena, viejo.
+ff8744e741778a97	Sí, ya entendí. Te traigo el martillo y me cuentas lo que quiero saber.#Más vale que valga la pena, viejo.
 ff8b94cede6671d8	La dura tundra de Vonua frenó mucho el avance de Scaradunna...
 ff8dd01a9ef9af89	Seguro que sí. Estoy reuniendo a la tripulación en una biblioteca al este.
 ff9b34e982cb5cf8	Info : Sí
 ffc490db24d600fb	Guau, guau#grrrguaaau...
-ffca08d2b2aa9c19	Matadioses
+ffca08d2b2aa9c19	God Slayer
 ffcf477ec302ff1d	Me han contado quién eres.#¡El hijo de un poderoso general demonio!
 ffd071b08385e5c1	Tajo pesado con dos hachas heladas.
 ffd459ccdabd8047	Así que tú eres la rata que husmea por aquí.#Esta vez no hay agujeros donde meterte a esconderte.

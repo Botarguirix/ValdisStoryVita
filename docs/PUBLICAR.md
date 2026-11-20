@@ -14,13 +14,66 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 
 > Commits nuevos: en GitHub Desktop, revisa la lista de cambios antes de **Commit to main** + **Push origin**. Si aparece cualquier archivo del juego, un `.vpk`, un `.dat` o `tools/local.env`, no lo subas.
 
-## 2. Crear el Release v0.5.0-alpha
+## 2. Crear el Release v0.6.0-alpha (20-11)
+
+1. En la web del repo: **Releases → Draft a new release**.
+2. **Choose a tag:** escribe `v0.6.0-alpha` → *Create new tag on publish* (sobre `main`).
+3. **Release title:** `Valdis Story PSVITA v0.6.0-alpha`
+4. Marca **Set as a pre-release**.
+5. Arrastra el VPK **sin código del juego** (probado en la Vita el 20-11: título en español y menú MODS): `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), unos 1,6 MB, SHA-256 `8aae0ec0cbeff7f904423f29b8dda9e574277da50a8193519a70764127da1370`.
+   - **No subas** `build\vita\vsvita.vpk`: es la versión AOT, lleva código derivado del juego y es solo para uso personal.
+6. Pega las notas de abajo en la descripción y pulsa **Publish release**.
+
+### Notas del release v0.6.0 (copiar y pegar)
+
+```markdown
+## Valdis Story PSVITA v0.6.0-alpha
+
+Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de GameMaker Studio 1.x en C++17 (no es emulador ni YoYo Loader). El juego se convierte desde **tu copia de Steam** en la propia consola.
+
+**ULTRA IA VIBECODED!** Todo el código, las herramientas y la documentación los escribió una IA (Claude Opus 5.5 como modelo principal y Claude Sonnet 5.5 en subagentes, con Claude Code); el usuario dirigió y probó cada build en una PS Vita real.
+
+> ⚠️ **No incluye el juego.** Necesitas una copia legal de Steam (build 722041, App ID 252030; ver README). Este VPK solo trae el motor y la traducción al español (sin el texto original). Valdis Story es propiedad de Endless Fluff Games; proyecto de fans sin ánimo de lucro.
+
+### Novedades
+- **Menú de MODS (SELECT):**
+  - **Idioma:** inglés original o **español**. La traducción de fans, en **español latino**, cubre el 99,5 % del texto: diálogos de los 4 personajes, historia, libro del saber, menús, objetos y habilidades.
+  - **Fuente:** la del juego, que ahora también dibuja tildes, ñ y ¿ ¡, o la **fuente del sistema de la Vita**, más legible.
+  - **Botones:** iconos de PS Vita (✕ ○ □ △ L R) en tutoriales y avisos, en lugar de los nombres de mando de Xbox (A, B, LB…).
+  - **Panel trasero:** por defecto solo responde la parte de arriba, para no pulsar L1/R1 sin querer al sujetar la consola; también "entero" o "apagado".
+- **Menú de TRUCOS (SELECT + L + R):** modo dios, maná infinito, subir nivel, +5 puntos, personajes desbloqueados, ir a cualquier sala y contador de rendimiento.
+- **Salir → Menú principal** ya vuelve al título.
+- **"GFX : Low"** ya no causa parpadeos.
+
+### Pruebas en la Vita (versión AOT, la de 60 fps)
+- Partida de 42 minutos jugada a mano (Wyatt, hasta el jefe de hielo): sin cuelgues.
+- Partida nueva automática y recorrido de unas 220 salas con cada personaje: Wyatt, Reina y Gilda sin cuelgues; con Vladyn hubo un cuelgue suelto que no se ha vuelto a repetir.
+- **28 jefes, cada uno en su propia sala:** sin cuelgues, a 60 pasos por segundo.
+- **Sesión larga de 74 minutos** (las 245 salas tres veces, con botones al azar): sin cuelgues, 0,42 % de frames perdidos y **sin fugas de memoria**. La memoria del juego se estabiliza en unos 78 MB a partir del minuto 40.
+
+### Rendimiento de este VPK
+Es la versión de **intérprete**: no lleva código del juego, por eso se puede compartir. Va bien en la mayoría de salas, pero en las más cargadas baja a unos 34 fps. La versión rápida (AOT) se compila desde tu propia copia del juego (ver README).
+
+### Problemas conocidos
+- En las ranuras de partida, "Lv/Time/Crew/Location" siguen en inglés: forman parte del dibujo del juego.
+- Con la fuente original, algún texto en español puede quedar justo en su cuadro; la fuente del sistema es más estrecha.
+- Primera entrada a algunas salas: pausa de 0,3–0,7 s cargando texturas.
+
+### Instalación
+1. Instala `vsvita.vpk` con VitaShell. Necesitas `ur0:data/libshacccg.suprx` (extráelo con ShaRKBR33D).
+2. Copia `data.win`, `data_1/`, `data_2/`, `data_5/` y los `music_*.ogg` de tu carpeta de Steam a `ux0:data/valdis/game/`.
+3. Abre el juego: el primer arranque convierte los datos (unos minutos). Pulsa SELECT para elegir español.
+```
+
+## Release anterior: v0.5.0-alpha (19-11, publicado)
+
+### Pasos que se siguieron
 
 1. En la web del repo: **Releases → Draft a new release**.
 2. **Choose a tag:** escribe `v0.5.0-alpha` → *Create new tag on publish* (sobre `main`).
 3. **Release title:** `Valdis Story PSVITA v0.5.0-alpha`
 4. Marca **Set as a pre-release**.
-5. Arrastra el VPK **sin código del juego**: `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo) (1,3 MB).
+5. Arrastra el VPK **sin código del juego** (probado en la Vita el 20-11: título en español y menú MODS): `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo) (1,3 MB).
    - **No subas** `build\vita\vsvita.vpk` (15 MB): es la versión AOT y lleva código derivado del juego. Es solo para uso personal.
    - Probado en la Vita el 19-11: arranca, carga la partida y se juega (Azudor 57–59 fps; sewer_11 ~34 fps).
 6. Pega las notas de abajo en la descripción y pulsa **Publish release**.

@@ -9,7 +9,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'controls.png')
-TITLE, VERSION = 'Valdis Story PSVITA', 'ALPHA 0.5.0'
+TITLE, VERSION = 'Valdis Story PSVITA', 'ALPHA 0.6.0'
 SCREEN = ('Valdis Story', 'Abyssal City', 'CONTROLES POR DEFECTO / DEFAULT CONTROLS')
 W, H = 1800, 1120
 BG, INK, SUB, LINE = (238, 242, 247), (24, 38, 58), (60, 72, 90), (70, 130, 170)
