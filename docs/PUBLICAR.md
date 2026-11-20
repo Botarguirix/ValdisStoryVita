@@ -53,6 +53,7 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 - **Este VPK es la versión de intérprete** (sin código del juego, por eso se puede compartir). Medido en la Vita: el jefe Azudor va a 57–59 fps, pero las salas más cargadas (p. ej. sewer_11) bajan a ~34 fps. La versión rápida (AOT, 60 fps en esas salas) se compila desde tu propia copia (ver README).
 
 ### Problemas conocidos
+- Con este VPK (intérprete), los combates pesados van lentos: Ragano y Myrgato en la Arena a ~40 pasos de lógica por segundo (el juego se ve a cámara lenta, ~2/3 de velocidad). La versión AOT da 57 con Myrgato y 42 con Ragano, que todavía hay que optimizar.
 - Primera entrada a algunas salas: pausa de 0,3–0,7 s cargando texturas.
 - Campaña completa todavía sin jugar de principio a fin en la Vita (sí probadas todas las salas y jefes con herramientas).
 - Iconos de botones del juego como mando de PC.
@@ -66,4 +67,5 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 ## Pendiente antes del Release
 - [x] Probar `build\vita_noaot\vsvita.vpk` en la Vita (19-11: arranca y se juega; Azudor 57–59 fps, sewer_11 ~34 fps).
 - [ ] Conversión desde cero con este VPK (se probó con la versión AOT, que usa el mismo código de conversión).
-- [ ] Revisar las notas con lo último que se haya medido (sección "Estado").
+- [x] Revisar las notas con lo último que se haya medido (sección "Estado").
+- [x] VPK público recompilado y probado en la Vita el 19-11 (carga partida y combate en la Arena; ~40 pasos/s en jefes).
