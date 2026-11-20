@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <dirent.h>
 
 namespace vs {
 extern long gWarnCount;   // vm.cpp: avisos distintos emitidos
@@ -59,6 +60,29 @@ int roomByName(Game& g, const std::string& n) { for (size_t r = 0; r < g.d.rooms
 int objByName(Game& g, const std::string& n) { for (size_t o = 0; o < g.d.objects.size(); o++) if (g.d.objects[o].name == n) return (int)o; return -1; }
 int varByName(Game& g, const char* n) { for (size_t v = 0; v < g.d.varNames.size(); v++) if (g.d.varNames[v] == n) return (int)v; return -1; }
 bool fileExists(const std::string& p) { if (FILE* f = std::fopen(p.c_str(), "r")) { std::fclose(f); return true; } return false; }
+// Archivos de prueba en save/: vale el nombre exacto ("godmode", "keys.txt") o con un sufijo "_loquesea" antes de la
+// extension ("godmode_0815", "keys_0815.txt"). vita-agent no deja volver a crear un archivo en una ruta de la que antes
+// movio otro (la subida dice "completa" pero el archivo no aparece): cada prueba sube los suyos con nombres nuevos.
+std::vector<std::string> gSaveList; std::string gSaveListDir;
+std::string testPath(const std::string& dir, const std::string& base) {
+    if (fileExists(dir + "/" + base)) return dir + "/" + base;
+    if (gSaveListDir != dir) {
+        gSaveListDir = dir; gSaveList.clear();
+        if (DIR* d = opendir(dir.c_str())) { while (dirent* e = readdir(d)) gSaveList.push_back(e->d_name); closedir(d); }
+        std::sort(gSaveList.begin(), gSaveList.end());
+    }
+    size_t dot = base.rfind('.'); std::string stem = base.substr(0, dot), ext = dot == std::string::npos ? "" : base.substr(dot);
+    for (auto it = gSaveList.rbegin(); it != gSaveList.rend(); ++it) {   // el mas reciente por nombre
+        const std::string& n = *it;
+        if (n.size() > stem.size() + 1 + ext.size() && n.compare(0, stem.size() + 1, stem + "_") == 0 &&
+            n.compare(n.size() - ext.size(), ext.size(), ext) == 0) return dir + "/" + n;
+    }
+    return "";
+}
+bool testExists(const std::string& dir, const std::string& base) { return !testPath(dir, base).empty(); }
+}  // namespace (reabierto abajo)
+bool testFileExists(const std::string& dir, const std::string& base) { return testExists(dir, base); }
+namespace {
 
 void logStats(const char* tag, const std::string& what, const Stats& s) {
     if (s.frames == 0) { logf("%s %s: sin frames medidos\n", tag, what.c_str()); return; }
@@ -92,11 +116,46 @@ void monkeyStep(Game& g) {
     setKey(37, gMk.dir < 0); setKey(39, gMk.dir > 0);
 }
 
+// ---- Teclas programadas (save/keys.txt), lo mismo que --key / --onroom del PC pero en cualquier plataforma.
+// Lineas: "at FRAME TECLA" o "onroom SALA RETRASO TECLA" (codigos de tecla de GMS: 68 = D, 39 = derecha, 13 = Enter).
+// Cada linea se dispara una sola vez (onroom: RETRASO frames despues de entrar en SALA).
+struct KeyEv { bool onroom = false; int room = -1, at = 0, key = 0; bool done = false; };
+std::vector<KeyEv> gKeys; int gKeyHold[256] = {}; int gKeysRoomAt = -1, gKeysLastRoom = -1;
+void keysInit(Game& g, const std::string& saveDir) {
+    FILE* f = std::fopen(testPath(saveDir, "keys.txt").c_str(), "r");
+    if (!f) return;
+    char w[128], room[128];
+    while (std::fscanf(f, "%127s", w) == 1) {
+        KeyEv e;
+        if (!std::strcmp(w, "at") && std::fscanf(f, "%d %d", &e.at, &e.key) == 2) gKeys.push_back(e);
+        else if (!std::strcmp(w, "onroom") && std::fscanf(f, "%127s %d %d", room, &e.at, &e.key) == 3) {
+            e.onroom = true; e.room = roomByName(g, room);
+            if (e.room >= 0) gKeys.push_back(e); else logf("[teclas] sala desconocida: %s\n", room);
+        }
+    }
+    std::fclose(f);
+    logf("[teclas] %d pulsaciones programadas\n", (int)gKeys.size());
+}
+void keysStep(Game& g) {
+    if (gKeys.empty()) return;
+    if (g.room != gKeysLastRoom) { gKeysLastRoom = g.room; gKeysRoomAt = g.frame; }
+    for (auto& e : gKeys) {
+        if (e.done) continue;
+        bool fire = e.onroom ? (g.room == e.room && g.frame - gKeysRoomAt >= e.at) : g.frame >= e.at;
+        if (fire) { e.done = true; if (e.key > 0 && e.key < 256) gKeyHold[e.key] = 6; logf("[teclas] frame %d tecla %d\n", g.frame, e.key); }
+    }
+    // como una tecla fisica: entra en el siguiente inputBeginFrame (tambien vk_anykey, que pide el titulo)
+    for (int k = 1; k < 256; k++) {
+        if (gKeyHold[k] > 0) { g.in.phys[k] = true; if (--gKeyHold[k] == 0) gKeyHold[k] = -1; }
+        else if (gKeyHold[k] < 0) { g.in.phys[k] = false; gKeyHold[k] = 0; }
+    }
+}
+
 // ---- Boss Rush de prueba
 struct BossRush { std::string room; int frames = 1800; std::vector<int> objs; int idx = -1, at = 0, room_ = -1; long warn0 = 0; Stats st; } gBR;
 bool gBROn = false;
 void bossRushInit(Game& g, const std::string& saveDir) {
-    FILE* f = std::fopen((saveDir + "/bossrush.txt").c_str(), "r");
+    FILE* f = std::fopen(testPath(saveDir, "bossrush.txt").c_str(), "r");
     if (!f) return;
     char room[128], ob[128];
     if (std::fscanf(f, "%127s %d", room, &gBR.frames) == 2) {
@@ -142,17 +201,18 @@ std::string gSaveDir; double gLastStep = 0, gLastDraw = 0;
 void cheatsInit(Game& g);
 void debugTourInit(Game& g, const std::string& saveDir) {
     gSaveDir = saveDir;
-    gGod = fileExists(saveDir + "/godmode");
-    gMonkey = fileExists(saveDir + "/monkey");
+    gGod = testExists(saveDir, "godmode");
+    gMonkey = testExists(saveDir, "monkey");
     bossRushInit(g, saveDir);
-    { extern int gDrawDebug; if (fileExists(saveDir + "/drawdebug")) gDrawDebug = 400; }
-    if (fileExists(saveDir + "/drawdebug")) gfx::gUploadDebug = true;
-    gUnlockChars = fileExists(saveDir + "/unlockchars"); gVarUnlockChar = varByName(g, "unlock_char");
+    keysInit(g, saveDir);
+    { extern int gDrawDebug; if (testExists(saveDir, "drawdebug")) gDrawDebug = 400; }
+    if (testExists(saveDir, "drawdebug")) gfx::gUploadDebug = true;
+    gUnlockChars = testExists(saveDir, "unlockchars"); gVarUnlockChar = varByName(g, "unlock_char");
     if (gUnlockChars) logf("[prueba] personajes desbloqueados (global.unlock_char = 1, variable %d)\n", gVarUnlockChar);
     gVarHp = varByName(g, "hp"); gVarHpMax = varByName(g, "hp_max"); gVarDeath = varByName(g, "death"); gObjPlayer = objByName(g, "player_wyatt");
     cheatsInit(g);
     if (gGod) logf("[prueba] modo sin morir activo (hp=%d hp_max=%d jugador=%d)\n", gVarHp, gVarHpMax, gObjPlayer);
-    if (FILE* f = std::fopen((saveDir + "/tour.txt").c_str(), "r")) {
+    if (FILE* f = std::fopen(testPath(saveDir, "tour.txt").c_str(), "r")) {
         char w[128];
         while (std::fscanf(f, "%127s", w) == 1) {
             if (!std::strcmp(w, "FRAMES")) { int n; if (std::fscanf(f, "%d", &n) == 1) gTourFrames = std::max(60, n); continue; }
@@ -162,7 +222,7 @@ void debugTourInit(Game& g, const std::string& saveDir) {
         gTourOn = !gTour.empty();
         if (gTourOn) logf("[recorrido] %d salas, %d frames cada una (%.0f min)\n", (int)gTour.size(), gTourFrames, gTour.size() * gTourFrames / 3600.0);
     }
-    if (FILE* f = std::fopen((saveDir + "/stress.txt").c_str(), "r")) {
+    if (FILE* f = std::fopen(testPath(saveDir, "stress.txt").c_str(), "r")) {
         char room[128], ob[128];
         if (std::fscanf(f, "%127s %d %d %d", room, &gStress.every, &gStress.add, &gStress.max) == 4) {
             gStress.room = room;
@@ -177,6 +237,7 @@ void debugTourInit(Game& g, const std::string& saveDir) {
 void cheatsStep(Game& g);
 void debugTourBeforeStep(Game& g) {
     bossRushStep(g);
+    keysStep(g);
     if (gMonkey && !isMenuRoom(g.d.rooms[g.room].name)) monkeyStep(g);
     // unlockchars: el juego pone global.unlock_char = 1 al desbloquear el lore 63 (general_control Step) y lo vuelve a 0
     // en room_settings; aqui se mantiene a 1 para poder elegir a Gilda y Vladyn sin la partida completa
@@ -229,6 +290,12 @@ void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) 
         logf("[vars] %d instancias, media %.1f variables\n", n, n ? (double)tot / n : 0.0);
         for (size_t o = 0; o < per.size(); o++) if (per[o].first) logf("[vars] %-22s x%3d  %5.1f vars\n", g.d.objects[o].name.c_str(), per[o].first, (double)per[o].second / per[o].first);
     }
+    if (const char* e = std::getenv("VS_VARDUMP")) if (g.frame == std::atoi(e)) {   // TEMPORAL: valores numericos de todo
+        for (auto& p : g.insts) if (p->alive) p->vars.forEach([&](int k, const Value& v) {
+            if (v.isReal()) logf("[vardump] %s.%s = %.17g\n", g.d.objects[p->obj].name.c_str(), g.d.varNames[k].c_str(), v.r); });
+        for (size_t k = 0; k < g.globals.size(); k++) if (g.globals[k].isReal()) logf("[vardump] global.%s = %.17g\n", g.d.varNames[k].c_str(), g.globals[k].r);
+        for (auto& p : g.insts) if (p->alive) logf("[vardump] %s xy %.17g %.17g\n", g.d.objects[p->obj].name.c_str(), p->x, p->y);
+    }
     gLastStep = gLastStep * 0.9 + stepMs * 0.1; gLastDraw = gLastDraw * 0.9 + drawMs * 0.1;
     int inst = (int)g.insts.size();
     if (gTourOn && gTourIdx >= 0) gTourSt.add(stepMs, drawMs, frameMs, inst, g.frame - gTourAt < kEntryFrames);
@@ -241,34 +308,73 @@ void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) 
 // logica; los eventos Draw siguen dibujando la escena). Las opciones de encendido/apagado se guardan como archivos en
 // save/ (los mismos de las herramientas de prueba: godmode, unlockchars...), asi que siguen activas al volver a entrar.
 extern void (*gOverlayHook)(Game&);
+extern void (*gPreDrawHook)(Game&);
 void overlayBegin(Game& g);
 void overlaySize(int& w, int& h);
 void overlayRect(float x1, float y1, float x2, float y2, uint32_t bgr, float alpha);
 void overlayText(Game& g, double x, double y, const std::string& s, double scale, uint32_t bgr, double alpha);
 
+ModsCfg gMods;
+int rearTouchZone(int x, int y) {
+    if (gMods.touch == 0 || x < 0 || x >= 1920 || y < 0 || y >= 1088) return 0;
+    if (gMods.touch == 2) return x < 960 ? 1 : 2;
+    // Como Shotgun King Vita: dos zonas anchas solo en la parte de arriba del panel, con margen exterior y un gran
+    // hueco central, para que las palmas que sujetan la consola no pulsen L1/R1 sin querer.
+    if (x >= 120 && x < 820 && y >= 40 && y < 420) return 1;
+    if (x >= 1100 && x < 1800 && y >= 40 && y < 420) return 2;
+    return 0;
+}
+
 namespace {
 bool gInfMana = false, gShowPerf = false;
-bool gMenuOpen = false, gBlockInput = false; uint32_t gPrevBtn = 0; int gSel = 0, gRepeat = 0;
+int gMenu = 0;   // 0 ninguno, 1 TRUCOS, 2 MODS
+bool gMenuOpen = false, gBlockInput = false; uint32_t gPrevBtn = 0; int gSel = 0, gSelMods = 0, gRepeat = 0;
+bool gSelectHeld = false, gSelectUsed = false, gSelectLR = false;
 std::vector<int> gWarpRooms; int gWarpSel = 0; int gWarpTarget = -1;
 int gVarMp = -1, gVarSetMp = -1, gVarXp = -1, gVarXpMax = -1, gVarPStat = -1, gVarPSkill = -1;
 std::string gMsg; int gMsgFrames = 0;
 
 enum { C_GOD, C_MANA, C_LEVEL, C_POINTS, C_UNLOCK, C_WARP, C_PERF, C_CLOSE, C_COUNT };
+enum { M_LANG, M_FONT, M_ICONS, M_TOUCH, M_CLOSE, M_COUNT };
+
+void modsLoad() {
+    FILE* f = std::fopen((gSaveDir + "/mods.ini").c_str(), "r");
+    if (!f) return;
+    char k[64]; int v;
+    while (std::fscanf(f, " %63[^=]=%d", k, &v) == 2) {
+        std::string s = k;
+        if (s == "lang") gMods.lang = std::max(0, std::min(1, v));
+        else if (s == "font") gMods.font = std::max(0, std::min(1, v));
+        else if (s == "icons") gMods.icons = std::max(0, std::min(1, v));
+        else if (s == "touch") gMods.touch = std::max(0, std::min(2, v));
+    }
+    std::fclose(f);
+}
+void modsSave() {
+    if (FILE* f = std::fopen((gSaveDir + "/mods.ini").c_str(), "w")) {
+        std::fprintf(f, "lang=%d\nfont=%d\nicons=%d\ntouch=%d\n", gMods.lang, gMods.font, gMods.icons, gMods.touch);
+        std::fclose(f);
+    }
+    logf("[mods] lang=%d font=%d icons=%d touch=%d\n", gMods.lang, gMods.font, gMods.icons, gMods.touch);
+}
 
 void setFlagFile(const char* name, bool on) {
     std::string p = gSaveDir + "/" + name;
     if (on) { if (FILE* f = std::fopen(p.c_str(), "w")) { std::fputs("1", f); std::fclose(f); } }
-    else std::remove(p.c_str());
+    else {   // tambien las variantes con sufijo que subio una prueba (godmode_0815...)
+        for (int k = 0; k < 16; k++) { std::string q = testPath(gSaveDir, name); if (q.empty()) break; std::remove(q.c_str()); gSaveListDir.clear(); }
+    }
+    gSaveListDir.clear();
 }
 Instance* player(Game& g) { return gObjPlayer >= 0 ? g.firstOf(gObjPlayer) : nullptr; }
 bool inGameplay(Game& g) { const std::string& n = g.d.rooms[g.room].name; return !isMenuRoom(n) && n != "quit_room" && player(g); }
 void say(const std::string& m) { gMsg = m; gMsgFrames = 150; logf("[trucos] %s\n", m.c_str()); }
 
 std::string label(Game& g, int k) {
-    auto onoff = [](bool b) { return std::string(b ? "SI" : "NO"); };
+    auto onoff = [](bool b) { return std::string(b ? "SÍ" : "NO"); };
     switch (k) {
         case C_GOD: return "Modo dios (no mueres): " + onoff(gGod);
-        case C_MANA: return "Mana infinito: " + onoff(gInfMana);
+        case C_MANA: return "Maná infinito: " + onoff(gInfMana);
         case C_LEVEL: return "Subir un nivel";
         case C_POINTS: return "+5 puntos de atributo y de habilidad";
         case C_UNLOCK: return "Personajes desbloqueados: " + onoff(gUnlockChars);
@@ -283,27 +389,83 @@ std::string label(Game& g, int k) {
     }
 }
 
+// Iconos de botones de la Vita: el juego guarda el nombre de cada boton del mando en variables joy_*_name de
+// general_control (joy_name_script: "A", "B", "X", "Y", "LB", "RB", "LT", "RT", "Start", "Select") y de ahi lo copian los
+// tutoriales, la intro, los creditos y el menu de controles. Se cambian por codigos 0x11..0x1A que drawText dibuja como
+// iconos (ver fn_draw.cpp). Mapeo del runner en la Vita: A = X (cruz), B = circulo, X = cuadrado, Y = triangulo,
+// LB/RB = panel trasero izq/der, LT/RT = gatillos L/R.
+const char* kJoyNames[10] = {"A", "B", "X", "Y", "LT", "RT", "LB", "RB", "Start", "Select"};
+std::vector<int> gJoyVars; int gObjGeneral = -1;
+void joyIconsInit(Game& g) {
+    gObjGeneral = objByName(g, "general_control");
+    for (size_t v = 0; v < g.d.varNames.size(); v++) {
+        const std::string& n = g.d.varNames[v];
+        if (n.size() > 9 && n.compare(0, 4, "joy_") == 0 && n.compare(n.size() - 5, 5, "_name") == 0) gJoyVars.push_back((int)v);
+    }
+}
+void joyIconsApply(Game& g) {
+    if (gObjGeneral < 0) return;
+    for (Instance* in : g.instancesOf(gObjGeneral)) {
+        if (!in->alive) continue;
+        for (int v : gJoyVars) {
+            Value* p = in->vars.get(v);
+            if (!p || !p->isStr()) continue;
+            const std::string& s = p->sref();
+            if (gMods.icons) {
+                for (int k = 0; k < 10; k++) if (s == kJoyNames[k]) { *p = Value::str(std::string(1, (char)(0x11 + k))); break; }
+            } else if (s.size() == 1 && s[0] >= 0x11 && s[0] <= 0x1A) {
+                *p = Value::str(kJoyNames[s[0] - 0x11]);
+            }
+        }
+    }
+}
+
+// MODS: etiquetas bilingues (el menu tiene que entenderse antes de elegir el idioma)
+std::string modLabel(int k) {
+    switch (k) {
+        case M_LANG: return std::string("Idioma / Language: < ") + (gMods.lang ? "Español" : "English") + " >";
+        case M_FONT: return std::string("Fuente / Font: < ") + (gMods.font ? "Sistema de la Vita" : "Original") + " >";
+        case M_ICONS: return std::string("Botones / Buttons: < ") + (gMods.icons ? "PS Vita" : "Original (Xbox)") + " >";
+        case M_TOUCH: {
+            const char* t[3] = {"Apagado / Off", "Solo arriba / Top only", "Entero / Full"};
+            return std::string("Panel trasero / Rear touch: < ") + t[gMods.touch] + " >";
+        }
+        default: return "Cerrar / Close";
+    }
+}
+void modActivate(Game& g, int k, int dir) {
+    int d = dir == 0 ? 1 : dir;
+    switch (k) {
+        case M_LANG: gMods.lang ^= 1; say(gMods.lang ? "Español: se aplica al volver al menú principal (Salir) o al abrir el juego" : "English: applies when you return to the main menu (Quit) or restart"); break;
+        case M_FONT: gMods.font ^= 1; break;
+        case M_ICONS: gMods.icons ^= 1; break;
+        case M_TOUCH: gMods.touch = (gMods.touch + d + 3) % 3; break;
+        case M_CLOSE: if (dir == 0) { gMenuOpen = false; gBlockInput = true; } return;
+    }
+    (void)g; modsSave();
+}
+
 void activate(Game& g, int k, int dir) {   // dir 0 = X; -1/+1 = izquierda/derecha
     switch (k) {
         case C_GOD: gGod = !gGod; setFlagFile("godmode", gGod); say(gGod ? "Modo dios activado" : "Modo dios desactivado"); break;
-        case C_MANA: gInfMana = !gInfMana; setFlagFile("infmana", gInfMana); say(gInfMana ? "Mana infinito activado" : "Mana infinito desactivado"); break;
+        case C_MANA: gInfMana = !gInfMana; setFlagFile("infmana", gInfMana); say(gInfMana ? "Maná infinito activado" : "Maná infinito desactivado"); break;
         case C_UNLOCK:
             gUnlockChars = !gUnlockChars; setFlagFile("unlockchars", gUnlockChars);
-            say(gUnlockChars ? "Personajes desbloqueados en la seleccion de personaje" : "Personajes: como en la partida");
+            say(gUnlockChars ? "Personajes desbloqueados en la selección de personaje" : "Personajes: como en la partida");
             break;
         case C_PERF: gShowPerf = !gShowPerf; setFlagFile("showperf", gShowPerf); break;
         case C_LEVEL:
             if (dir != 0) break;
             if (!inGameplay(g) || gVarXp < 0 || gVarXpMax < 0) { say("Solo dentro de la partida"); break; }
             g.globals[gVarXp] = Value(g.globals[gVarXpMax].num() + 1);   // el propio juego sube el nivel en el Step del jugador
-            say("Subes un nivel (maximo 20)");
+            say("Subes un nivel (máximo 20)");
             break;
         case C_POINTS:
             if (dir != 0) break;
             if (!inGameplay(g) || gVarPStat < 0 || gVarPSkill < 0) { say("Solo dentro de la partida"); break; }
             g.globals[gVarPStat] = Value(g.globals[gVarPStat].num() + 5);
             g.globals[gVarPSkill] = Value(g.globals[gVarPSkill].num() + 5);
-            say("+5 puntos de atributo y +5 de habilidad: gastalos en el menu de pausa");
+            say("+5 puntos de atributo y +5 de habilidad: gástalos en el menú de pausa");
             break;
         case C_WARP:
             if (gWarpRooms.empty()) break;
@@ -318,9 +480,11 @@ void activate(Game& g, int k, int dir) {   // dir 0 = X; -1/+1 = izquierda/derec
 }
 
 void drawOverlay(Game& g) {
-    if (!gMenuOpen && !gShowPerf && gMsgFrames <= 0) return;
+    static const char* textTest = std::getenv("VS_TEXTTEST");   // prueba de texto (acentos, iconos) en PC
+    if (!gMenuOpen && !gShowPerf && gMsgFrames <= 0 && !textTest) return;
     overlayBegin(g);
     int W, H; overlaySize(W, H);
+    if (textTest) { overlayRect(0, 60, (float)W, 200, 0, 0.7f); overlayText(g, 20, 80, textTest, 1.0, 0xFFFFFF, 1); overlayText(g, 20, 150, textTest, 0.5, 0x00E0FF, 1); }
     if (gShowPerf) {
         char b[96]; std::snprintf(b, sizeof b, "%d fps | logica %.1f ms | dibujo %.1f ms", g.fps, gLastStep, gLastDraw);
         overlayRect(W - 364.f, H - 28.f, W - 4.f, H - 4.f, 0, 0.6f);   // abajo a la derecha: arriba esta la vida
@@ -331,13 +495,16 @@ void drawOverlay(Game& g) {
         overlayRect(0, 0, (float)W, (float)H, 0, 0.45f);
         overlayRect(x0, y0, x1, y1, 0x201010, 0.92f);
         overlayRect(x0, y0, x1, y0 + 3, 0x00CCFF, 1);
-        overlayText(g, x0 + 20, y0 + 12, "TRUCOS", 0.6, 0x00CCFF, 1);
-        for (int k = 0; k < C_COUNT; k++) {
+        bool mods = gMenu == 2;
+        overlayText(g, x0 + 20, y0 + 12, mods ? "MODS" : "TRUCOS", 0.6, 0x00CCFF, 1);
+        int n = mods ? M_COUNT : C_COUNT, sel = mods ? gSelMods : gSel;
+        for (int k = 0; k < n; k++) {
             float y = y0 + 60 + k * 36;
-            if (k == gSel) overlayRect(x0 + 10, y - 4, x1 - 10, y + 28, 0x604020, 0.95f);
-            overlayText(g, x0 + 24, y, label(g, k), 0.45, k == gSel ? 0x00E0FF : 0xFFFFFF, 1);
+            if (k == sel) overlayRect(x0 + 10, y - 4, x1 - 10, y + 28, 0x604020, 0.95f);
+            overlayText(g, x0 + 24, y, mods ? modLabel(k) : label(g, k), 0.45, k == sel ? 0x00E0FF : 0xFFFFFF, 1);
         }
-        overlayText(g, x0 + 20, y1 - 32, "X elegir - Izq/Der cambiar (L/R de 10 en 10) - O o SELECT cerrar", 0.35, 0xB0B0B0, 1);
+        overlayText(g, x0 + 20, y1 - 32, mods ? "\x11 / Izq / Der cambiar - \x12 o SELECT cerrar   (SELECT + L + R: trucos)"
+                                              : "\x11 elegir - Izq/Der cambiar (L/R de 10 en 10) - \x12 o SELECT cerrar", 0.35, 0xB0B0B0, 1);
     }
     if (gMsgFrames > 0) {
         float y = H - 46.f;
@@ -348,8 +515,9 @@ void drawOverlay(Game& g) {
 } // namespace
 
 void cheatsInit(Game& g) {
-    gInfMana = fileExists(gSaveDir + "/infmana");
-    gShowPerf = fileExists(gSaveDir + "/showperf");
+    gInfMana = testExists(gSaveDir, "infmana");
+    gShowPerf = testExists(gSaveDir, "showperf");
+    modsLoad();
     gVarMp = varByName(g, "mp"); gVarSetMp = varByName(g, "set_mp");
     gVarXp = varByName(g, "xp"); gVarXpMax = varByName(g, "xp_max");
     gVarPStat = varByName(g, "point_stat"); gVarPSkill = varByName(g, "point_skill");
@@ -361,9 +529,12 @@ void cheatsInit(Game& g) {
         gWarpRooms.push_back((int)r);
     }
     gOverlayHook = drawOverlay;
+    joyIconsInit(g);
+    gPreDrawHook = joyIconsApply;
 }
 
 void cheatsStep(Game& g) {
+    joyIconsApply(g);
     if (gInfMana && gVarMp >= 0 && gVarSetMp >= 0)
         if (Instance* p = player(g)) p->vars[gVarMp] = g.globals[gVarSetMp];
     // tras saltar de sala: si el jugador queda fuera de los limites de la sala, se le pone dentro
@@ -382,13 +553,35 @@ bool cheatsInput(Game& g, uint32_t b) {
     auto clearPad = [&]() { for (bool& x : g.in.gpBtn) x = false; for (float& a : g.in.gpAxis) a = 0; };
     if (!gMenuOpen) {
         if (gBlockInput) { if (b == 0) gBlockInput = false; else { clearPad(); return false; } }
-        if (pr & 64) { gMenuOpen = true; gRepeat = 0; clearPad(); return true; }
+        // SELECT: al soltarlo abre MODS; si mientras se mantiene se pulsan L y R, abre TRUCOS
+        if (pr & 64) { gSelectHeld = true; gSelectUsed = false; gSelectLR = false; }
+        if (gSelectHeld) {
+            if ((b & 64) && (b & 128) && (b & 256) && !gSelectUsed) {
+                gSelectUsed = true; gMenu = 1; gMenuOpen = true; gRepeat = 0; clearPad(); return true;
+            }
+            if (b & (128 | 256)) gSelectLR = true;   // tocar L o R con SELECT nunca abre MODS al soltar
+            if (!(b & 64)) {
+                gSelectHeld = false;
+                if (!gSelectUsed && !gSelectLR) { gMenu = 2; gMenuOpen = true; gRepeat = 0; clearPad(); return true; }
+            }
+            clearPad();   // mientras se mantiene SELECT el juego no recibe el mando (SELECT no tiene uso en el juego)
+            return false;
+        }
         return false;
     }
     clearPad();
     if (gMsgFrames > 0) gMsgFrames--;
     uint32_t dirs = b & 15, act = pr;   // repeticion al mantener una direccion
     if (dirs) { if (++gRepeat > 24 && gRepeat % 4 == 0) act |= dirs; } else gRepeat = 0;
+    if (gMenu == 2) {
+        if (act & 1) gSelMods = (gSelMods + M_COUNT - 1) % M_COUNT;
+        if (act & 2) gSelMods = (gSelMods + 1) % M_COUNT;
+        if (pr & 4) modActivate(g, gSelMods, -1);
+        if (pr & 8) modActivate(g, gSelMods, +1);
+        if (gMenuOpen && (pr & 16)) modActivate(g, gSelMods, 0);
+        if (gMenuOpen && (pr & (32 | 64))) { gMenuOpen = false; gBlockInput = true; }
+        return true;
+    }
     if (act & 1) gSel = (gSel + C_COUNT - 1) % C_COUNT;
     if (act & 2) gSel = (gSel + 1) % C_COUNT;
     if (act & 4) activate(g, gSel, -1);

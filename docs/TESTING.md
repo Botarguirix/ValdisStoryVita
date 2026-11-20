@@ -1,8 +1,19 @@
-# Menú de TRUCOS y herramientas de prueba
+# Menús MODS y TRUCOS, y herramientas de prueba
+
+## Menú de MODS (en el juego)
+
+**SELECT** (pulsar y soltar) abre el menú de MODS; en PC, **F3**. Son ajustes del port, no trampas. Se guardan en `save/mods.ini`. Mientras está abierto, el juego queda en pausa.
+
+| Opción | Efecto |
+|---|---|
+| Idioma / Language | English (original) o Español (traducción de fans, `lang/es.txt` dentro del VPK). Se aplica al volver al menú principal (Salir) o al abrir el juego |
+| Fuente / Font | Original (la fuente de sprites del juego; las tildes, la ñ y ¿ ¡ las dibuja el runner) o Sistema de la Vita (fuente latina del sistema con scePvf: no se distribuye ningún archivo de fuente) |
+| Botones / Buttons | PS Vita (✕ ○ □ △ L R L1 R1 START SELECT dibujados por el runner) u Original (nombres de mando de Xbox: A, B, X, Y, LB, RT...) |
+| Panel trasero / Rear touch | Solo arriba (por defecto: dos zonas anchas en la parte de arriba con un hueco central, como Shotgun King Vita), Entero (mitades izquierda/derecha) o Apagado |
 
 ## Menú de TRUCOS (en el juego)
 
-**SELECT** abre el menú (SELECT no tiene uso en los controles del juego; en PC, **F2**). Mientras está abierto, el juego queda en pausa.
+**SELECT + L + R** abre el menú (mantener SELECT y pulsar L y R; en PC, **F2**). SELECT no tiene uso en los controles por defecto del juego. Mientras está abierto, el juego queda en pausa.
 
 | Opción | Efecto |
 |---|---|
@@ -18,7 +29,9 @@ Las opciones de encendido y apagado se recuerdan entre sesiones (son los mismos 
 
 ## Herramientas de prueba (archivos)
 
-Se activan creando archivos en `ux0:data/valdis/save/` (en PC, en la carpeta de partidas que se pase al runner). Si no existen, el juego funciona normal. Al terminar el port pasarán a un menú de trucos dentro del juego (roadmap, sección 8).
+Se activan creando archivos en `ux0:data/valdis/save/` (en PC, en la carpeta de partidas que se pase al runner). Si no existen, el juego funciona normal. También valen con un sufijo antes de la extensión (`godmode_0815`, `keys_0815.txt`).
+
+**Con vita-agent:** el agente no deja volver a crear un archivo en una ruta de la que antes movió otro: la subida dice "completa", pero el archivo no aparece. Sube cada archivo con un nombre nuevo a `pruebas/` y luego muévelo con `fs move` a su sitio, que sí funciona. Con la pantalla apagada (`screen off`), el juego se congela: vitaGL espera a la pantalla. Haz las pruebas con la pantalla encendida.
 
 | Archivo | Efecto |
 |---|---|
@@ -28,6 +41,7 @@ Se activan creando archivos en `ux0:data/valdis/save/` (en PC, en la carpeta de 
 | `unlockchars` | Los cuatro personajes en la selección (mantiene `global.unlock_char = 1`; el juego lo activa al desbloquear el lore 63) |
 | `monkey` | Botones al azar en las salas de juego: moverse, saltar, atacar, magia, bloquear (nunca magia + bloqueo juntos, que abre el menú de hechizos). Con `godmode` y `tour.txt` prueba el código de cada personaje en todas las salas |
 | `bossrush.txt` | Boss Rush de prueba: `SALA FRAMES JEFE1 JEFE2 ...` (p. ej. `arena_1 1800 azudor shu itahn ...`). Va a la sala y saca cada jefe junto al jugador; línea `[jefe]` con coste, frames perdidos, si sigue vivo y avisos nuevos. Con `monkey` y `godmode` hay combate real |
+| `keys.txt` | Pulsaciones programadas, igual que `--key`/`--onroom` del PC: líneas `at FRAME TECLA` y `onroom SALA RETRASO TECLA` (códigos de tecla GMS: 68 = D, 39 = derecha, 13 = Enter). Sirve para empezar partida sola con un personaje concreto |
 | `nodrawskip` | Desactiva el dibujo a 30 fps cuando la lógica no llega (para medir el coste real de cada frame) |
 | `godmode` | El jugador no muere en combate (`hp` a 999999 en cada frame). El autoguardado puede guardar ese valor |
 | `sampler` | Muestreador de perfiles: un hilo en el núcleo 2 anota cada 0,5 ms qué script y qué función integrada se ejecutan. Informe `[muestreo]` cada 10 s. Sin coste en el hilo principal |

@@ -84,8 +84,10 @@ Son los controles por defecto del juego con mando; se pueden reasignar en el men
 | R | Magia |
 | L | Asistencia |
 | R + ○ | Menú de hechizos |
-| Panel trasero izquierdo / derecho | Mapa (L1) / libre (R1) |
-| START / SELECT | Menú / menú de TRUCOS del port (ver [TESTING](docs/TESTING.md)) |
+| Panel trasero, parte de arriba, izquierda / derecha | Mapa (L1) / libre (R1) (zonas configurables en MODS) |
+| START | Menú |
+| SELECT | Menú de MODS del port: idioma (inglés / español), fuente, iconos de botones, panel trasero (ver [TESTING](docs/TESTING.md)) |
+| SELECT + L + R | Menú de TRUCOS del port |
 
 La imagen se genera con `python -I tools/make_controls.py`.
 
@@ -165,7 +167,7 @@ Runs at stock clocks (500/222 MHz). Overclocking is your own choice and risk (he
 
 ### Controls
 
-See the image above: ✕ jump/accept, ○ block/cancel, □ attack, △ attack 2, R magic, L assist, R + ○ spell menu, rear touch left = map, START menu, SELECT port cheats menu. Rebind them in the game's controls menu.
+See the image above: ✕ jump/accept, ○ block/cancel, □ attack, △ attack 2, R magic, L assist, R + ○ spell menu, rear touch upper-left = map, START menu, SELECT port MODS menu (language English/Spanish, font, button icons, rear touch), SELECT + L + R port cheats menu. Rebind them in the game's controls menu.
 
 ### Building
 

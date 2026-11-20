@@ -15,8 +15,10 @@
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/message_dialog.h>
 #include <psp2/power.h>
+#include <psp2/pvf.h>
 #include <vitaGL.h>
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <malloc.h>
 #include <cstring>
@@ -34,7 +36,7 @@
 int _newlib_heap_size_user = 120 * 1024 * 1024;
 unsigned int sceUserMainThreadStackSize = 4 * 1024 * 1024; // scripts GML anidados (script_execute en cascada)
 
-namespace vs { extern int gWinW, gWinH; }
+namespace vs { extern int gWinW, gWinH; extern std::vector<std::string> gLangDirs; }
 using namespace vs;
 
 static constexpr const char* kRoot = "ux0:data/valdis";
@@ -185,6 +187,70 @@ static void samplerDump(vs::Game& g) {
 static bool gDrawSkip = true;
 long gDiscardFrames = 0;   // frames sin dibujar (se informan en [perf])
 
+// Fuente alternativa del menu de MODS: la fuente latina del sistema de la Vita (scePvf), en negrita. Se lee de la
+// propia consola: el VPK no lleva ningun archivo de fuente.
+namespace vs {
+extern bool (*gFontOpen)(float px, float& ascent, float& lineH);
+extern bool (*gFontGlyph)(uint32_t cp, std::vector<uint8_t>& alpha, int& w, int& h, int& xoff, int& yoff, float& adv);
+}
+static ScePvfLibId gPvfLib = nullptr; static ScePvfFontId gPvfFont = nullptr;
+static ScePvfPointer pvfAlloc(ScePvfPointer, ScePvfU32 n) { return std::malloc(n); }
+static ScePvfPointer pvfRealloc(ScePvfPointer, ScePvfPointer p, ScePvfU32 n) { return std::realloc(p, n); }
+static void pvfFree(ScePvfPointer, ScePvfPointer p) { std::free(p); }
+static bool vitaFontOpen(float px, float& ascent, float& lineH) {
+    ScePvfInitRec init{}; init.maxNumFonts = 4; init.allocFunc = pvfAlloc; init.reallocFunc = pvfRealloc; init.freeFunc = pvfFree;
+    ScePvfError err = 0;
+    gPvfLib = scePvfNewLib(&init, &err);
+    if (!gPvfLib) { vs::logf("[fuente] scePvfNewLib fallo 0x%08X\n", (unsigned)err); return false; }
+    scePvfSetResolution(gPvfLib, 72.f, 72.f);   // 72 ppp: un punto = un pixel
+    ScePvfFontStyleInfo st{}; st.familyCode = SCE_PVF_FAMILY_SANSERIF; st.style = SCE_PVF_STYLE_BOLD; st.languageCode = SCE_PVF_LANGUAGE_LATIN;
+    ScePvfFontIndex idx = scePvfFindOptimumFont(gPvfLib, &st, &err);
+    if (idx >= 0) gPvfFont = scePvfOpen(gPvfLib, idx, SCE_PVF_FILEBASEDSTREAM, &err);
+    if (!gPvfFont) gPvfFont = scePvfOpenDefaultLatinFontOnSharedMemory(gPvfLib, &err);
+    if (!gPvfFont) { vs::logf("[fuente] no se pudo abrir la fuente del sistema 0x%08X\n", (unsigned)err); return false; }
+    scePvfSetCharSize(gPvfFont, px, px);
+    // En la Vita, scePvfGetFontInfo y los campos bitmap* de ScePvfCharInfo salen vacios o invalidos; las metricas del
+    // glifo (glyphMetrics, en 1/64 de pixel) si son correctas. Ascenso con la 'H' y descenso con la 'g'.
+    auto bearingY = [](uint16_t c, float& top, float& height) {
+        ScePvfCharInfo ci{};
+        if (scePvfGetCharInfo(gPvfFont, c, &ci) < 0) return false;
+        top = ci.glyphMetrics.horizontalBearingY64 / 64.f; height = ci.glyphMetrics.height64 / 64.f;
+        return std::isfinite(top) && std::isfinite(height) && height > 0;
+    };
+    float hTop = 0, hH = 0, gTop = 0, gH = 0;
+    float asc = bearingY('H', hTop, hH) ? hTop * 1.15f : px * 0.8f;
+    float desc = bearingY('g', gTop, gH) ? std::max(0.f, gH - gTop) : px * 0.2f;
+    ascent = asc; lineH = asc + desc;
+    if (!std::isfinite(lineH) || lineH <= 0) { ascent = px * 0.8f; lineH = px; }
+    vs::logf("[fuente] sistema: indice %d, ascenso %.1f, descenso %.1f\n", (int)idx, (double)asc, (double)desc);
+    return true;
+}
+static bool vitaFontGlyph(uint32_t cp, std::vector<uint8_t>& alpha, int& w, int& h, int& xoff, int& yoff, float& adv) {
+    if (!gPvfFont || cp > 0xFFFF) return false;
+    if (cp != 32 && !scePvfIsElement(gPvfFont, (ScePvfCharCode)cp)) return false;
+    ScePvfCharInfo ci{};
+    if (scePvfGetCharInfo(gPvfFont, (ScePvfCharCode)cp, &ci) < 0) return false;
+    const ScePvfIGlyphMetricsInfo& m = ci.glyphMetrics;
+    adv = m.horizontalAdvance64 / 64.f;
+    // caja del glifo a partir de las metricas, con 1 pixel de margen por cada lado
+    int left = (int)std::floor(m.horizontalBearingX64 / 64.f) - 1, top = (int)std::ceil(m.horizontalBearingY64 / 64.f) + 1;
+    w = (int)std::ceil(m.width64 / 64.f) + 3; h = (int)std::ceil(m.height64 / 64.f) + 3;
+    if (cp == 32 || m.width64 == 0 || m.height64 == 0) { w = h = 0; }
+    if (w > 256 || h > 256) return false;
+    xoff = left; yoff = -top;
+    alpha.assign((size_t)std::max(0, w) * std::max(0, h), 0);
+    int ink = 0;
+    if (w > 0 && h > 0) {
+        ScePvfUserImageBufferRec ib{}; ib.pixelFormat = SCE_PVF_USERIMAGE_DIRECT8;
+        ib.xPos64 = -left * 64; ib.yPos64 = top * 64;   // origen (linea base) dentro del bitmap
+        ib.rect.width = (ScePvfU16)w; ib.rect.height = (ScePvfU16)h; ib.bytesPerLine = (ScePvfU16)w; ib.buffer = alpha.data();
+        if (scePvfGetCharGlyphImage(gPvfFont, (ScePvfCharCode)cp, &ib) < 0) return false;
+        for (uint8_t v : alpha) ink += v > 0;
+    }
+    if (cp == 'A') vs::logf("[fuente] 'A': %dx%d izq %d arriba %d avance %.1f, %d pixeles con tinta\n", w, h, left, top, (double)adv, ink);
+    return true;
+}
+
 int main(int, char**) {
     { SceUID f = sceIoOpen("ux0:data/valdis/save/boot.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777); if (f >= 0) sceIoClose(f); }
     bootMark("main");
@@ -247,6 +313,7 @@ int main(int, char**) {
     SceIoStat st;
     if (sceIoGetstat((gameDir + "/data_5").c_str(), &st) < 0)
         showError("Faltan los archivos externos del juego.\n\nCopia data_1, data_2, data_5 y los music_*.ogg de tu carpeta de Steam a\nux0:data/valdis/game/");
+    vs::gLangDirs = {root + "/lang", "app0:lang"};   // traduccion: ux0:data/valdis/lang (para probar) o la del VPK
     if (!game.init(dataDir, gameDir, saveDir, err)) { showError("Error al iniciar: " + err); bgio::flush(); sceKernelExitProcess(0); return 0; }
     logf("[sistema] CPU %d MHz, GPU %d MHz | DMR: %s | 4.o nucleo: %s | memoria vitaGL libre: VRAM %u MB, RAM %u MB, phycont %u MB, total %u MB\n",
          scePowerGetArmClockFrequency(), scePowerGetGpuClockFrequency(),
@@ -276,9 +343,10 @@ int main(int, char**) {
         vs::logf("[warp] %d saltos de depuracion cargados de save/warp.txt\n", (int)warps.size());
     }
     int roomEnterFrame = 0, lastRoom = -1;
+    vs::gFontOpen = vitaFontOpen; vs::gFontGlyph = vitaFontGlyph;
     vs::debugTourInit(game, saveDir);   // save/tour.txt, stress.txt, godmode (pruebas de rendimiento)
     {   // save/nodrawskip: desactiva el dibujo a 30 fps (para medir el coste real de cada frame)
-        SceIoStat ns; gDrawSkip = sceIoGetstat((saveDir + "/nodrawskip").c_str(), &ns) < 0;
+        gDrawSkip = !vs::testFileExists(saveDir, "nodrawskip");
         vs::logf("[sistema] dibujo a 30 fps cuando la logica no llega: %s\n", gDrawSkip ? "activo" : "desactivado (save/nodrawskip)");
     }
     bool discardNext = false;
@@ -313,7 +381,10 @@ int main(int, char**) {
         g[12] = b & SCE_CTRL_UP; g[13] = b & SCE_CTRL_DOWN; g[14] = b & SCE_CTRL_LEFT; g[15] = b & SCE_CTRL_RIGHT;
         SceTouchData touch{};
         if (sceTouchPeek(SCE_TOUCH_PORT_BACK, &touch, 1) > 0)
-            for (int t = 0; t < (int)touch.reportNum; t++) { if (touch.report[t].x < 960) g[4] = true; else g[5] = true; }
+            for (int t = 0; t < (int)touch.reportNum; t++) {   // zonas del panel trasero: menu de MODS (por defecto solo arriba)
+                int z = vs::rearTouchZone(touch.report[t].x, touch.report[t].y);
+                if (z == 1) g[4] = true; else if (z == 2) g[5] = true;
+            }
         auto axis = [](uint8_t v) { float f = (v - 128) / 127.f; return std::fabs(f) < 0.15f ? 0.f : std::max(-1.f, std::min(1.f, f)); };
         game.in.gpAxis[0] = axis(pad.lx); game.in.gpAxis[1] = axis(pad.ly);
         game.in.gpAxis[2] = axis(pad.rx); game.in.gpAxis[3] = axis(pad.ry);
@@ -323,7 +394,7 @@ int main(int, char**) {
         // pantalla. Nunca dos seguidos. Asi el juego sigue a 60 pasos por segundo en vez de ir a camara lenta.
         bool discard = gDrawSkip && discardNext;
         gfx::setDiscard(discard);
-        uint32_t cb = 0;   // menu de trucos: SELECT lo abre
+        uint32_t cb = 0;   // menus: SELECT abre MODS, SELECT + L + R abre TRUCOS
         if (b & SCE_CTRL_UP) cb |= 1; if (b & SCE_CTRL_DOWN) cb |= 2; if (b & SCE_CTRL_LEFT) cb |= 4; if (b & SCE_CTRL_RIGHT) cb |= 8;
         if (b & SCE_CTRL_CROSS) cb |= 16; if (b & SCE_CTRL_CIRCLE) cb |= 32; if (b & SCE_CTRL_SELECT) cb |= 64;
         if (b & SCE_CTRL_LTRIGGER) cb |= 128; if (b & SCE_CTRL_RTRIGGER) cb |= 256;

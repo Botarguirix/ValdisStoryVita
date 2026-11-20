@@ -81,14 +81,14 @@ label(1470, 213, 'R  ·  Magia / Magic', None, 'r'); line((1320, 255), (1320, 29
 # izquierda (el texto no pasa de x=300 para no tapar la consola)
 label(55, 360, 'Cruceta / D-pad', 'Mover / Move'); line((60, 440), (350, 440), (385, 460))
 label(55, 560, 'Stick izq. / L-stick', 'Mover / Move'); line((60, 640), (350, 640), (404, 660))
-label(55, 860, 'Panel trasero / Rear touch', 'Izq.: Mapa (L1) · Der.: libre (R1)')
-d.text((55, 936), 'Left: Map (L1) · Right: free (R1)', font=font(23), fill=SUB)
+label(55, 860, 'Panel trasero / Rear touch', 'Arriba: izq. Mapa (L1) · der. libre (R1)')
+d.text((55, 936), 'Top: left Map (L1) · right free (R1)', font=font(23), fill=SUB)
 # derecha
 label(1500, 340, 'Ataque 2 / Attack 2', 'Ataque secundario', sym=col('tri')); line((1379, 395), (1460, 370), (1490, 370))
 label(1500, 455, 'Bloquear / Block', 'Cancelar / Cancel', sym=col('ci')); line((1444, 470), (1490, 480))
 label(1500, 570, 'Saltar / Jump', 'Aceptar / Accept', sym=col('x')); line((1376, 545), (1460, 595), (1490, 595))
 label(1120, 860, 'Atacar / Attack', None, 'r', sym=col('sq')); line((1256, 465), (1245, 465), (1245, 845), (1130, 845))
-label(1745, 860, 'START  ·  Menú / Menu', 'SELECT · Trucos / Cheats', 'r'); line((1390, 785), (1390, 845), (1500, 845))
+label(1745, 860, 'START  ·  Menú / Menu', 'SELECT · Mods   ·   SELECT+L+R · Trucos / Cheats', 'r'); line((1390, 785), (1390, 845), (1500, 845))
 
 d.rounded_rectangle((65, 1000, 1735, 1080), radius=22, fill=(214, 228, 240))
 d.text((900, 1027), 'R + ○  ·  Menú de hechizos / Spell menu', font=font(26, True), fill=INK, anchor='mm')

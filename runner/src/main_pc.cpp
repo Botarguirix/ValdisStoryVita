@@ -16,7 +16,39 @@ namespace vs { void geomTouchObj(int obj); extern uint64_t gGeomEpoch; }
 #include <string>
 #include <sys/stat.h>
 
-namespace vs { extern int gWinW, gWinH; }
+namespace vs { extern int gWinW, gWinH; extern std::vector<std::string> gLangDirs; }
+
+// Fuente alternativa del menu de MODS en PC (solo para probar): una TTF de Windows con stb_truetype. En la Vita se usa
+// la fuente del sistema de la consola (main_vita.cpp); ningun archivo de fuente va en el VPK ni en el repositorio.
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "../third_party/stb_truetype.h"
+namespace vs {
+extern bool (*gFontOpen)(float px, float& ascent, float& lineH);
+extern bool (*gFontGlyph)(uint32_t cp, std::vector<uint8_t>& alpha, int& w, int& h, int& xoff, int& yoff, float& adv);
+}
+static std::vector<unsigned char> gTtf; static stbtt_fontinfo gTtfInfo; static float gTtfScale = 1;
+static bool pcFontOpen(float px, float& ascent, float& lineH) {
+    for (const char* path : {"C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf"}) {
+        FILE* f = std::fopen(path, "rb"); if (!f) continue;
+        std::fseek(f, 0, SEEK_END); long n = std::ftell(f); std::fseek(f, 0, SEEK_SET);
+        gTtf.resize(n); size_t rd = std::fread(gTtf.data(), 1, n, f); std::fclose(f);
+        if ((long)rd != n || !stbtt_InitFont(&gTtfInfo, gTtf.data(), 0)) continue;
+        int a, d, g; stbtt_GetFontVMetrics(&gTtfInfo, &a, &d, &g);
+        gTtfScale = stbtt_ScaleForPixelHeight(&gTtfInfo, px);
+        ascent = a * gTtfScale; lineH = (a - d) * gTtfScale;
+        return true;
+    }
+    return false;
+}
+static bool pcFontGlyph(uint32_t cp, std::vector<uint8_t>& alpha, int& w, int& h, int& xoff, int& yoff, float& adv) {
+    int gi = stbtt_FindGlyphIndex(&gTtfInfo, (int)cp); if (gi == 0 && cp != 32) return false;
+    int aw, lsb; stbtt_GetGlyphHMetrics(&gTtfInfo, gi, &aw, &lsb); adv = aw * gTtfScale;
+    int x0, y0, x1, y1; stbtt_GetGlyphBitmapBox(&gTtfInfo, gi, gTtfScale, gTtfScale, &x0, &y0, &x1, &y1);
+    w = std::max(0, x1 - x0); h = std::max(0, y1 - y0); xoff = x0; yoff = y0;
+    alpha.assign((size_t)w * h, 0);
+    if (w > 0 && h > 0) stbtt_MakeGlyphBitmap(&gTtfInfo, alpha.data(), w, h, w, gTtfScale, gTtfScale, gi);
+    return true;
+}
 using namespace vs;
 
 static int mapKey(SDL_Keycode k) {
@@ -164,7 +196,9 @@ int main(int argc, char** argv) {
         gWinW = tmp.winW; gWinH = tmp.winH;
     }
     if (detSeed >= 0) { game.det = true; game.detSeed = (uint32_t)detSeed; }
+    vs::gLangDirs = {saveDir + "/../lang", "lang"};   // traduccion: junto a las partidas o en la carpeta lang del repo
     if (!game.init(dataDir, gameDir, saveDir, err)) { std::printf("error: %s\n", err.c_str()); return 1; }
+    vs::gFontOpen = pcFontOpen; vs::gFontGlyph = pcFontGlyph;
     vs::debugTourInit(game, saveDir);   // save/tour.txt, stress.txt, godmode
     if (noAot) game.aotEnabled = false;
 
@@ -184,7 +218,7 @@ int main(int argc, char** argv) {
             } else if (e.type == SDL_CONTROLLERDEVICEADDED && !pad) pad = SDL_GameControllerOpen(e.cdevice.which);
             else if (e.type == SDL_CONTROLLERDEVICEREMOVED && pad) { SDL_GameControllerClose(pad); pad = nullptr; }
         }
-        game.in.gpConnected = pad != nullptr;
+        game.in.gpConnected = pad != nullptr || std::getenv("VS_FAKEPAD");   // VS_FAKEPAD: el juego cree que hay mando (iconos)
         if (pad) {
             static const SDL_GameControllerButton map[16] = {
                 SDL_CONTROLLER_BUTTON_A, SDL_CONTROLLER_BUTTON_B, SDL_CONTROLLER_BUTTON_X, SDL_CONTROLLER_BUTTON_Y,
@@ -221,12 +255,13 @@ int main(int argc, char** argv) {
                 for (size_t o = 0; o < game.d.objects.size(); o++) if (game.d.objects[o].name == "player_wyatt")
                     for (auto* in : game.instancesOf((int)o)) { in->x = sp.x; in->y = sp.y; vs::geomTouchObj(in->obj); vs::gGeomEpoch++; }
             for (auto& [fr, k] : keyEvents) if (fr == game.frame) { if (k > 0) game.in.phys[k] = true; else game.in.phys[-k] = false; }
-            {   // menu de trucos: F2 (o VS_CHEATSEQ="iter:bits,..." para pruebas con capturas; mismos bits que en la Vita)
+            {   // menus TRUCOS/MODS (o VS_CHEATSEQ="iter:bits,..." para pruebas con capturas; mismos bits que en la Vita)
                 static long cheatIter = 0; static std::vector<std::pair<long, uint32_t>> seq; static bool seqRead = false;
                 if (!seqRead) { seqRead = true; if (const char* e = std::getenv("VS_CHEATSEQ")) { long it; unsigned bt; int n;
                     while (std::sscanf(e, "%ld:%u%n", &it, &bt, &n) == 2) { seq.push_back({it, bt}); e += n; if (*e == ',') e++; else break; } } }
                 const Uint8* ks = SDL_GetKeyboardState(nullptr);
-                uint32_t cb = ks[SDL_SCANCODE_F2] ? 64u : 0u;
+                // F2 = TRUCOS (SELECT + L + R en la Vita), F3 = MODS (SELECT)
+                uint32_t cb = (ks[SDL_SCANCODE_F2] ? 64u | 128u | 256u : 0u) | (ks[SDL_SCANCODE_F3] ? 64u : 0u);
                 for (auto& [it, bt] : seq) if (it == cheatIter) cb |= bt;
                 cheatIter++;
                 if (vs::cheatsInput(game, cb)) { acc -= dt; steps++; continue; }

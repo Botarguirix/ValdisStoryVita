@@ -27,6 +27,7 @@ bool texSize(int tex, int& w, int& h);
 int pageState(int tex);   // diagnostico: 1 cargada, 0 no, -1 fallida, -2 esperando reintento
 int loadDynamic(const std::string& path, int& w, int& h); // -1 si falla
 void freeDynamic(int handle);
+int createDynamic(const unsigned char* rgba, int w, int h, bool linear);   // textura RGBA propia del runner
 int maxTextureSize();
 bool loadDynamicStrip(const std::string& path, int frames, std::vector<int>& handles, std::vector<int>& offs, int& w, int& h, int& chunkW);
 void setPageSize(int page, int w, int h);

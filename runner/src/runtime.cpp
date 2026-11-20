@@ -1,4 +1,5 @@
 #include "runtime.h"
+#include "debugtour.h"
 #include "gfx.h"
 #include "bgio.h"
 #include <algorithm>
@@ -7,6 +8,7 @@
 #include <cstring>
 
 namespace vs {
+void langInit(Game& g); void langApply(Game& g, int lang);
 extern int gSlowFnWatch; void watchDump(Game& g); extern bool gProfPhaseOnly;   // vm.cpp / mas abajo
 void geomTouchObj(int obj);   // mas abajo: la geometria de las instancias de obj cambio
 void stepGridsReset();        // mas abajo: olvida las rejillas de colision (cambio de sala)
@@ -160,6 +162,7 @@ bool Game::init(const std::string& dd, const std::string& gd, const std::string&
     dataDir = dd; gameDir = gd; saveDir = sd;
     gfx::flushLog();   // despues de saber la carpeta de partidas (antes fijaba la ruta del registro a "/vsrunner.log")
     if (!d.load(dataDir + "/game.vsd", err)) return false;
+    langInit(*this);   // idioma del menu de MODS (lang.cpp), antes de ejecutar nada
     rng = new std::mt19937(det ? detSeed : (uint32_t)nowMs());
     startMs = nowMs();
 
@@ -469,7 +472,9 @@ static uint64_t hmix(uint64_t h, uint64_t v) { h ^= v + 0x9E3779B97F4A7C15ull + 
 static uint64_t hval(uint64_t h, const Value& v) {
     h = hmix(h, (uint64_t)v.t);
     if (v.t == VT::Real) { uint64_t b; double r = v.r; std::memcpy(&b, &r, 8); return hmix(h, b); }
-    if (v.t == VT::Str) { for (unsigned char c : v.s->s) h = hmix(h, c); return h; }
+    // VS_HASHNOSTR: las cadenas solo cuentan por su tipo (para comparar la logica con y sin traduccion)
+    static const bool noStr = std::getenv("VS_HASHNOSTR") != nullptr;
+    if (v.t == VT::Str) { if (!noStr) for (unsigned char c : v.s->s) h = hmix(h, c); return h; }
     if (v.t == VT::Arr) { for (auto& row : v.a->rows) { h = hmix(h, row.size()); for (auto& e : row) h = hval(h, e); } }
     return h;
 }
@@ -856,6 +861,7 @@ void Game::restartGame() {
     savedRooms.clear();
     roomPersistOverride.clear();
     audioResetForRestart();
+    langApply(*this, gMods.lang);   // el cambio de idioma del menu de MODS se aplica al volver al menu principal
     gotoRoom(d.roomOrder[0], true);
 }
 

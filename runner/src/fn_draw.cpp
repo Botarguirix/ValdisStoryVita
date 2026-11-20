@@ -1,11 +1,15 @@
 // Dibujo: escena (vistas, fondos, tiles, instancias), sprites, texto (font_add_sprite) y primitivas.
 #include "runtime.h"
 #include "gfx.h"
+#include "debugtour.h"
+#include <unordered_map>
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 
 namespace vs {
 extern void (*gOverlayHook)(Game&);   // capa del runner (menu de trucos), definida abajo
+extern void (*gPreDrawHook)(Game&);   // ajustes del runner justo antes de dibujar (iconos de botones)
 
 int gWinW = 1024, gWinH = 576;
 
@@ -64,13 +68,125 @@ static const RGlyph* glyphFor(const RFont& f, uint32_t ch) {
     return &f.glyphs[k];
 }
 
-static double textLineWidth(const RFont& f, const std::string& s, size_t a, size_t b) {
-    double w = 0;
-    for (size_t i = a; i < b; i++) {
-        const RGlyph* g = glyphFor(f, (unsigned char)s[i]);
-        if (!g) { w += f.spaceW; continue; }
-        w += g->w + f.sep;
+static uint32_t baseChar(uint32_t cp, int& mark);
+// ---- Fuente alternativa (menu de MODS: Fuente = Sistema). La plataforma rasteriza cada glifo (Vita: fuente del
+// sistema con scePvf, sin distribuir ningun archivo de fuente; PC: una TTF de Windows, solo para pruebas) y aqui se
+// juntan en un atlas con filtro lineal. Tiene acentos, enie y signos de apertura propios.
+bool (*gFontOpen)(float px, float& ascent, float& lineH) = nullptr;
+bool (*gFontGlyph)(uint32_t cp, std::vector<uint8_t>& alpha, int& w, int& h, int& xoff, int& yoff, float& adv) = nullptr;
+struct AltGlyph { float u0, v0, u1, v1, xoff, yoff, w, h, adv; };
+static struct { bool tried = false, ok = false; int tex = -1; float px = 48, ascent = 0, lineH = 0; std::unordered_map<uint32_t, AltGlyph> g; } gAlt;
+static bool altBuild() {
+    gAlt.tried = true;
+    if (!gFontOpen || !gFontGlyph || !gFontOpen(gAlt.px, gAlt.ascent, gAlt.lineH) || !std::isfinite(gAlt.lineH) || gAlt.lineH <= 0) { logf("[fuente] sin fuente del sistema\n"); return false; }
+    std::vector<uint32_t> set;
+    for (uint32_t c = 32; c < 127; c++) set.push_back(c);
+    for (uint32_t c = 160; c < 256; c++) set.push_back(c);
+    for (uint32_t c : {0x2018u, 0x2019u, 0x201Cu, 0x201Du, 0x2013u, 0x2014u, 0x2026u}) set.push_back(c);
+    const int W = 1024; int H = 0, x = 2, y = 2, rowH = 0;
+    struct Raw { uint32_t cp; std::vector<uint8_t> a; int w, h, xo, yo, ax, ay; float adv; };
+    std::vector<Raw> raws;
+    for (uint32_t c : set) {
+        Raw r; r.cp = c;
+        if (!gFontGlyph(c, r.a, r.w, r.h, r.xo, r.yo, r.adv)) continue;
+        if (r.w + 4 > W) continue;
+        if (x + r.w + 2 > W) { x = 2; y += rowH + 2; rowH = 0; }
+        r.ax = x; r.ay = y; x += r.w + 2; rowH = std::max(rowH, r.h);
+        raws.push_back(std::move(r));
     }
+    H = 1; while (H < y + rowH + 2) H *= 2;
+    std::vector<uint8_t> rgba((size_t)W * H * 4, 0);
+    for (auto& r : raws) {
+        for (int j = 0; j < r.h; j++) for (int i = 0; i < r.w; i++) {
+            uint8_t* p = &rgba[(((size_t)(r.ay + j)) * W + r.ax + i) * 4];
+            p[0] = p[1] = p[2] = 255; p[3] = r.a[(size_t)j * r.w + i];
+        }
+        gAlt.g[r.cp] = AltGlyph{(float)r.ax, (float)r.ay, (float)(r.ax + r.w), (float)(r.ay + r.h), (float)r.xo, (float)r.yo, (float)r.w, (float)r.h, r.adv};
+    }
+    gAlt.tex = gfx::createDynamic(rgba.data(), W, H, true);
+    int inked = 0; for (auto& r : raws) for (uint8_t v : r.a) if (v) { inked++; break; }
+    gAlt.ok = gAlt.tex != -1 && !gAlt.g.empty() && inked > 20;   // sin tinta (fuente rota): se queda la fuente del juego
+    logf("[fuente] fuente del sistema: %d glifos (%d con tinta), atlas %dx%d, %.0f px (ascenso %.1f, linea %.1f)%s\n", (int)gAlt.g.size(), inked, W, H,
+         (double)gAlt.px, (double)gAlt.ascent, (double)gAlt.lineH, gAlt.ok ? "" : " -> NO se usa (queda la fuente del juego)");
+    return gAlt.ok;
+}
+static bool altOn() {
+    if (gMods.font != 1) return false;
+    if (!gAlt.tried) altBuild();
+    return gAlt.ok;
+}
+static const AltGlyph* altGlyph(uint32_t cp) {
+    auto it = gAlt.g.find(cp);
+    if (it == gAlt.g.end()) { int mk; uint32_t b = baseChar(cp, mk); it = gAlt.g.find(b); if (it == gAlt.g.end()) return nullptr; }
+    return &it->second;
+}
+static double altScale(const RFont& f) { return f.lineH * 0.82 / gAlt.lineH; }
+
+// ---- Texto del runner: UTF-8, letras acentuadas compuestas e iconos de botones
+// Las cadenas del juego son ASCII; las traducciones vienen en UTF-8. Un byte que no forma UTF-8 valido se toma como
+// Latin-1. La fuente del juego no tiene a e i o u n con acento ni signos de apertura: se dibuja la letra base y el
+// runner anade la marca encima (tilde, virgulilla, dieresis) o gira el glifo (los signos de apertura).
+// Codigos 0x11..0x1A = iconos de botones de la Vita (debugtour.cpp cambia los nombres de boton del juego por ellos).
+static void decodeUtf8(const std::string& s, std::vector<uint32_t>& out) {
+    out.clear();
+    for (size_t i = 0; i < s.size();) {
+        unsigned char c = (unsigned char)s[i];
+        int n = c < 0x80 ? 0 : (c >> 5) == 6 ? 1 : (c >> 4) == 14 ? 2 : (c >> 3) == 30 ? 3 : -1;
+        if (n > 0 && i + n >= s.size()) break;   // letra cortada al final (efecto máquina de escribir por bytes): no se dibuja
+        bool ok = n >= 0 && i + n < s.size();
+        for (int k = 1; ok && k <= n; k++) ok = ((unsigned char)s[i + k] >> 6) == 2;
+        if (!ok || n == 0) { out.push_back(c); i++; continue; }
+        uint32_t cp = c & (0x3F >> n);
+        for (int k = 1; k <= n; k++) cp = (cp << 6) | ((unsigned char)s[i + k] & 0x3F);
+        out.push_back(cp); i += n + 1;
+    }
+}
+enum { MK_NONE, MK_ACUTE, MK_GRAVE, MK_TILDE, MK_DIAER, MK_CIRC, MK_INV };
+static uint32_t baseChar(uint32_t cp, int& mark) {
+    mark = MK_NONE;
+    switch (cp) {
+        case 0xE1: mark = MK_ACUTE; return 'a'; case 0xE9: mark = MK_ACUTE; return 'e'; case 0xED: mark = MK_ACUTE; return 'i';
+        case 0xF3: mark = MK_ACUTE; return 'o'; case 0xFA: mark = MK_ACUTE; return 'u';
+        case 0xC1: mark = MK_ACUTE; return 'A'; case 0xC9: mark = MK_ACUTE; return 'E'; case 0xCD: mark = MK_ACUTE; return 'I';
+        case 0xD3: mark = MK_ACUTE; return 'O'; case 0xDA: mark = MK_ACUTE; return 'U';
+        case 0xE0: mark = MK_GRAVE; return 'a'; case 0xE8: mark = MK_GRAVE; return 'e'; case 0xF2: mark = MK_GRAVE; return 'o';
+        case 0xF1: mark = MK_TILDE; return 'n'; case 0xD1: mark = MK_TILDE; return 'N';
+        case 0xFC: mark = MK_DIAER; return 'u'; case 0xDC: mark = MK_DIAER; return 'U';
+        case 0xBF: mark = MK_INV; return '?'; case 0xA1: mark = MK_INV; return '!';
+        case 0xE7: return 'c'; case 0xC7: return 'C';
+        case 0xAB: case 0xBB: case 0x201C: case 0x201D: return '"';
+        case 0x2018: case 0x2019: return '\'';
+        case 0x2014: case 0x2013: return '-';
+        case 0x2026: return '.';
+        default: return cp;
+    }
+}
+static bool isIcon(uint32_t c) { return c >= 0x11 && c <= 0x1A; }
+static const char* iconText(uint32_t c) {
+    switch (c) { case 0x15: return "L"; case 0x16: return "R"; case 0x17: return "L1"; case 0x18: return "R1";
+                 case 0x19: return "START"; case 0x1A: return "SELECT"; default: return ""; }
+}
+static double asciiWidth(const RFont& f, const char* t) {
+    double w = 0; for (; *t; t++) { const RGlyph* g = glyphFor(f, (unsigned char)*t); w += g ? g->w + f.sep : f.spaceW; } return w;
+}
+static double iconPillTextScale(uint32_t c) { return c >= 0x19 ? 0.5 : 0.72; }
+static double iconWidth(const RFont& f, uint32_t c) {
+    double L = f.lineH;
+    if (c <= 0x14) return L * 0.92;
+    return asciiWidth(f, iconText(c)) * iconPillTextScale(c) + L * 0.5;
+}
+static double charAdvance(const RFont& f, uint32_t cp) {
+    if (isIcon(cp)) return iconWidth(f, cp) + f.sep;
+    if (altOn()) { const AltGlyph* a = altGlyph(cp); double k = altScale(f); return a ? a->adv * k : f.spaceW; }
+    int mk; uint32_t b = baseChar(cp, mk);
+    const RGlyph* g = glyphFor(f, b);
+    return g ? g->w + f.sep : f.spaceW;
+}
+static double textLineWidth(const RFont& f, const std::string& s, size_t a, size_t b) {
+    static std::vector<uint32_t> cps;
+    decodeUtf8(s.substr(a, b - a), cps);
+    double w = 0;
+    for (uint32_t cp : cps) w += charAdvance(f, cp);
     return w;
 }
 
@@ -81,7 +197,7 @@ static void splitLines(const RFont& f, const std::string& in, double maxW, std::
     for (size_t i = 0; i < in.size(); i++) {
         char ch = in[i];
         if (ch == '\\' && i + 1 < in.size() && in[i + 1] == '#') { cur += '#'; i++; continue; }
-        if (ch == '#' || ch == '\n') { hard.push_back(cur); cur.clear(); if (ch == '\n' && false) {} continue; }
+        if (ch == '#' || ch == '\n') { hard.push_back(cur); cur.clear(); continue; }
         if (ch == '\r') continue;
         cur += ch;
     }
@@ -116,31 +232,124 @@ void Game::drawText(double x, double y, const std::string& s, double xs, double 
         auto ch = [&](int sh) { return (uint32_t)std::lround(((p >> sh) & 255) * (1 - t) + ((q >> sh) & 255) * t) << sh; };
         return ch(0) | ch(8) | ch(16);
     };
+    auto P = [&](double lx, double ly, float& X, float& Y) {
+        double px = lx * xs, py = ly * ys;
+        X = (float)(x + px * ca + py * sa); Y = (float)(y - px * sa + py * ca);
+    };
+    // poligono solido de 4 vertices en coordenadas locales del texto (un triangulo repite el ultimo vertice)
+    auto solid = [&](double ax, double ay, double bx, double by, double cx_, double cy_, double dx, double dy, uint32_t col, double al) {
+        float xy[8]; P(ax, ay, xy[0], xy[1]); P(bx, by, xy[2], xy[3]); P(cx_, cy_, xy[4], xy[5]); P(dx, dy, xy[6], xy[7]);
+        float uv[8] = {0, 0, 0, 0, 0, 0, 0, 0}; uint32_t cc[4] = {col, col, col, col};
+        gfx::quad(-1, xy, uv, cc, (float)al);
+    };
+    auto bar = [&](double ax, double ay, double bx, double by, double t, uint32_t col, double al) {   // segmento grueso
+        double dx = bx - ax, dy = by - ay, len = std::sqrt(dx * dx + dy * dy); if (len <= 0) return;
+        double nx = -dy / len * t * 0.5, ny = dx / len * t * 0.5;
+        solid(ax + nx, ay + ny, bx + nx, by + ny, bx - nx, by - ny, ax - nx, ay - ny, col, al);
+    };
+    auto disc = [&](double cx_, double cy_, double r, uint32_t col, double al) {
+        const int N = 16;
+        for (int k = 0; k < N; k += 2) {
+            double a0 = k * 2 * M_PI / N, a1 = (k + 1) * 2 * M_PI / N, a2 = (k + 2) * 2 * M_PI / N;
+            solid(cx_, cy_, cx_ + r * std::cos(a0), cy_ + r * std::sin(a0), cx_ + r * std::cos(a1), cy_ + r * std::sin(a1),
+                  cx_ + r * std::cos(a2), cy_ + r * std::sin(a2), col, al);
+        }
+    };
+    auto ring = [&](double cx_, double cy_, double r, double t, uint32_t col, double al) {
+        const int N = 20; double r0 = r - t * 0.5, r1 = r + t * 0.5;
+        for (int k = 0; k < N; k++) {
+            double a0 = k * 2 * M_PI / N, a1 = (k + 1) * 2 * M_PI / N;
+            solid(cx_ + r0 * std::cos(a0), cy_ + r0 * std::sin(a0), cx_ + r1 * std::cos(a0), cy_ + r1 * std::sin(a0),
+                  cx_ + r1 * std::cos(a1), cy_ + r1 * std::sin(a1), cx_ + r0 * std::cos(a1), cy_ + r0 * std::sin(a1), col, al);
+        }
+    };
+    auto glyphQuad = [&](const RGlyph* g, double cx, double cy, const uint32_t cc[4], bool rot180) {
+        const SFrame& fr = g->f;
+        double lx0 = cx + (fr.tx - g->offset), ly0 = cy + fr.ty, lx1 = lx0 + fr.sw, ly1 = ly0 + fr.sh;
+        float xy[8]; P(lx0, ly0, xy[0], xy[1]); P(lx1, ly0, xy[2], xy[3]); P(lx1, ly1, xy[4], xy[5]); P(lx0, ly1, xy[6], xy[7]);
+        float u0 = (float)fr.sx, v0 = (float)fr.sy, u1 = (float)(fr.sx + fr.sw), v1 = (float)(fr.sy + fr.sh);
+        float uv[8] = {u0, v0, u1, v0, u1, v1, u0, v1};
+        if (rot180) { float r[8] = {u1, v1, u0, v1, u0, v0, u1, v0}; std::memcpy(uv, r, sizeof uv); }
+        gfx::quad(fr.tex, xy, uv, cc, (float)alpha);
+    };
+    std::vector<uint32_t> cps;
     for (size_t li = 0; li < lines.size(); li++) {
         const std::string& l = lines[li];
         double lw = textLineWidth(f, l, 0, l.size());
         double cx = drawHalign == 1 ? -lw / 2 : drawHalign == 2 ? -lw : 0;
         double cy = yoff + li * lh;
-        for (unsigned char ch : l) {
-            const RGlyph* g = glyphFor(f, ch);
-            if (!g || !g->valid) { cx += g ? g->w + f.sep : f.spaceW; continue; }
+        decodeUtf8(l, cps);
+        for (uint32_t cp : cps) {
+            double adv = charAdvance(f, cp);
             // colores por posicion (degradado en la caja del texto)
             double tx0 = maxW > 0 ? (cx - (drawHalign == 1 ? -maxW / 2 : drawHalign == 2 ? -maxW : 0)) / maxW : 0;
-            double tx1 = maxW > 0 ? tx0 + g->w / maxW : 0;
+            double tx1 = maxW > 0 ? tx0 + (adv - f.sep) / maxW : 0;
             double ty0 = totalH > 0 ? (cy - yoff) / totalH : 0, ty1 = totalH > 0 ? (cy - yoff + lh) / totalH : 1;
             uint32_t top0 = lerpc(c1, c2, tx0), top1 = lerpc(c1, c2, tx1), bot0 = lerpc(c4, c3, tx0), bot1 = lerpc(c4, c3, tx1);
             uint32_t cc[4] = {lerpc(top0, bot0, ty0), lerpc(top1, bot1, ty0), lerpc(top1, bot1, ty1), lerpc(top0, bot0, ty1)};
-            // el glifo se dibuja con su frame (offset tx propio ya incluido en g->offset)
-            const SFrame& fr = g->f;
-            double lx0 = cx + (fr.tx - g->offset), ly0 = cy + fr.ty, lx1 = lx0 + fr.sw, ly1 = ly0 + fr.sh;
-            auto P = [&](double lx, double ly, float& X, float& Y) {
-                double px = lx * xs, py = ly * ys;
-                X = (float)(x + px * ca + py * sa); Y = (float)(y - px * sa + py * ca);
-            };
-            float xy[8]; P(lx0, ly0, xy[0], xy[1]); P(lx1, ly0, xy[2], xy[3]); P(lx1, ly1, xy[4], xy[5]); P(lx0, ly1, xy[6], xy[7]);
-            float uv[8] = {(float)fr.sx, (float)fr.sy, (float)(fr.sx + fr.sw), (float)fr.sy, (float)(fr.sx + fr.sw), (float)(fr.sy + fr.sh), (float)fr.sx, (float)(fr.sy + fr.sh)};
-            gfx::quad(fr.tex, xy, uv, cc, (float)alpha);
-            cx += g->w + f.sep;
+            double L = f.lineH;
+            if (isIcon(cp)) {   // iconos de botones de la Vita, dibujados por el runner (sin arte del juego)
+                double iw = adv - f.sep, mx = cx + iw / 2, my = cy + L * 0.5, r = L * 0.42;
+                if (cp <= 0x14) {
+                    disc(mx, my, r, 0x262626, alpha * 0.9);
+                    double t = L * 0.085, k = r * 0.5;
+                    if (cp == 0x11) { bar(mx - k, my - k, mx + k, my + k, t, 0xE8B27C, alpha); bar(mx - k, my + k, mx + k, my - k, t, 0xE8B27C, alpha); }
+                    else if (cp == 0x12) ring(mx, my, r * 0.52, t, 0x6E6EFF, alpha);
+                    else if (cp == 0x13) { double q = r * 0.48; bar(mx - q, my - q, mx + q, my - q, t, 0xD07EE6, alpha); bar(mx + q, my - q, mx + q, my + q, t, 0xD07EE6, alpha);
+                                           bar(mx + q, my + q, mx - q, my + q, t, 0xD07EE6, alpha); bar(mx - q, my + q, mx - q, my - q, t, 0xD07EE6, alpha); }
+                    else { double q = r * 0.58; double ax = mx, ay = my - q, bx = mx + q * 0.87, by = my + q * 0.5, dx = mx - q * 0.87, dy = my + q * 0.5;
+                           bar(ax, ay, bx, by, t, 0x9EE04A, alpha); bar(bx, by, dx, dy, t, 0x9EE04A, alpha); bar(dx, dy, ax, ay, t, 0x9EE04A, alpha); }
+                } else {   // pastilla con el nombre (L, R, L1, R1, START, SELECT)
+                    double h = L * 0.7, y0 = my - h / 2, y1 = my + h / 2, x0 = cx + L * 0.06, x1 = cx + iw - L * 0.06, rr = h / 2;
+                    solid(x0 + rr, y0, x1 - rr, y0, x1 - rr, y1, x0 + rr, y1, 0x3A3A3A, alpha * 0.92);
+                    disc(x0 + rr, my, rr, 0x3A3A3A, alpha * 0.92); disc(x1 - rr, my, rr, 0x3A3A3A, alpha * 0.92);
+                    double ts = iconPillTextScale(cp), tw = asciiWidth(f, iconText(cp)) * ts, tx = mx - tw / 2;
+                    for (const char* t = iconText(cp); *t; t++) {
+                        const RGlyph* g = glyphFor(f, (unsigned char)*t);
+                        if (!g || !g->valid) { tx += f.spaceW * ts; continue; }
+                        const SFrame& fr = g->f;
+                        double gx0 = tx + (fr.tx - g->offset) * ts, gy0 = my - L * ts * 0.5 + fr.ty * ts;
+                        float xy[8]; P(gx0, gy0, xy[0], xy[1]); P(gx0 + fr.sw * ts, gy0, xy[2], xy[3]); P(gx0 + fr.sw * ts, gy0 + fr.sh * ts, xy[4], xy[5]); P(gx0, gy0 + fr.sh * ts, xy[6], xy[7]);
+                        float uv[8] = {(float)fr.sx, (float)fr.sy, (float)(fr.sx + fr.sw), (float)fr.sy, (float)(fr.sx + fr.sw), (float)(fr.sy + fr.sh), (float)fr.sx, (float)(fr.sy + fr.sh)};
+                        uint32_t wc[4] = {0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF};
+                        gfx::quad(fr.tex, xy, uv, wc, (float)alpha);
+                        tx += (g->w + f.sep) * ts;
+                    }
+                }
+                cx += adv; continue;
+            }
+            if (altOn()) {   // fuente del sistema: la linea base cae donde la de la fuente del juego (~0,8 de la celda)
+                const AltGlyph* ag = altGlyph(cp);
+                if (ag && ag->w > 0) {
+                    double k = altScale(f), base = cy + L * 0.80;
+                    double lx0 = cx + ag->xoff * k, ly0 = base + ag->yoff * k, lx1 = lx0 + ag->w * k, ly1 = ly0 + ag->h * k;
+                    float xy[8]; P(lx0, ly0, xy[0], xy[1]); P(lx1, ly0, xy[2], xy[3]); P(lx1, ly1, xy[4], xy[5]); P(lx0, ly1, xy[6], xy[7]);
+                    float uv[8] = {ag->u0, ag->v0, ag->u1, ag->v0, ag->u1, ag->v1, ag->u0, ag->v1};
+                    gfx::quad(gAlt.tex, xy, uv, cc, (float)alpha);
+                }
+                cx += adv; continue;
+            }
+            int mk; uint32_t b = baseChar(cp, mk);
+            const RGlyph* g = glyphFor(f, b);
+            if (!g || !g->valid) { cx += adv; continue; }
+            glyphQuad(g, cx, cy, cc, mk == MK_INV);
+            if (mk != MK_NONE && mk != MK_INV) {   // marca encima de la letra, del color de la parte de arriba del texto
+                // los glifos de la fuente ocupan la celda entera: la altura de la marca va por proporciones de la celda
+                // (mayusculas: arriba del todo; minusculas: altura de la x a ~1/4 de la celda)
+                const SFrame& fr = g->f; (void)fr;
+                bool upper = b >= 'A' && b <= 'Z';
+                double gmx = cx + g->w * 0.5, mh = L * 0.15, top = upper ? cy - L * 0.01 : cy + L * 0.25;
+                double t = std::max(1.2, L * 0.06), gap = L * 0.03;
+                uint32_t col = cc[0];
+                if (mk == MK_ACUTE) bar(gmx - L * 0.05, top - gap, gmx + L * 0.07, top - gap - mh, t, col, alpha);
+                else if (mk == MK_GRAVE) bar(gmx + L * 0.05, top - gap, gmx - L * 0.07, top - gap - mh, t, col, alpha);
+                else if (mk == MK_DIAER) { double d = t * 1.1; solid(gmx - L * 0.1, top - gap - d, gmx - L * 0.1 + d, top - gap - d, gmx - L * 0.1 + d, top - gap, gmx - L * 0.1, top - gap, col, alpha);
+                                           solid(gmx + L * 0.1 - d, top - gap - d, gmx + L * 0.1, top - gap - d, gmx + L * 0.1, top - gap, gmx + L * 0.1 - d, top - gap, col, alpha); }
+                else if (mk == MK_TILDE) { double w2 = std::max(g->w * 0.3, L * 0.1), yb = top - gap - mh * 0.3, yt = top - gap - mh;
+                                           bar(gmx - w2, yb, gmx - w2 * 0.35, yt, t, col, alpha); bar(gmx - w2 * 0.35, yt, gmx + w2 * 0.35, yb, t, col, alpha);
+                                           bar(gmx + w2 * 0.35, yb, gmx + w2, yt, t, col, alpha); }
+            }
+            cx += adv;
         }
     }
 }
@@ -313,6 +522,7 @@ VS_FN(screen_save) { g.warnOnce("screen_save ignorado"); return Value(); }
 
 // ------------------------------------------------------------------ escena
 void Game::draw() {
+    if (gPreDrawHook) gPreDrawHook(*this);
     gfx::beginFrame();
     gfx::setBlend(0); blendMode = 0;
     struct Item { double depth; int kind; void* p; uint64_t order; };
@@ -394,6 +604,7 @@ void Game::draw() {
 
 // ---- capa propia del runner por encima del juego (menu de trucos): coordenadas de ventana, fuente del juego
 void (*gOverlayHook)(Game&) = nullptr;
+void (*gPreDrawHook)(Game&) = nullptr;
 void overlayBegin(Game& g) { (void)g; gfx::setCamera(0, 0, gWinW, gWinH, 0, 0, gWinW, gWinH, 0); gfx::setBlend(0); }
 void overlaySize(int& w, int& h) { w = gWinW; h = gWinH; }
 void overlayRect(float x1, float y1, float x2, float y2, uint32_t bgr, float alpha) {

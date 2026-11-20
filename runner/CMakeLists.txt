@@ -29,7 +29,7 @@ set(CORE_SRC
     src/vsd.cpp src/vm.cpp src/runtime.cpp
     src/fn_core.cpp src/fn_draw.cpp src/fn_audio.cpp src/particles.cpp
     src/gfx.cpp src/audio.cpp src/bgio.cpp
-    src/convert.cpp src/convert_vsd.cpp src/stbimpl.cpp src/debugtour.cpp)
+    src/convert.cpp src/convert_vsd.cpp src/stbimpl.cpp src/debugtour.cpp src/lang.cpp)
 
 # vsdinfo: herramienta de volcado (sin dependencias)
 if(NOT VITA)
@@ -59,7 +59,7 @@ if(VITA)
         vitaGL vitashark SceShaccCgExt mathneon taihen_stub SceShaccCg_stub
         vorbisfile vorbis ogg z
         SceKernelDmacMgr_stub SceCommonDialog_stub SceGxm_stub SceDisplay_stub SceSysmodule_stub SceAppMgr_stub
-        SceCtrl_stub SceTouch_stub SceAudio_stub ScePower_stub SceRtc_stub SceLibKernel_stub SceIofilemgr_stub
+        SceCtrl_stub SceTouch_stub ScePvf_stub SceAudio_stub ScePower_stub SceRtc_stub SceLibKernel_stub SceIofilemgr_stub
         pthread m c)
     vita_create_self(eboot.bin vsvita UNSAFE)
     # Arte de la burbuja y la LiveArea (docs/LIVEAREA.md): el original (tools/make_livearea.py) va siempre en el VPK
@@ -77,7 +77,8 @@ if(VITA)
         FILE ${SCE_ART}/pic0.png sce_sys/pic0.png
         FILE ${SCE_ART}/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
         FILE ${SCE_ART}/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
-        FILE ${CMAKE_SOURCE_DIR}/vita/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml)
+        FILE ${CMAKE_SOURCE_DIR}/vita/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
+        FILE ${CMAKE_SOURCE_DIR}/../lang/es.txt lang/es.txt)
 else()
     find_package(SDL2 REQUIRED)
     find_package(OpenGL REQUIRED)

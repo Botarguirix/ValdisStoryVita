@@ -47,6 +47,7 @@ struct Tex {
     uint64_t retryAt = 0; // si no hubo memoria de GPU, no reintentar hasta este frame
     bool pending = false; // pedida al hilo cargador
     int filt = -1, wrap = -1; // estado GL actual de la textura (evita glTexParameteri redundantes)
+    bool linear = false;      // siempre con filtro lineal (atlas de la fuente del sistema)
 };
 struct Vtx { float x, y, u, v; uint8_t r, g, b, a; };
 
@@ -555,6 +556,13 @@ int loadDynamic(const std::string& path, int& w, int& h) {
 // del frame dentro de ella. Devuelve false si no hace falta partirla (o no se puede leer el PNG).
 
 int maxTextureSize() { return gMaxTex; }
+int createDynamic(const unsigned char* rgba, int w, int h, bool linear) {
+    Tex t; t.id = upload(rgba, w, h); t.w = w; t.h = h; t.bytes = (size_t)w * h * 4; t.loaded = true; t.linear = linear;
+    if (!t.id) return -1;
+    int handle = gNextDyn--;
+    gDyn[handle] = t;
+    return handle;
+}
 bool loadDynamicStrip(const std::string& path, int frames, std::vector<int>& handles, std::vector<int>& offs, int& w, int& h, int& chunkW) {
     int comp;
     if (!stbi_info(path.c_str(), &w, &h, &comp) || w <= gMaxTex || frames < 2) return false;
@@ -686,7 +694,7 @@ void flush() {
     int w, h; GLuint id = resolve(gBatchTex, w, h);
     Tex* t = gBatchTex == -1 ? nullptr : find(gBatchTex);
     glBindTexture(GL_TEXTURE_2D, id);
-    GLint f = gLinear ? GL_LINEAR : GL_NEAREST;
+    GLint f = (gLinear || (t && t->linear)) ? GL_LINEAR : GL_NEAREST;
     GLint wrap = gRepeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
     if (!t || t->filt != f) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, f);
