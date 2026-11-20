@@ -18,6 +18,7 @@
 #include <vitaGL.h>
 #include <algorithm>
 #include <cstdio>
+#include <malloc.h>
 #include <cstring>
 #include <functional>
 #include "sysmutex.h"
@@ -334,6 +335,18 @@ int main(int, char**) {
         gSampPhase = 0;
         uint64_t t2 = sceKernelGetProcessTimeWide();
         if (sampDumpAt && t2 >= sampDumpAt) { samplerDump(game); sampDumpAt = t2 + 10000000; }
+        {   // memoria cada minuto (sesiones largas: fugas de RAM o VRAM)
+            static uint64_t memAt = 0; static int memMin = 0;
+            if (!memAt) memAt = t2 + 60000000;
+            if (t2 >= memAt) {
+                memAt = t2 + 60000000; memMin++;
+                struct mallinfo mi = mallinfo();
+                vs::logf("[memoria] min %d | heap usado %u KB (reservado %u KB) | vitaGL libre: VRAM %u KB, RAM %u KB, phycont %u KB | instancias %d | sala %s\n",
+                         memMin, (unsigned)(mi.uordblks >> 10), (unsigned)(mi.arena >> 10), (unsigned)(vglMemFree(VGL_MEM_VRAM) >> 10),
+                         (unsigned)(vglMemFree(VGL_MEM_RAM) >> 10), (unsigned)(vglMemFree(VGL_MEM_PHYCONT) >> 10), (int)game.insts.size(),
+                         game.d.rooms[game.room].name.c_str());
+            }
+        }
         if (!discard) vglSwapBuffers(GL_FALSE); else gDiscardFrames++;
         discardNext = !discard && (t2 - t0) > 15500;
         gfx::perf().swapMs += (sceKernelGetProcessTimeWide() - t2) / 1000.0;   // espera a la GPU / vsync
