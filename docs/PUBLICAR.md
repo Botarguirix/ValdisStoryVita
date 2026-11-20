@@ -44,11 +44,15 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 - Recorrido de 245 salas: 211 sin ningún frame perdido; 0,32 % de frames perdidos en total.
 - Jefe Azudor, outer_slum_2 (430 instancias), sewer_11 y temple_5 a 60 fps.
 - Límite actual: cada enemigo activo cuesta ~0,9 ms; en las salas más pesadas caben 3–4 enemigos extra antes de bajar de 60.
+- Si una sala pesada no llega, el motor salta el dibujo de un frame (nunca dos seguidos) para que la velocidad del juego no cambie.
+- Recorrido automático de las 245 salas con Gilda en la Vita sin cuelgues (0,81 % de frames perdidos); con los 4 personajes en PC, también sin cuelgues.
+- Boss Rush de prueba (36 jefes seguidos) en PC sin cuelgues.
+- Corregido: animaciones de ataque de enemigos que no salían, retratos de diálogo vacíos y tirones al entrar en salas vecinas.
 - **Este VPK es la versión de intérprete** (sin código del juego, por eso se puede compartir). Medido en la Vita: el jefe Azudor va a 57–59 fps, pero las salas más cargadas (p. ej. sewer_11) bajan a ~34 fps. La versión rápida (AOT, 60 fps en esas salas) se compila desde tu propia copia (ver README).
 
 ### Problemas conocidos
 - Primera entrada a algunas salas: pausa de 0,3–0,7 s cargando texturas.
-- Campaña completa todavía sin terminar en la Vita (Reina hasta el jefe 1; Gilda y Vladyn sin probar).
+- Campaña completa todavía sin jugar de principio a fin en la Vita (sí probadas todas las salas y jefes con herramientas).
 - Iconos de botones del juego como mando de PC.
 
 ### Instalación
