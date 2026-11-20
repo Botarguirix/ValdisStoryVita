@@ -39,6 +39,8 @@ Perf& perf();                        // contadores acumulados; el llamador los r
 int gpuFreeMB();                     // memoria libre de vitaGL en MB (PC: -1)
 void setDiscard(bool d);   // frame sin GPU: logica y eventos Draw si, dibujo no (ver gfx.cpp)
 bool discarding();
+extern bool gUploadDebug;   // anota cada subida de pagina (save/drawdebug)
+void debugEvict(int tex);   // diagnostico: descarga una pagina
 void flushLog();   // vuelca los mensajes guardados antes de tener gLogHook
 extern void (*gLogHook)(const char*); // destino de los avisos de gfx (el runtime lo apunta a logf)
 

@@ -15,6 +15,7 @@
 //              dejaba al jugador atrapado en un bucle de golpes que repetia un sonido sin parar.)
 #include "debugtour.h"
 #include "runtime.h"
+#include "gfx.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -142,6 +143,7 @@ void debugTourInit(Game& g, const std::string& saveDir) {
     gMonkey = fileExists(saveDir + "/monkey");
     bossRushInit(g, saveDir);
     { extern int gDrawDebug; if (fileExists(saveDir + "/drawdebug")) gDrawDebug = 400; }
+    if (fileExists(saveDir + "/drawdebug")) gfx::gUploadDebug = true;
     gUnlockChars = fileExists(saveDir + "/unlockchars"); gVarUnlockChar = varByName(g, "unlock_char");
     if (gUnlockChars) logf("[prueba] personajes desbloqueados (global.unlock_char = 1, variable %d)\n", gVarUnlockChar);
     gVarHp = varByName(g, "hp"); gVarHpMax = varByName(g, "hp_max"); gVarDeath = varByName(g, "death"); gObjPlayer = objByName(g, "player_wyatt");

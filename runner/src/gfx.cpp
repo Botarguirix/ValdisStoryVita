@@ -71,6 +71,12 @@ static PFN_CompTex pglCompressedTexImage2D = nullptr;
 #endif
 static Perf gPerf;
 static std::vector<std::pair<uint64_t, std::vector<unsigned char>>> gUploadKeep; // datos subidos aun "en vuelo"
+// Vita: una pagina subida a mitad de un frame (entrada a sala: se carga lo visible mientras se dibuja) a veces quedaba
+// vacia en la GPU (retratos de Wyatt y Vladyn en la seleccion de personaje, pagina 59). Subirla otra vez entre frames
+// la arregla siempre (comprobado). Se vuelve a subir al empezar el frame siguiente, con el bufer que ya se guarda.
+static bool gInFrame = false;
+struct Reupload { GLuint id; GLenum fmt; int w, h; const unsigned char* data; size_t n; };
+static std::vector<Reupload> gReupload;
 Perf& perf() { return gPerf; }
 static size_t gpuFree();
 int gpuFreeMB() {
@@ -137,9 +143,12 @@ static void makeRoom(size_t need, const Tex* keep) {
     if (f >= need + kGpuReserve) return;
     evictBytes(need + kGpuReserve - f, keep);
 }
+static GLenum gLastGlError = GL_NO_ERROR;   // ultimo error de GL visto en una subida (diagnostico)
+bool gUploadDebug = false;                  // save/drawdebug: anota cada subida de pagina
 static bool uploadFailed() {
     GLenum e = glGetError(), last = GL_NO_ERROR;
     while (e != GL_NO_ERROR) { last = e; e = glGetError(); }
+    gLastGlError = last;
     return last == GL_OUT_OF_MEMORY;
 }
 
@@ -201,10 +210,32 @@ static bool uploadVdx(const std::string& path, const uint32_t hdr[8], std::vecto
     double t2 = nowMs();
     makeRoom(buf.size(), &t);
     uploadFailed(); // limpiar errores previos
+    size_t freeBefore = gUploadDebug ? gpuFree() : 0;
+#ifdef __vita__
+    size_t vb = gUploadDebug ? vglMemFree(VGL_MEM_VRAM) : 0, rb = gUploadDebug ? vglMemFree(VGL_MEM_RAM) : 0, pb = gUploadDebug ? vglMemFree(VGL_MEM_PHYCONT) : 0;
+#else
+    size_t vb = 0, rb = 0, pb = 0;
+#endif
     GLuint id; glGenTextures(1, &id); texParams(id);
     glCompressedTexImage2D(GL_TEXTURE_2D, 0, (GLenum)hdr[5], (GLsizei)hdr[1], (GLsizei)hdr[2], 0, (GLsizei)hdr[6], buf.data());
+#ifdef __vita__
+    // vitaGL copia las texturas DXT a un bufer intermedio y las pasa a la GPU de forma asincrona: sin esperar, algunas
+    // paginas quedaban vacias (retratos de Wyatt y Vladyn en la seleccion de personaje, pagina 59), segun el momento.
+    // Esperar a la GPU tras cada subida lo evita; solo hay subidas al cambiar de sala o al ver algo nuevo.
+#endif
     gPerf.uploadMs += nowMs() - t2;
-    if (uploadFailed()) {
+    bool failed = uploadFailed();
+    if (gUploadDebug) {
+#ifdef __vita__
+        size_t va = vglMemFree(VGL_MEM_VRAM), ra = vglMemFree(VGL_MEM_RAM), pa = vglMemFree(VGL_MEM_PHYCONT);
+#else
+        size_t va = 0, ra = 0, pa = 0;
+#endif
+        gfxLog("[gfx] subida %s: id %u, %ux%u fmt %x, %u KB, error GL %x, libre %u -> %u KB (VRAM -%d, RAM -%d, phycont -%d KB), frame %llu\n", path.c_str(), id, hdr[1], hdr[2], hdr[5],
+               (unsigned)(buf.size() >> 10), (unsigned)gLastGlError, (unsigned)(freeBefore >> 10), (unsigned)(gpuFree() >> 10),
+               (int)(((long long)vb - (long long)va) >> 10), (int)(((long long)rb - (long long)ra) >> 10), (int)(((long long)pb - (long long)pa) >> 10), (unsigned long long)gFrame);
+    }
+    if (failed) {
         glDeleteTextures(1, &id); gPerf.uploadFails++;
         gfxLog("[gfx] sin memoria de GPU para %s (%u KB, libre %u KB)\n", path.c_str(), (unsigned)(buf.size() >> 10), (unsigned)(gpuFree() >> 10));
         t.loaded = false; t.retryAt = gFrame + 30;
@@ -212,6 +243,10 @@ static bool uploadVdx(const std::string& path, const uint32_t hdr[8], std::vecto
     }
     t.id = id; t.w = (int)hdr[1]; t.h = (int)hdr[2]; t.bytes = buf.size(); t.loaded = true; t.filt = GL_NEAREST; t.wrap = GL_CLAMP_TO_EDGE;
     gUploadKeep.push_back({gFrame, std::move(buf)});
+    if (gInFrame) {
+        const auto& kept = gUploadKeep.back().second;
+        gReupload.push_back({id, (GLenum)hdr[5], (int)hdr[1], (int)hdr[2], kept.data(), kept.size()});
+    }
     realW = (int)hdr[3]; realH = (int)hdr[4];
     return true;
 }
@@ -477,6 +512,15 @@ void preload(int tex) {
 
 void roomStart() { gSyncDraw = true; }
 
+// diagnostico: descarga una pagina (se volvera a cargar al dibujarla)
+void debugEvict(int tex) {
+    if (tex < 0 || tex >= (int)gPages.size()) return;
+    Tex& t = gPages[tex];
+    if (!t.loaded) return;
+    flush(); glDeleteTextures(1, &t.id); gBytes -= std::min(gBytes, t.bytes); t.loaded = false; t.id = 0;
+    gfxLog("[gfx] pagina %d descargada a mano (diagnostico)\n", tex);
+}
+
 int pageState(int tex) {
     if (tex < 0 || tex >= (int)gPages.size()) return 0;
     const Tex& t = gPages[tex];
@@ -554,14 +598,23 @@ void setScreen(int pw, int ph, int lw, int lh) { gPixW = pw; gPixH = ph; gLogW =
 // (42 de 166 cambian variables: saltarlos rompia el 1:1), pero no se manda nada a la GPU ni se espera a la pantalla.
 // Las texturas se siguen buscando y marcando como usadas, para que el siguiente frame real no tenga que esperarlas.
 static bool gDiscard = false;
+
 void setDiscard(bool d) { gDiscard = d; }
 bool discarding() { return gDiscard; }
 
 void beginFrame() {
     gFrame++;
+#ifdef __vita__
+    for (auto& r : gReupload) {   // antes de dibujar nada de este frame (los bufer siguen en gUploadKeep)
+        glBindTexture(GL_TEXTURE_2D, r.id);
+        glCompressedTexImage2D(GL_TEXTURE_2D, 0, r.fmt, r.w, r.h, 0, (GLsizei)r.n, r.data);
+    }
+#endif
+    gReupload.clear();
     // los datos de texturas subidas hace mas de 4 frames ya estan en la GPU
     while (!gUploadKeep.empty() && gUploadKeep.front().first + 4 < gFrame) gUploadKeep.erase(gUploadKeep.begin());
     pump();
+    gInFrame = true;
     if (gDiscard) return;
     glViewport(0, 0, gPixW, gPixH);
     glClearColor(0, 0, 0, 1);
@@ -693,6 +746,7 @@ void line(float x1, float y1, float x2, float y2, uint32_t c1, uint32_t c2, floa
 
 void endFrame() {
     flush();
+    gInFrame = false;
     gSyncDraw = false;
     glDisable(GL_SCISSOR_TEST);
 }
