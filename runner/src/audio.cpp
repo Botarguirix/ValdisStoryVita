@@ -202,13 +202,31 @@ float lengthSeconds(const std::string& path, bool isOgg) {
         auto it = gCache.find(path);
         if (it != gCache.end()) p = it->second;
     }
-    if (!p) {   // duracion pedida antes de cargarlo: lectura directa (sin cachear, el cargador puede estar con el)
-        Pcm* tmp = readWav(path);
-        float s = tmp ? (float)tmp->frames() / tmp->rate : 0;
-        delete tmp;
-        return s;
+    if (!p) {   // duracion pedida antes de cargarlo: solo la cabecera (leer el wav entero costaba 0,5-0,8 s en la Vita)
+        float s = 0;
+        if (FILE* f = std::fopen(path.c_str(), "rb")) {
+            uint8_t h[12]; int ch = 0, bits = 16; uint32_t rate = 0;
+            if (std::fread(h, 1, 12, f) == 12 && !std::memcmp(h, "RIFF", 4) && !std::memcmp(h + 8, "WAVE", 4)) {
+                uint8_t c[8];
+                while (std::fread(c, 1, 8, f) == 8) {
+                    uint32_t sz; std::memcpy(&sz, c + 4, 4);
+                    if (!std::memcmp(c, "fmt ", 4)) {
+                        uint8_t fm[16] = {};
+                        size_t got = std::fread(fm, 1, std::min<uint32_t>(sz, 16), f);
+                        uint16_t cc, bt; std::memcpy(&cc, fm + 2, 2); std::memcpy(&rate, fm + 4, 4); std::memcpy(&bt, fm + 14, 2);
+                        ch = cc; bits = bt;
+                        std::fseek(f, (long)(sz - got + (sz & 1)), SEEK_CUR);
+                    } else if (!std::memcmp(c, "data", 4)) {
+                        if (ch >= 1 && rate > 0) s = (float)((double)sz / (ch * (bits == 8 ? 1 : 2)) / rate);
+                        break;
+                    } else std::fseek(f, (long)(sz + (sz & 1)), SEEK_CUR);
+                }
+            }
+            std::fclose(f);
+        }
+        return lenCache[path] = s;
     }
-    return (float)p->frames() / p->rate;
+    return lenCache[path] = (float)p->frames() / p->rate;
 }
 
 // lee un frame (L,R) de una voz; false si termino
