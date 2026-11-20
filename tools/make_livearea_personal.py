@@ -3,12 +3,16 @@
 NO se suben al repo ni van en el VPK publico (arte con copyright de Endless Fluff Games): se escriben en
 runner/vita/sce_sys_personal/ (ignorado por git) y CMake los usa en lugar de los originales si existen.
 
-Uso:  python -I tools/make_livearea_personal.py <pagina_65.png>
+Uso:  python -I tools/make_livearea_personal.py <pagina_65.png> <Valdis_Story_AC.exe>
   <pagina_65.png> = la pagina de textura 65 exportada de tu data.win (build 722041 de Steam), p. ej.
   build/tex_png_backup/65.png. Ahi estan ui_splash (fondo del titulo, 512x288 en 384,612) y ui_logo
   (371x422 en 4,612). Comprobar con:  build/pc/vsdinfo build/vsdata/game.vsd bg 214   (y bg 220)
+  <Valdis_Story_AC.exe> = el ejecutable de tu copia: su icono (el emblema "VS", 128x128) se usa para la burbuja y
+  para el boton de Iniciar (tools/extract_exe_icon.py).
 """
 import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from extract_exe_icon import biggest_icon
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -55,13 +59,22 @@ def main():
     x, y, w, h = SPLASH; splash = page.crop((x, y, x + w, y + h))
     x, y, w, h = LOGO; logo = page.crop((x, y, x + w, y + h))
     save_indexed(scene(splash, logo, 840, 500, 360, 600, 40), os.path.join(OUT, 'livearea', 'contents', 'bg.png'))
-    save_indexed(scene(splash, logo, 280, 158, 120, 140, 8, vita_tag=False), os.path.join(OUT, 'livearea', 'contents', 'startup.png'))
+    # boton de Iniciar: fondo del titulo + emblema del .exe a la izquierda + logo a la derecha
+    emblem = biggest_icon(sys.argv[2])
+    st = cover(splash, 280, 158).convert('RGBA')
+    e = emblem.resize((130, 130), Image.LANCZOS)
+    glow = Image.new('RGBA', st.size, (0, 0, 0, 0))
+    glow.paste((0, 20, 40, 255), (12, 17), e.split()[3])
+    st.alpha_composite(glow.filter(ImageFilter.GaussianBlur(5)))
+    st.alpha_composite(e, (10, 14))
+    k = 140 / logo.height
+    l = logo.resize((round(logo.width * k), 140), Image.LANCZOS)
+    st.alpha_composite(l, (150 + (130 - l.width) // 2, 9))
+    save_indexed(st, os.path.join(OUT, 'livearea', 'contents', 'startup.png'))
     save_indexed(scene(splash, logo, 960, 544, 380, 640, 50), os.path.join(OUT, 'pic0.png'))
-    # icono: el logo sobre el fondo, recortado al cuadrado
-    ic = cover(splash, 128, 128, 0.62, 0.45).convert('RGBA')
-    k = 120 / logo.height
-    l = logo.resize((round(logo.width * k), 120), Image.LANCZOS)
-    ic.alpha_composite(l, ((128 - l.width) // 2, 4))
+    # icono de la burbuja: el del propio .exe (emblema "VS"), al tamano exacto
+    ic = emblem.resize((128, 128), Image.LANCZOS)
+    bgc = Image.new('RGBA', (128, 128), (8, 30, 60, 255)); bgc.alpha_composite(ic); ic = bgc
     save_indexed(ic, os.path.join(OUT, 'icon0.png'))
     print('LiveArea personal en', os.path.normpath(OUT), '(no se sube a git)')
 

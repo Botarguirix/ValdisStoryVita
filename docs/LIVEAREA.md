@@ -1,6 +1,6 @@
 # Icono y LiveArea de un port a PS Vita (guía base)
 
-Base común para todos los ports (Touhou123Vita, DDVita, ValdisStoryVita…). Copia este archivo y los dos scripts (`tools/make_livearea.py`, `tools/make_livearea_personal.py`) al proyecto nuevo y cambia solo el dibujo y las coordenadas.
+Base común para todos los ports (Touhou123Vita, DDVita, ValdisStoryVita…). Copia este archivo y los scripts (`tools/make_livearea.py`, `tools/make_livearea_personal.py`, `tools/extract_exe_icon.py`) al proyecto nuevo y cambia solo el dibujo y las coordenadas.
 
 ## 1. Archivos y formato exacto
 
@@ -67,7 +67,9 @@ vita_create_vpk(... FILE ${SCE_ART}/icon0.png sce_sys/icon0.png
 En orden de calidad:
 1. **Las texturas del propio juego** (pantalla de título y logo), exportadas de la copia del usuario. Valdis: página 65, `ui_splash` (fondo del título) y `ui_logo`; las coordenadas salen de `vsdinfo game.vsd bg <n>`. Para encontrar qué imagen usa una pantalla: `vsdinfo roombgs <sala>`, o una hoja de contacto de todas las páginas.
 2. **La caché de Steam** del usuario: `Steam/appcache/librarycache/<AppID>/` trae `library_hero.jpg`, `library_600x900.jpg`, `header.jpg` y a veces `logo.png` (DDVita usa `library_hero` y `logo`). Suelen ser de menos resolución o capturas de juego.
-3. El icono del `.exe` (exportado a PNG de 256 px), para la burbuja.
+3. **El icono del `.exe`** del juego: es el mejor candidato para la burbuja (`icon0.png`) y para el botón Iniciar (`startup.png`), porque ya está diseñado para verse pequeño. `tools/extract_exe_icon.py <juego.exe> <salida.png>` lo saca sin herramientas externas (lee los recursos `RT_GROUP_ICON`/`RT_ICON` del formato PE y elige el más grande; sirve para cualquier `.exe` de Windows, también los de GameMaker). En Valdis sale un emblema "VS" de 128×128 que va tal cual en `icon0.png` y, a 130 px, a la izquierda de `startup.png` junto al logo. `make_livearea_personal.py <pagina_65.png> <juego.exe>` lo hace todo.
+
+Si el icono del `.exe` es más pequeño que 128 px, se escala con `LANCZOS`; si tiene transparencia, se pone sobre un color de fondo sólido antes de cuantizar (la paleta no guarda alfa).
 
 Nunca se suben al repo ni se adjuntan a un Release.
 
