@@ -15,6 +15,10 @@ int main(int argc, char** argv) {
             g.codes.size(), g.varNames.size(), g.functions.size(), g.scripts.size(), g.sounds.size(), g.tpages.size(), g.textures.size());
         size_t ins = 0; for (auto& c : g.codes) ins += c.ins.size();
         std::printf("instrucciones=%zu  primera room=%s\n", ins, g.rooms[g.roomOrder[0]].name.c_str());
+    } else if (mode == "roombgs" && argc > 3) {   // fondos de una sala
+        for (auto& r : g.rooms) if (r.name == argv[3])
+            for (auto& b : r.bgs) if (b.bg >= 0) std::printf("bg %d %s visible=%d fore=%d pos %d,%d tiles %d,%d\n", b.bg,
+                b.bg < (int)g.backgrounds.size() ? g.backgrounds[b.bg].name.c_str() : "?", b.enabled, b.foreground, b.x, b.y, b.htiled, b.vtiled);
     } else if (mode == "bg" && argc > 3) {   // fondo N: pagina y rectangulo en el atlas
         int b = std::atoi(argv[3]);
         if (b >= 0 && b < (int)g.backgrounds.size()) {

@@ -62,12 +62,21 @@ if(VITA)
         SceCtrl_stub SceTouch_stub SceAudio_stub ScePower_stub SceRtc_stub SceLibKernel_stub SceIofilemgr_stub
         pthread m c)
     vita_create_self(eboot.bin vsvita UNSAFE)
+    # Arte de la burbuja y la LiveArea (docs/LIVEAREA.md): el original (tools/make_livearea.py) va siempre en el VPK
+    # publico (sin AOT). La version con AOT, que es de uso personal, usa vita/sce_sys_personal si existe (arte de tu
+    # copia del juego, tools/make_livearea_personal.py; no se sube a git).
+    set(SCE_ART ${CMAKE_SOURCE_DIR}/vita/sce_sys)
+    if(VS_AOT AND EXISTS ${CMAKE_SOURCE_DIR}/vita/sce_sys_personal/icon0.png)
+        set(SCE_ART ${CMAKE_SOURCE_DIR}/vita/sce_sys_personal)
+    endif()
+    message(STATUS "LiveArea: ${SCE_ART}")
     vita_create_vpk(vsvita.vpk ${VITA_TITLEID} eboot.bin
         VERSION ${VITA_VERSION}
         NAME ${VITA_APP_NAME}
-        FILE ${CMAKE_SOURCE_DIR}/vita/sce_sys/icon0.png sce_sys/icon0.png
-        FILE ${CMAKE_SOURCE_DIR}/vita/sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
-        FILE ${CMAKE_SOURCE_DIR}/vita/sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
+        FILE ${SCE_ART}/icon0.png sce_sys/icon0.png
+        FILE ${SCE_ART}/pic0.png sce_sys/pic0.png
+        FILE ${SCE_ART}/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
+        FILE ${SCE_ART}/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
         FILE ${CMAKE_SOURCE_DIR}/vita/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml)
 else()
     find_package(SDL2 REQUIRED)

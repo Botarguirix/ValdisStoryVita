@@ -6,6 +6,9 @@
 /extracted/
 /original/
 
+# Arte personal de la LiveArea (sale de la copia del juego del usuario)
+/runner/vita/sce_sys_personal/
+
 # Herramientas de terceros empaquetadas (se descargan aparte)
 /tools/utmt_cli/
 /tools/utmt_cli.zip

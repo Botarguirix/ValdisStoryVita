@@ -91,7 +91,7 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | 5.1 | Instrucciones de instalación (README) | ✅ |
 | 5.2 | El VPK con AOT lleva código derivado del juego: solo para ti, no se comparte | — |
 | 5.3 | Versión sin AOT (intérprete), que podría compartirse sin el juego | ✅ `build/vita_noaot` (1,3 MB). Probada en la Vita: Azudor 57–59 fps, sewer_11 ~34 fps (lógica 2,4 veces más lenta que AOT). Es la del Release |
-| 5.4 | Icono y LiveArea propios, sin arte del juego | ⬜ |
+| 5.4 | Icono y LiveArea propios, sin arte del juego | ✅ Original dibujada por script (`tools/make_livearea.py`) para el VPK público; versión personal con el título y el logo de tu copia (`tools/make_livearea_personal.py`, no se sube). Guía: `docs/LIVEAREA.md` |
 
 ## 6. Herramientas de prueba en la Vita
 

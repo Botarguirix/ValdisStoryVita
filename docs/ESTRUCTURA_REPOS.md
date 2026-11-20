@@ -27,9 +27,10 @@ El VPK publicado **solo** trae el motor; el usuario aporta su copia legal y la c
 │   ├── TESTING.md         # herramientas de prueba / trucos y cómo se verifica
 │   ├── DATA.md            # qué archivos del juego hacen falta y cómo se convierten
 │   ├── ESTRUCTURA_REPOS.md# esta guía
+│   ├── LIVEAREA.md       # icono y LiveArea: formatos exactos y versión original/personal
 │   └── (VIABILIDAD.md, NOTAS_*.md, imágenes como controls.png)
 ├── <motor>/ o src/ + include/   # código propio del port (CMake)
-│   └── vita/sce_sys/      # icono y LiveArea PROPIOS (sin arte del juego)
+│   └── vita/sce_sys/      # icono y LiveArea PROPIOS (sin arte del juego); sce_sys_personal/ ignorado. Ver LIVEAREA.md
 ├── tools/                 # scripts propios: build, deploy, conversión, informes
 │   └── local.env          # (ignorado) rutas de esta máquina
 ├── tests/                 # pruebas en host si las hay
