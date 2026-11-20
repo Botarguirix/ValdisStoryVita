@@ -81,8 +81,8 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | # | Tarea | Estado |
 |---|---|---|
 | 4.1 | L/R → gatillos, panel trasero → hombros: comprobar que sea cómodo en combate | 🖥️ |
-| 4.2 | Iconos de botones del juego (aparecen como un mando de PC) | ⬜ |
-| 4.3 | Contador de fps verde: ocultarlo o activarlo desde una opción | ⬜ |
+| 4.2 | Iconos de botones del juego | 🔶 Revisado: son teclas genéricas con la acción escrita (`Atk`, `Jmp`, `Def`, `Mag`, `Ok`, flechas), válidas en la Vita; solo `Esc` es de PC (en la Vita es Start). Mejora opcional: sprites propios con □ ✕ ○ △ y Start |
+| 4.3 | Contador de fps verde | ✅ Ya no existe: era de una versión temprana del runner (no aparece en las capturas actuales) |
 
 ## 5. Entrega (uso personal)
 

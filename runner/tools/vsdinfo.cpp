@@ -15,6 +15,9 @@ int main(int argc, char** argv) {
             g.codes.size(), g.varNames.size(), g.functions.size(), g.scripts.size(), g.sounds.size(), g.tpages.size(), g.textures.size());
         size_t ins = 0; for (auto& c : g.codes) ins += c.ins.size();
         std::printf("instrucciones=%zu  primera room=%s\n", ins, g.rooms[g.roomOrder[0]].name.c_str());
+    } else if (mode == "sprframes" && argc > 3) {   // rectangulos de cada frame de un sprite (pagina, origen, tamano)
+        for (auto& sp : g.sprites) if (sp.name == argv[3])
+            for (int f : sp.frames) if (f >= 0 && f < (int)g.tpages.size()) { auto& t = g.tpages[f]; std::printf("p%d %u %u %u %u\n", t.tex, t.sx, t.sy, t.sw, t.sh); }
     } else if (mode == "roombgs" && argc > 3) {   // fondos de una sala
         for (auto& r : g.rooms) if (r.name == argv[3])
             for (auto& b : r.bgs) if (b.bg >= 0) std::printf("bg %d %s visible=%d fore=%d pos %d,%d tiles %d,%d\n", b.bg,
