@@ -98,6 +98,8 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | 5.1 | Instrucciones de instalación (README) | ✅ |
 | 5.2 | El VPK con AOT lleva código derivado del juego: solo para ti, no se comparte | — |
 | 5.3 | Versión sin AOT (intérprete), que podría compartirse sin el juego | ✅ `build/vita_noaot` (1,4 MB). Probada en la Vita: Azudor 57–59 fps, sewer_11 ~34 fps (lógica 2,4 veces más lenta que AOT). Es la del Release |
+| 5.5 | AOT para otros usuarios: opción A, generarlo en su PC | ⬜ El AOT se genera en el PC al compilar (vsaot lee el data.win y escribe C++, VitaSDK lo compila dentro del VPK), así que el VPK con AOT lleva código del juego y no se publica. La Vita no puede hacerlo al primer arranque: no tiene compilador y no deja ejecutar código generado en el momento. Opción A: publicar las herramientas, un script y una guía para que cada usuario genere **su propio** VPK con AOT con su copia de Steam y VitaSDK (unos 30 min de compilación; para usuarios avanzados). Rinde igual que el AOT personal |
+| 5.6 | AOT para otros usuarios: opción B, pre-traducir en la Vita | ⬜ Al primer arranque, junto a la conversión de datos, pasar el bytecode a una forma ya decodificada y más rápida de ejecutar (sin código nativo) y guardarla en la tarjeta. Estimado: 1,3–1,6 veces el intérprete, sin llegar a 60 fps en las salas más pesadas. Antes de empezar, medirlo con un prototipo en PC |
 | 5.4 | Icono y LiveArea propios, sin arte del juego | ✅ Original dibujada por script (`tools/make_livearea.py`) para el VPK público; versión personal con el título y el logo de tu copia (`tools/make_livearea_personal.py`, no se sube). Guía: `docs/LIVEAREA.md` |
 
 ## 6. Herramientas de prueba en la Vita
