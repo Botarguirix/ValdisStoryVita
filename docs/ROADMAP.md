@@ -1,6 +1,6 @@
 # Valdis Story PSVITA — Roadmap (lo que falta)
 
-Actualizado: 2026-11-19 (tarde). Objetivo: terminar el juego en la Vita con **todos los personajes** a **60 fps fijos**.
+Actualizado: 2026-11-19 (noche; Release v0.5.0-alpha publicado). Objetivo: terminar el juego en la Vita con **todos los personajes** a **60 fps fijos**.
 
 Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendiente · 🔶 mejorado, pero queda algo
 
@@ -63,7 +63,7 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | 2.3e | Texturas vacías en la Vita al entrar en una sala | ✅ | Las páginas que se suben a mitad de un frame (al entrar en una sala, lo visible se carga mientras se dibuja) a veces quedaban vacías en la GPU: retratos de Wyatt y Vladyn en la selección de personaje (página 59). Subirla otra vez entre frames lo arregla siempre (comprobado con capturas). Ahora se vuelve a subir al empezar el frame siguiente. Puede explicar otros "sprites invisibles" vistos antes |
 | 2.3c | Avisos pendientes de revisar | ⬜ Lecturas de variables en una instancia que no existe dentro de `nme_v_player_script`, `nme_v_feral_script`, `hermit_Step_0`, `pressure_switch_Step_0` y `save_player_script` (una vez por partida). En GMS1 eso sería un error: comprobar si es una diferencia del runner |
 | 2.3d | Boss Rush de prueba (PC, 19-11) | 🖥️ 36 jefes y rivales (azudor … abbigail, ruckjahl, anemone, los 4 personajes rivales) 30 s cada uno en arena_1 con monkey y godmode: 0 cuelgues, 0 frames perdidos. Encontró un fallo real: el código de creación de sala se ejecutaba sin `self` (el modo Arena perdía sus variables); corregido con una instancia "dummy" (id 0), como GMS1. **Vita (19-11, AOT):** 6 jefes sin fallos (Azudor … Myrgato, 0,2–2,1 % perdidos); con Ragano el juego se congeló una vez (1 de 3 intentos). Medido después: el coste venía de meter el jefe en arena_1, el pueblo con ~17 NPC que reaccionan a un enemigo (13,5 ms de lógica, 42 pasos/s); sin jefe arena_1 va a 60 pasos/s (4,4 ms) y Ragano **en su sala real (lab_6) va a 60 pasos/s, 0,1 % perdidos**. Corregido el tirón de 1,3 s al aparecer: `audio_sound_length` leía el wav entero de la tarjeta y no guardaba el resultado; ahora lee solo la cabecera y lo recuerda. **Decisión del usuario:** el Boss Rush deja la Arena; cada jefe se pelea en su propia sala (ver 8.5) |
-| 2.4 | Todos los jefes y zonas, con una lista de salas probadas en la Vita | 🔶 Las 245 salas recorridas en la Vita (1.8); jefes en combate real: solo Azudor |
+| 2.4 | Todos los jefes y zonas, con una lista de salas probadas en la Vita | 🔶 Las 245 salas recorridas en la Vita (1.8); jefes en combate real: Azudor, y Ragano en su sala (lab_6, 60 pasos/s); Boss Rush de prueba: 6 jefes más sin fallos |
 | 2.5 | Guardar y cargar, autoguardado entre salas, finales | 🖥️ (carga ✅) |
 | 2.6 | Menús: hechizos, habilidades, objetos, mapa, opciones y lore | 🖥️ (pausa ✅) |
 | 2.7 | Audio: toda la música y los efectos, bucles, volumen de las opciones | 🖥️ |
@@ -82,7 +82,7 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 |---|---|---|
 | 4.1 | L/R → gatillos, panel trasero → hombros: comprobar que sea cómodo en combate | 🖥️ |
 | 4.2 | Iconos de botones del juego | 🔶 Revisado: son teclas genéricas con la acción escrita (`Atk`, `Jmp`, `Def`, `Mag`, `Ok`, flechas), válidas en la Vita; solo `Esc` es de PC (en la Vita es Start). Mejora opcional: sprites propios con □ ✕ ○ △ y Start |
-| 4.3 | Contador de fps verde | ✅ Ya no existe: era de una versión temprana del runner (no aparece en las capturas actuales) |
+| 4.3 | Contador de fps verde | ✅ No es del juego: es el overlay del plugin PSVshell (se quita desde el plugin) |
 
 ## 5. Entrega (uso personal)
 
@@ -90,7 +90,7 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 |---|---|---|
 | 5.1 | Instrucciones de instalación (README) | ✅ |
 | 5.2 | El VPK con AOT lleva código derivado del juego: solo para ti, no se comparte | — |
-| 5.3 | Versión sin AOT (intérprete), que podría compartirse sin el juego | ✅ `build/vita_noaot` (1,3 MB). Probada en la Vita: Azudor 57–59 fps, sewer_11 ~34 fps (lógica 2,4 veces más lenta que AOT). Es la del Release |
+| 5.3 | Versión sin AOT (intérprete), que podría compartirse sin el juego | ✅ `build/vita_noaot` (1,4 MB). Probada en la Vita: Azudor 57–59 fps, sewer_11 ~34 fps (lógica 2,4 veces más lenta que AOT). Es la del Release |
 | 5.4 | Icono y LiveArea propios, sin arte del juego | ✅ Original dibujada por script (`tools/make_livearea.py`) para el VPK público; versión personal con el título y el logo de tu copia (`tools/make_livearea_personal.py`, no se sube). Guía: `docs/LIVEAREA.md` |
 
 ## 6. Herramientas de prueba en la Vita
@@ -102,11 +102,11 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | `perfverbose` | Una línea `[perf]` por segundo, más un desglose de funciones y scripts en cada entrada a sala |
 | `prof` | Perfilador por script (líneas `[prof]` cada 600 frames) |
 | `proffases` | Solo el tiempo de cada fase del frame, casi sin coste (`profphase` cronometra cada llamada e infla la lógica unas 3–4 veces) |
-| `tour.txt` | Recorrido: `FRAMES n` y una sala por línea; escribe una línea `[recorrido]` por sala (fps, frames perdidos, peor frame). Informe: `python build/vitalogs/tour_report.py vsrunner.log` |
+| `tour.txt` | Recorrido: `FRAMES n` y una sala por línea; escribe una línea `[recorrido]` por sala (fps, frames perdidos, peor frame). Informe: `python tools/tour_report.py vsrunner.log` |
 | `stress.txt` | Estrés: `SALA CADA_FRAMES CUANTOS MAXIMO OBJ...` mete enemigos junto al jugador y escribe `[estres]` por tanda |
 | `godmode` | El jugador no muere en combate (hp a 999999). El autoguardado se lo puede guardar: restaurar partidas |
 
-**Cuidado con las partidas al probar con el agente:** nunca `fs trash` sobre una ruta que se vaya a reutilizar: la papelera actúa tarde y borra el archivo nuevo (así se perdieron las partidas dos veces el 19-11; restauradas desde `build/save_vita_bak_1119_0913`). `fs move` no sobrescribe y `fs download` puede devolver una copia vieja. Usa `build/vitalogs/restore_saves.sh <copia>` (aparta con move, sube con nombre único) y comprueba con `fs list` y con Retry en el menú. Los archivos de prueba quedan en `ux0:data/valdis/pruebas/`.
+**Cuidado con las partidas al probar con el agente:** nunca `fs trash` sobre una ruta que se vaya a reutilizar: la papelera actúa tarde y borra el archivo nuevo (así se perdieron las partidas dos veces el 19-11; restauradas desde `build/save_vita_bak_1119_0913`). `fs move` no sobrescribe y `fs download` puede devolver una copia vieja. Usa `tools/restore_saves.sh <copia>` (aparta con move, sube con nombre único) y comprueba con `fs list` y con Retry en el menú. Los archivos de prueba quedan en `ux0:data/valdis/pruebas/`.
 
 **Fallo conocido del SDK:** `vita-elf-create.exe` a veces se cae (código 0xC0000374) según cómo queden las direcciones del binario. Si pasa, cambia el tamaño de `vs_pad_probe` al final de `runner/src/gfx.cpp` y recompila.
 
