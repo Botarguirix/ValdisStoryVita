@@ -152,47 +152,72 @@ void keysStep(Game& g) {
 }
 
 // ---- Boss Rush de prueba
-struct BossRush { std::string room; int frames = 1800; std::vector<int> objs; int idx = -1, at = 0, room_ = -1; long warn0 = 0; Stats st; } gBR;
+// bossrush.txt, dos formatos:
+//   "SALA FRAMES JEFE1 JEFE2 ..."          todos los jefes en la misma sala (la Arena del pueblo, 19-11)
+//   "salas FRAMES" + lineas "JEFE SALA"     cada jefe en su propia sala de combate (decision del usuario, 20-11)
+struct BossRush { int frames = 1800; std::vector<int> objs, rooms; int idx = -1, at = 0, enteredAt = -1, lastRoom = -1; long warn0 = 0; Stats st; } gBR;
 bool gBROn = false;
 void bossRushInit(Game& g, const std::string& saveDir) {
     FILE* f = std::fopen(testPath(saveDir, "bossrush.txt").c_str(), "r");
     if (!f) return;
     char room[128], ob[128];
     if (std::fscanf(f, "%127s %d", room, &gBR.frames) == 2) {
-        gBR.room = room; gBR.room_ = roomByName(g, room);
-        while (std::fscanf(f, "%127s", ob) == 1) { int o = objByName(g, ob); if (o >= 0) gBR.objs.push_back(o); else logf("[jefe] objeto desconocido: %s\n", ob); }
+        if (!std::strcmp(room, "salas")) {
+            while (std::fscanf(f, "%127s %127s", ob, room) == 2) {
+                int o = objByName(g, ob), r = roomByName(g, room);
+                if (o >= 0 && r >= 0) { gBR.objs.push_back(o); gBR.rooms.push_back(r); }
+                else logf("[jefe] desconocido: %s en %s\n", ob, room);
+            }
+        } else {
+            int r = roomByName(g, room);
+            while (std::fscanf(f, "%127s", ob) == 1) {
+                int o = objByName(g, ob);
+                if (o >= 0 && r >= 0) { gBR.objs.push_back(o); gBR.rooms.push_back(r); } else logf("[jefe] objeto desconocido: %s\n", ob);
+            }
+        }
     }
     std::fclose(f);
-    gBROn = gBR.room_ >= 0 && !gBR.objs.empty();
-    if (gBROn) logf("[jefe] Boss Rush de prueba en %s: %d jefes, %d frames cada uno\n", room, (int)gBR.objs.size(), gBR.frames);
+    gBROn = !gBR.objs.empty();
+    if (gBROn) logf("[jefe] Boss Rush de prueba: %d jefes, %d frames cada uno\n", (int)gBR.objs.size(), gBR.frames);
 }
 void bossRushStep(Game& g) {
     if (!gBROn || g.pendingRoom >= 0) return;
     const std::string& rn = g.d.rooms[g.room].name;
-    if (gBR.idx < 0) {   // primero a la sala del combate
+    if (g.room != gBR.lastRoom) { gBR.lastRoom = g.room; gBR.enteredAt = g.frame; }
+    if (gBR.idx < 0) {
         if (isMenuRoom(rn) || g.frame < 60) return;
-        if (g.room != gBR.room_) { g.pendingRoom = gBR.room_; return; }
         gBR.idx = 0; gBR.at = 0;
     }
-    if (g.room != gBR.room_) { g.pendingRoom = gBR.room_; return; }   // si una puerta o una muerte lo saca, vuelve
-    if (gBR.at == 0 || g.frame - gBR.at >= gBR.frames) {
-        if (gBR.at != 0) {   // cerrar el jefe actual
-            int o = gBR.objs[gBR.idx], alive = 0;
-            for (Instance* i : g.instancesOf(o)) if (i->alive) alive++;
-
-            logStats("[jefe]", std::to_string(gBR.idx + 1) + "/" + std::to_string(gBR.objs.size()) + " " + g.d.objects[o].name +
-                     (alive ? " (sigue vivo)" : " (derrotado)") + " avisos nuevos " + std::to_string(gWarnCount - gBR.warn0), gBR.st);
-            for (Instance* i : g.instancesOf(o)) if (i->alive) g.destroyInstance(i, false);
-            gBR.idx++;
-            if (gBR.idx >= (int)gBR.objs.size()) { logf("[jefe] Boss Rush terminado\n"); gBROn = false; return; }
-        }
+    int target = gBR.rooms[gBR.idx], o = gBR.objs[gBR.idx];
+    if (g.room != target) {   // a la sala del jefe (o de vuelta, si una puerta o una muerte lo saca)
+        if (gBR.at != 0) logf("[jefe] %s: el jugador salio de %s, se repite\n", g.d.objects[o].name.c_str(), g.d.rooms[target].name.c_str());
+        gBR.at = 0; g.pendingRoom = target; return;
+    }
+    if (gBR.at == 0) {
+        if (g.frame - gBR.enteredAt < 90) return;   // que la sala termine de cargar y de colocar a todos
         Instance* pl = gObjPlayer >= 0 ? g.firstOf(gObjPlayer) : nullptr;
+        if (pl) {   // como el salto de sala de los trucos: dentro de los limites de la sala
+            pl->x = std::max(48.0, std::min(pl->x, (double)g.roomW - 48));
+            pl->y = std::max(48.0, std::min(pl->y, (double)g.roomH - 96));
+        }
         double px = pl ? pl->x : g.roomW / 2.0, py = pl ? pl->y : g.roomH / 2.0;
-        int o = gBR.objs[gBR.idx];
         gBR.warn0 = gWarnCount;
-        logf("[jefe] sale %s\n", g.d.objects[o].name.c_str());
-        g.createInstance(px + 220, py - 60, o, true);
+        logf("[jefe] sale %s en %s\n", g.d.objects[o].name.c_str(), rn.c_str());
+        double bx = px + 220 < g.roomW - 64 ? px + 220 : px - 220;
+        bool placed = false; for (Instance* i : g.instancesOf(o)) if (i->alive) placed = true;
+        if (placed) logf("[jefe] %s ya esta colocado en la sala: no se crea otro\n", g.d.objects[o].name.c_str());
+        else g.createInstance(bx, py - 60, o, true);
         gBR.at = g.frame; gBR.st = Stats{};
+        return;
+    }
+    if (g.frame - gBR.at >= gBR.frames) {   // cerrar el jefe actual
+        int alive = 0;
+        for (Instance* i : g.instancesOf(o)) if (i->alive) alive++;
+        logStats("[jefe]", std::to_string(gBR.idx + 1) + "/" + std::to_string(gBR.objs.size()) + " " + g.d.objects[o].name + " en " + rn +
+                 (alive ? " (sigue vivo)" : " (derrotado)") + " avisos nuevos " + std::to_string(gWarnCount - gBR.warn0), gBR.st);
+        for (Instance* i : g.instancesOf(o)) if (i->alive) g.destroyInstance(i, false);
+        gBR.idx++; gBR.at = 0;
+        if (gBR.idx >= (int)gBR.objs.size()) { logf("[jefe] Boss Rush terminado\n"); gBROn = false; }
     }
 }
 } // namespace

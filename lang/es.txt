@@ -469,7 +469,7 @@
 1d5c6ef7fa4844fe	Caparazón dorado
 1d6e0b381d83331c	Gracias por la información.
 1d7c8d22b25fec46	Cazador del cielo:
-1d992a8b570c6e25	Puntos de habilidad
+1d992a8b570c6e25	Puntos hab.
 1dbba87d50f7e8c6	No podemos tener a un demonio paseándose entre nuestras casas.
 1dd52442f448f7b5	+15 Ruina de armadura / +10% prob. de crítico
 1ddc2ccd425d4cde	Cetro de monje
@@ -1351,7 +1351,7 @@
 59a699bafc8599fd	No lo sé.
 59b077e0c91bcd70	Estas criaturas, los ferales...#...no me dan buena espina.
 59b6cdca9cf8feba	+5% daño crítico
-59f16d51c7d18c68	Gráficos : Bajo
+59f16d51c7d18c68	Gráf. : Bajo
 59ffd5e26de6c9a4	Francotirador:
 5a0fff8efeb1b8b5	Los ataques cuerpo a cuerpo roban 1 de maná.#(Afinidad de luz +1)
 5a477ccdcbf34cc3	No soy amiga de ninguna de tus hijas.
@@ -1600,7 +1600,7 @@
 6a0a51c6d9995f48	Para ellos, las almas humanas no son más que suciedad que hay que limpiar.
 6a17b042f2d5e37e	¿Así que mis palabras ni siquiera te han hecho reflexionar sobre tus actos?
 6a17e66b052e81a7	El Ancestral:
-6a20a3d79a48056a	Gráficos : Alto
+6a20a3d79a48056a	Gráf. : Alto
 6a293f7e4fc8289d	De tus hermanas. Reina, eres mi hija.
 6a4cf8e025ffb553	Afecta a varias propiedades.#Usa un punto de estado para subir la Suerte.
 6a4f9379e0904c68	-Sin datos-
@@ -3412,7 +3412,7 @@ df47728a68c23e36	Lanzar un hechizo en sigilo aumenta su daño un 50%
 df5011328f8cb503	Nunca había visto un ángel así. ¿Qué está pasando en esta ciudad?
 df54fe2f71221fb7	Buen trabajo poniendo otra vez en marcha el tranvía.
 df58274e6a568837	Gran juicio [Afinidad de luz +6]
-df5afa00ad8e1140	Pantalla completa
+df5afa00ad8e1140	P. completa
 df7255f3fea315fc	Los humanos no aprendéis, ¿eh? Os advertimos que no os acercarais a nuestro... espera, ¿quién eres tú?
 df7b644487e91eae	Entrar en la Arena de combate
 df84eba2186e0668	Eres de fiar, forastero.

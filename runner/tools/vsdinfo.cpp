@@ -70,6 +70,12 @@ int main(int argc, char** argv) {
             for (auto& in : r.insts) cnt[in.obj >= 0 ? g.objects[in.obj].name : "?"]++;
             for (auto& kv : cnt) std::printf("%4d %s\n", kv.second, kv.first.c_str());
         }
+    } else if (mode == "findobj" && argc > 3) {   // salas donde esta colocado cada objeto pedido
+        for (int a = 3; a < argc; a++) {
+            std::printf("%s:", argv[a]);
+            for (auto& r : g.rooms) { int n = 0; for (auto& in : r.insts) if (in.obj >= 0 && g.objects[in.obj].name == argv[a]) n++; if (n) std::printf(" %s(%d)", r.name.c_str(), n); }
+            std::printf("\n");
+        }
     } else if (mode == "roompos" && argc > 3) {
         for (auto& r : g.rooms) if (r.name == argv[3])
             for (auto& in : r.insts) if (in.obj >= 0) std::printf("%s %d %d id=%u\n", g.objects[in.obj].name.c_str(), in.x, in.y, in.id);

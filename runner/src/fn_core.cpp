@@ -496,7 +496,8 @@ static const std::string* iniGet(Game& g, const Value& s, const Value& k) {
     return &jt->second;
 }
 VS_FN(ini_read_real) { const std::string* v = iniGet(g, a[0], a[1]); return v ? Value(std::atof(v->c_str())) : a[2]; }
-VS_FN(ini_read_string) { const std::string* v = iniGet(g, a[0], a[1]); return v ? Value::str(*v) : Value::str(a[2].toString()); }
+void langTranslateRead(std::string& s);   // lang.cpp: textos guardados en la partida, al idioma activo
+VS_FN(ini_read_string) { const std::string* v = iniGet(g, a[0], a[1]); std::string r = v ? *v : a[2].toString(); langTranslateRead(r); return Value::str(r); }
 VS_FN(ini_write_real) {
     char b[64]; std::snprintf(b, sizeof b, "%.6f", a[2].num());
     g.ini[a[0].toString()][a[1].toString()] = b; g.iniDirty = true; return Value();

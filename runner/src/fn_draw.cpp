@@ -218,8 +218,11 @@ static void splitLines(const RFont& f, const std::string& in, double maxW, std::
     }
 }
 
-void Game::drawText(double x, double y, const std::string& s, double xs, double ys, double ang, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, double alpha, double sep, double w) {
+const std::string* langDrawAlias(const std::string& s);   // lang.cpp
+void Game::drawText(double x, double y, const std::string& s0, double xs, double ys, double ang, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, double alpha, double sep, double w) {
     if (fontCur < 0 || fontCur >= (int)gFonts.size()) return;
+    const std::string* al = langDrawAlias(s0);
+    const std::string& s = al ? *al : s0;
     const RFont& f = gFonts[fontCur];
     std::vector<std::string> lines;
     splitLines(f, s, w, lines);

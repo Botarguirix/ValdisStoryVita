@@ -68,15 +68,22 @@ static bool loadTable(const char* code, std::unordered_map<uint64_t, std::string
     return false;
 }
 
+// Textos que la partida guarda como texto (p. ej. el objetivo actual, global.mission, con ini_write_string): al leerlos
+// con ini_read_string se pasan al idioma activo, para que una partida guardada en un idioma se vea bien en el otro.
+static std::unordered_map<std::string, std::string> gToEs, gToEn;
+
 // lang: 0 ingles (original), 1 espanol. Se llama al arrancar y en game_restart.
 void langApply(Game& g, int lang) {
     if (gOrigStrings.empty()) gOrigStrings = g.d.strings;
     if (lang == gLangApplied) return;
     g.d.strings = gOrigStrings;
+    std::unordered_map<uint64_t, std::string> tr; std::string from;
+    bool have = loadTable("es", tr, from);
+    gToEs.clear(); gToEn.clear();
+    if (have) for (auto& o : gOrigStrings) { auto it = tr.find(fnv1a64(o)); if (it != tr.end()) { gToEs[o] = it->second; gToEn[it->second] = o; } }
     int hits = 0;
     if (lang == 1) {
-        std::unordered_map<uint64_t, std::string> tr; std::string from;
-        if (!loadTable("es", tr, from)) logf("[idioma] no se encontro lang/es.txt: el juego sigue en ingles\n");
+        if (!have) logf("[idioma] no se encontro lang/es.txt: el juego sigue en ingles\n");
         else {
             for (auto& s : g.d.strings) { auto it = tr.find(fnv1a64(s)); if (it != tr.end()) { s = it->second; hits++; } }
             logf("[idioma] espanol: %d de %d textos traducidos (%s)\n", hits, (int)tr.size(), from.c_str());
@@ -85,6 +92,18 @@ void langApply(Game& g, int lang) {
     // constantes internadas: se reconstruyen con el idioma nuevo (las viejas pueden seguir vivas en variables)
     g.strConst.clear();
     gLangApplied = lang;
+}
+void langTranslateRead(std::string& s) {
+    if (gLangApplied == 1) { auto it = gToEs.find(s); if (it != gToEs.end()) s = it->second; }
+    else if (gLangApplied == 0) { auto it = gToEn.find(s); if (it != gToEn.end()) s = it->second; }
+}
+// Textos visibles que el juego tambien usa como identificadores (secciones del ini de la partida): no se pueden cambiar
+// en la tabla de cadenas, asi que solo se sustituyen al dibujarlos (drawText), con el juego en espanol.
+const std::string* langDrawAlias(const std::string& s) {
+    if (gLangApplied != 1) return nullptr;
+    static const std::unordered_map<std::string, std::string> alias = {{"Controls", "Controles"}, {"Items", "Objetos"}};
+    auto it = alias.find(s);
+    return it == alias.end() ? nullptr : &it->second;
 }
 void langInit(Game& g) { langApply(g, readModsLang(g.saveDir)); }
 
