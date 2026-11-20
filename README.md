@@ -117,6 +117,7 @@ Versión rápida (AOT) desde tu copia: `build/pc/vsconv` genera `game.vsd` desde
 - [Datos y conversión](docs/DATA.md)
 - [Arquitectura del runner](runner/README.md)
 - [Viabilidad inicial](docs/VIABILIDAD.md) · [Notas de decompilación](docs/NOTAS_DECOMP.md)
+- [Montar el entorno en un PC nuevo](docs/INSTALAR_PC_NUEVO.md)
 - [Guía base para publicar cualquier port](docs/ESTRUCTURA_REPOS.md) · [Cómo publicar este](docs/PUBLICAR.md) · [Icono y LiveArea](docs/LIVEAREA.md)
 
 ---
