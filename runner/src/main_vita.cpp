@@ -33,7 +33,7 @@
 #include "audio.h"
 
 // 120 MB: con el codigo nativo (AOT, ~36 MB de ejecutable) 150 MB dejaban el proceso sin memoria antes de main
-int _newlib_heap_size_user = 120 * 1024 * 1024;
+int _newlib_heap_size_user = 108 * 1024 * 1024;   // pico medido 88 MB (recorrido de Vladyn); lo demas va a vitaGL (texturas)
 unsigned int sceUserMainThreadStackSize = 4 * 1024 * 1024; // scripts GML anidados (script_execute en cascada)
 
 namespace vs { extern int gWinW, gWinH; extern std::vector<std::string> gLangDirs; extern double (*gVsdClock)(); extern double gVsdReadMs, gVsdParseMs; extern std::string gFontCachePath; }
@@ -314,7 +314,7 @@ int main(int, char**) {
             sceKernelExitProcess(0); return 0;
         }
         // texturas DXT (.vdx): ~190 MB todas; el resto de la memoria de vitaGL queda para buffers
-        gfx::init(dataDir + "/tex", (size_t)140 * 1024 * 1024);
+        gfx::init(dataDir + "/tex", (size_t)156 * 1024 * 1024);   // 1.11: de 189 MB de paginas, menos recargas al volver a una sala
         for (size_t i = 0; i < tmp.textures.size(); i++) gfx::setPageSize((int)i, tmp.textures[i].w, tmp.textures[i].h);
         gWinW = tmp.winW; gWinH = tmp.winH;
     }
