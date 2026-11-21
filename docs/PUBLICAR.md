@@ -60,7 +60,7 @@ Es la versión de **intérprete**: no lleva código del juego, por eso se puede 
 ### Problemas conocidos
 - En las ranuras de partida, "Lv/Time/Crew/Location" siguen en inglés: forman parte del dibujo del juego.
 - Con la fuente original, algún texto en español puede quedar justo en su cuadro; la fuente del sistema es más estrecha.
-- Primera entrada a algunas salas: pausa de 0,3–0,7 s cargando texturas.
+- Primera entrada a una sala lejana (al cargar partida o saltar con TRUCOS): pausa de 0,3–0,6 s leyendo texturas de la tarjeta.
 
 ### Instalación
 1. Instala `vsvita.vpk` con VitaShell. Necesitas `ur0:data/libshacccg.suprx` (extráelo con ShaRKBR33D).
