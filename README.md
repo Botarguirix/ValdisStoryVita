@@ -103,7 +103,9 @@ cmake -S runner -B build/vita_noaot -G Ninja -DCMAKE_TOOLCHAIN_FILE=$VITASDK/sha
 cmake --build build/vita_noaot
 ```
 
-Versión rápida (AOT) desde tu copia: `build/pc/vsconv` genera `game.vsd` desde tu `data.win`, `build/pc/vsaot` lo traduce a C++ en `build/aot_gen/`, y la build de Vita normal (`-DVS_AOT=ON`) lo incluye. Detalles en [runner/README.md](runner/README.md).
+**Versión rápida (AOT) desde tu copia, con un solo comando:** `tools/build_aot_vpk.sh "<carpeta del juego en Steam>"` → `build/vsvita_aot_personal.vpk`. Guía paso a paso para Windows (MSYS2) y Linux en [docs/AOT_USUARIOS.md](docs/AOT_USUARIOS.md).
+
+Por dentro: `build/pc/vsconv` genera `game.vsd` desde tu `data.win`, `build/pc/vsaot` lo traduce a C++ en `build/aot_gen/`, y la build de Vita normal (`-DVS_AOT=ON`) lo incluye. Detalles en [runner/README.md](runner/README.md).
 
 ### Créditos
 
@@ -155,7 +157,7 @@ Steam App ID **252030**, build **722041** (current). `data.win`: 259,836,864 byt
 
 ### Two builds
 
-The VPK on [Releases](../../releases) is the **interpreter** build (engine only, shareable, slower in heavy rooms). The fast **AOT** build translates the game's code to C++ and must be **built by yourself** from your own copy; it cannot be shared.
+The VPK on [Releases](../../releases) is the **interpreter** build (engine only, shareable, slower in heavy rooms). The fast **AOT** build translates the game's code to C++ and must be **built by yourself** from your own copy; it cannot be shared. One command does it: `tools/build_aot_vpk.sh "<Steam game folder>"` (needs VitaSDK, CMake, Ninja and a host C++ compiler; step-by-step guide in Spanish: [docs/AOT_USUARIOS.md](docs/AOT_USUARIOS.md)).
 
 ### Installation
 
