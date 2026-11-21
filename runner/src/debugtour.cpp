@@ -511,7 +511,7 @@ void drawOverlay(Game& g) {
     int W, H; overlaySize(W, H);
     if (textTest) { overlayRect(0, 60, (float)W, 200, 0, 0.7f); overlayText(g, 20, 80, textTest, 1.0, 0xFFFFFF, 1); overlayText(g, 20, 150, textTest, 0.5, 0x00E0FF, 1); }
     if (gShowPerf) {
-        char b[96]; std::snprintf(b, sizeof b, "%d fps | logica %.1f ms | dibujo %.1f ms", g.fps, gLastStep, gLastDraw);
+        char b[96]; std::snprintf(b, sizeof b, "%d fps | logica %.1f ms | dibujo %.1f ms", (int)(g.fps + 0.5), gLastStep, gLastDraw);
         overlayRect(W - 364.f, H - 28.f, W - 4.f, H - 4.f, 0, 0.6f);   // abajo a la derecha: arriba esta la vida
         overlayText(g, W - 358.0, H - 26.0, b, 0.4, 0xFFFFFF, 1);
     }
