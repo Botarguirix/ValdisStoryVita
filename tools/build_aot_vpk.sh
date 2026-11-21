@@ -42,7 +42,7 @@ if [ "$SHA" = "$KNOWN_SHA" ]; then echo "   data.win: build 722041 de Steam (cor
 else echo "   AVISO: data.win con huella desconocida ($SHA). Se probó con la build 722041; puede fallar."; fi
 
 OUT="$ROOT/build/aot_usuario"
-mkdir -p "$OUT/vsdata"
+mkdir -p "$OUT/vsdata/snd" "$OUT/vsdata/tex"   # vsconv escribe aqui los sonidos incrustados
 
 echo "== 2/5 Compilando las herramientas de PC (vsconv, vsaot)"
 cmake -S "$ROOT/runner" -B "$OUT/tools" -G Ninja -DVS_TOOLS_ONLY=ON -DVS_AOT=OFF -DCMAKE_BUILD_TYPE=Release >/dev/null
