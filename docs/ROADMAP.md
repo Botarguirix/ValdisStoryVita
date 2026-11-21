@@ -1,6 +1,6 @@
 # Valdis Story PSVITA — Roadmap (lo que falta)
 
-Actualizado: 2026-11-20 (partida del usuario hasta el jefe de hielo; menú de trucos; prueba de los 4 personajes en la Vita; menú de MODS con español, fuente del sistema, iconos de la Vita y panel trasero). Objetivo: terminar el juego en la Vita con **todos los personajes** a **60 fps fijos**.
+Actualizado: 2026-11-20 (coste por enemigo, arranque de 21,6 a 7,6 s, entradas en frío; partida del usuario hasta el jefe de hielo; menú de trucos; prueba de los 4 personajes en la Vita; menú de MODS con español, fuente del sistema, iconos de la Vita y panel trasero). Objetivo: terminar el juego en la Vita con **todos los personajes** a **60 fps fijos**.
 
 Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendiente · 🔶 mejorado, pero queda algo
 
@@ -33,9 +33,9 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 
 | # | Tarea | Estado | Notas |
 |---|---|---|---|
-| 1.1 | Entrada en frío a una sala que no es vecina (p. ej. al cargar partida) | 🔶 | 1,33 s → **1,07 s** con VDX4. Leer las 9 páginas cuesta ~740 ms y descomprimirlas ~340 ms. Las vecinas ya son inmediatas |
+| 1.1 | Entrada en frío a una sala que no es vecina (p. ej. al cargar partida) | 🔶 | Ver también 1.11 (más texturas residentes, 20-11). 1,33 s → **1,07 s** con VDX4. Leer las 9 páginas cuesta ~740 ms y descomprimirlas ~340 ms. Las vecinas ya son inmediatas |
 | 1.2 | Texturas comprimidas tipo LZ (VDX4) | ✅ | 94 → 53 MB. La Vita recomprime los datos antiguos sola al arrancar (~1 min, una vez). Leer y descomprimir en dos núcleos a la vez se midió peor (compiten por la memoria) y quedó desactivado |
-| 1.3 | Arranque | ✅ (20-11) Medido con marcas de tiempo en `boot.txt` y líneas `[arranque]`: **de 21,6 a 7,6 s hasta el primer frame.** (a) `game.vsd` (32 MB) se leía dos veces (una copia temporal solo para los tamaños de textura): ahora una. (b) newlib lo leía con su búfer pequeño a ~4 MB/s: con `setvbuf(_IONBF)` pasa a ~15 MB/s (de 7,95 a 2,15 s). (c) El atlas de la fuente del sistema se guarda en `vsdata/fuente_sistema.cache` (de 640 a 150 ms). Quedan ~2,3 s de vitaGL y ~1,6 s de vitaGL compilando shaders en el primer frame; esto último solo bajaría recompilando vitaGL con caché de shaders (`HAVE_SHADER_CACHE`, no incluida en nuestra librería) |
+| 1.3 | Arranque | ✅ (20-11) Medido con marcas de tiempo en `boot.txt` y líneas `[arranque]`: **de 21,6 a 7,6 s hasta el primer frame.** (a) `game.vsd` (32 MB) se leía dos veces (una copia temporal solo para los tamaños de textura): ahora una. (b) newlib lo leía con su búfer pequeño a ~4 MB/s: con `setvbuf(_IONBF)` pasa a ~15 MB/s (de 7,95 a 2,15 s). (c) El atlas de la fuente del sistema se guarda en `vsdata/fuente_sistema.cache` (de 640 a 150 ms). Quedan ~2,3 s de arranque de vitaGL y ~1,7 s del primer frame, de los que ~0,65 s son espera por las texturas del título (no son shaders: ver 1.11) |
 | 1.4 | Primer frame de outer_slum_7: ~200 ms de lógica (intro del jefe) | ⬜ | Diagnosticar con `save/perfverbose` |
 | 1.5 | Medir las zonas tardías | 🔶 | Medidas en la Vita las 12 salas más pesadas: lib_3, grave_13, skyway_3, outer_slum_11 y grave_2 van a 56–60 fps; temple_5 pasó de 53–54 a **60 fps** (lógica 15 → 8,6 ms con la caché de cajas de colisión) |
 | 1.5b | sewer_11 | ✅ | **60 fps fijos durante 33 s** (lógica 9,2 ms + dibujo 4,7 ms; antes 52–61 fps con dibujo 6,8 ms). Cambios: rejilla de colisiones por objeto en la fase de colisiones (cada enemigo probaba los ~320 `block_normal`; la fase bajó a ~0,9 ms) y memoria reutilizada en primitivas y orden de dibujo. Medido con Wyatt (antes con Reina, en otra posición): no es una comparación exacta |
