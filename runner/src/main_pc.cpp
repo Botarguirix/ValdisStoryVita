@@ -262,6 +262,9 @@ int main(int argc, char** argv) {
                 const Uint8* ks = SDL_GetKeyboardState(nullptr);
                 // F2 = TRUCOS (SELECT + L + R en la Vita), F3 = MODS (SELECT)
                 uint32_t cb = (ks[SDL_SCANCODE_F2] ? 64u | 128u | 256u : 0u) | (ks[SDL_SCANCODE_F3] ? 64u : 0u);
+                // flechas, Enter y Escape: menus del runner (Boss Rush en el menu principal); el juego no las ve si un menu las usa
+                cb |= (ks[SDL_SCANCODE_UP] ? 1u : 0u) | (ks[SDL_SCANCODE_DOWN] ? 2u : 0u) | (ks[SDL_SCANCODE_LEFT] ? 4u : 0u) |
+                      (ks[SDL_SCANCODE_RIGHT] ? 8u : 0u) | (ks[SDL_SCANCODE_RETURN] ? 16u : 0u) | (ks[SDL_SCANCODE_ESCAPE] ? 32u : 0u);
                 for (auto& [it, bt] : seq) if (it == cheatIter) cb |= bt;
                 cheatIter++;
                 if (vs::cheatsInput(game, cb)) { acc -= dt; steps++; continue; }

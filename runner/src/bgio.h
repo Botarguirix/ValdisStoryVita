@@ -13,4 +13,8 @@ bool remove(const std::string& path);
 bool rename(const std::string& from, const std::string& to);
 void appendLog(const std::string& path, const char* text); // se abre con "w" la primera vez
 void flush();                                                // espera a que todo este en disco
+// Modo aislado (Boss Rush): las escrituras, borrados y renombrados de guardados solo cambian la vista en memoria;
+// al desactivarlo se olvidan y los archivos se vuelven a leer de disco (las partidas del usuario no se tocan).
+void setSandbox(bool on);
+bool sandbox();
 }

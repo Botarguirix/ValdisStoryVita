@@ -224,6 +224,10 @@ void bossRushStep(Game& g) {
 
 std::string gSaveDir; double gLastStep = 0, gLastDraw = 0;
 void cheatsInit(Game& g);
+void bossRushModeInit(Game& g);
+bool bossRushModeInput(Game& g, uint32_t b, bool menuOpen);
+void bossRushModeStep(Game& g);
+bool bossRushModeOverlay(Game& g);
 void debugTourInit(Game& g, const std::string& saveDir) {
     gSaveDir = saveDir;
     gGod = testExists(saveDir, "godmode");
@@ -402,7 +406,7 @@ std::string label(Game& g, int k) {
         case C_MANA: return "Maná infinito: " + onoff(gInfMana);
         case C_LEVEL: return "Subir un nivel";
         case C_POINTS: return "+5 puntos de atributo y de habilidad";
-        case C_UNLOCK: return "Personajes desbloqueados: " + onoff(gUnlockChars);
+        case C_UNLOCK: return "Personajes y Boss Rush desbloqueados: " + onoff(gUnlockChars);
         case C_WARP: {   // la fuente del juego dibuja '_' como una flecha: se muestra con espacios
             std::string n = gWarpRooms.empty() ? std::string("-") : g.d.rooms[gWarpRooms[gWarpSel]].name;
             std::replace(n.begin(), n.end(), '_', ' ');
@@ -476,7 +480,7 @@ void activate(Game& g, int k, int dir) {   // dir 0 = X; -1/+1 = izquierda/derec
         case C_MANA: gInfMana = !gInfMana; setFlagFile("infmana", gInfMana); say(gInfMana ? "Maná infinito activado" : "Maná infinito desactivado"); break;
         case C_UNLOCK:
             gUnlockChars = !gUnlockChars; setFlagFile("unlockchars", gUnlockChars);
-            say(gUnlockChars ? "Personajes desbloqueados en la selección de personaje" : "Personajes: como en la partida");
+            say(gUnlockChars ? "Personajes desbloqueados y Boss Rush en el menú principal" : "Personajes y Boss Rush: como en la partida");
             break;
         case C_PERF: gShowPerf = !gShowPerf; setFlagFile("showperf", gShowPerf); break;
         case C_LEVEL:
@@ -506,6 +510,7 @@ void activate(Game& g, int k, int dir) {   // dir 0 = X; -1/+1 = izquierda/derec
 
 void drawOverlay(Game& g) {
     static const char* textTest = std::getenv("VS_TEXTTEST");   // prueba de texto (acentos, iconos) en PC
+    bossRushModeOverlay(g);
     if (!gMenuOpen && !gShowPerf && gMsgFrames <= 0 && !textTest) return;
     overlayBegin(g);
     int W, H; overlaySize(W, H);
@@ -556,10 +561,12 @@ void cheatsInit(Game& g) {
     gOverlayHook = drawOverlay;
     joyIconsInit(g);
     gPreDrawHook = joyIconsApply;
+    bossRushModeInit(g);
 }
 
 void cheatsStep(Game& g) {
     joyIconsApply(g);
+    bossRushModeStep(g);
     if (gInfMana && gVarMp >= 0 && gVarSetMp >= 0)
         if (Instance* p = player(g)) p->vars[gVarMp] = g.globals[gVarSetMp];
     // tras saltar de sala: si el jugador queda fuera de los limites de la sala, se le pone dentro
@@ -576,6 +583,7 @@ void cheatsStep(Game& g) {
 bool cheatsInput(Game& g, uint32_t b) {
     uint32_t pr = b & ~gPrevBtn; gPrevBtn = b;
     auto clearPad = [&]() { for (bool& x : g.in.gpBtn) x = false; for (float& a : g.in.gpAxis) a = 0; };
+    if (!gMenuOpen && bossRushModeInput(g, b, false)) return true;
     if (!gMenuOpen) {
         if (gBlockInput) { if (b == 0) gBlockInput = false; else { clearPad(); return false; } }
         // SELECT: al soltarlo abre MODS; si mientras se mantiene se pulsan L y R, abre TRUCOS

@@ -454,7 +454,13 @@ VS_FN(file_exists) {
     return Value(bgio::exists(g.savePath(f)) || fileExists(assetPath(g, f)) ? 1.0 : 0.0);
 }
 VS_FN(file_delete) { return Value(bgio::remove(g.savePath(a[0].toString())) ? 1.0 : 0.0); }
-VS_FN(file_rename) { return Value(bgio::rename(g.savePath(a[0].toString()), g.savePath(a[1].toString())) ? 1.0 : 0.0); }
+void (*gRenameHook)(Game&, const std::string&, const std::string&) = nullptr;   // bossrush.cpp: graba el estado de cada jefe
+VS_FN(file_rename) {
+    std::string from = a[0].toString(), to = a[1].toString();
+    bool ok = bgio::rename(g.savePath(from), g.savePath(to));
+    if (ok && gRenameHook) gRenameHook(g, from, to);
+    return Value(ok ? 1.0 : 0.0);
+}
 
 static std::string trim(const std::string& s) {
     size_t a = s.find_first_not_of(" \t\r\n"), b = s.find_last_not_of(" \t\r\n");

@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <deque>
 #include <map>
+#include <set>
 #include <pthread.h>
 #include <string>
 #include <sys/stat.h>
@@ -24,6 +25,8 @@ vs::SysSema& qSema() { static vs::SysSema s; return s; }
 std::deque<Task> gQueue;           // protegido por qMx
 int gPending = 0;                  // tareas encoladas + en curso (protegido por qMx)
 bool gWorker = false;
+bool gSandbox = false;                 // solo hilo principal
+std::set<std::string> gSandboxTouched; // rutas cambiadas en modo aislado (con viewMx)
 
 bool diskExists(const std::string& p) { struct stat st; return stat(p.c_str(), &st) == 0; }
 
@@ -126,6 +129,7 @@ void write(const std::string& path, std::string data) {
     {
         vs::SysLock lk(viewMx());
         Entry& e = view()[path]; e.exists = true; e.hasData = true; e.data = data;
+        if (gSandbox) { gSandboxTouched.insert(path); return; }
     }
     push({Op::Write, path, std::move(data)});
 }
@@ -136,6 +140,7 @@ bool remove(const std::string& path) {
         Entry& e = entry(path);
         if (!e.exists) return false;
         e.exists = false; e.hasData = false; std::string().swap(e.data);
+        if (gSandbox) { gSandboxTouched.insert(path); return true; }
     }
     push({Op::Remove, path, ""});
     return true;
@@ -150,10 +155,23 @@ bool rename(const std::string& from, const std::string& to) {
         if (has) data.swap(src.data); else has = diskRead(from, data);
         src.exists = false; src.hasData = false; std::string().swap(src.data);
         Entry& dst = view()[to]; dst.exists = true; dst.hasData = has; dst.data.swap(data);
+        if (gSandbox) { gSandboxTouched.insert(from); gSandboxTouched.insert(to); return true; }
     }
     push({Op::Rename, from, to});
     return true;
 }
+
+void flush();
+void setSandbox(bool on) {
+    flush();   // que no quede ninguna escritura real pendiente de las rutas que se van a olvidar
+    vs::SysLock lk(viewMx());
+    if (gSandbox && !on) {   // olvidar lo cambiado: se vuelve a leer de disco (no habia escrituras pendientes de esas rutas)
+        for (auto& p : gSandboxTouched) view().erase(p);
+        gSandboxTouched.clear();
+    }
+    gSandbox = on;
+}
+bool sandbox() { return gSandbox; }
 
 void appendLog(const std::string& path, const char* text) { push({Op::Log, path, text}); }
 

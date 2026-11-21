@@ -10,6 +10,7 @@
 
 namespace vs {
 extern void (*gOverlayHook)(Game&);   // capa del runner (menu de trucos), definida abajo
+extern void (*gViewDrawHook)(Game&);  // dibujo del runner en coordenadas de la vista (entrada Boss Rush)
 extern void (*gPreDrawHook)(Game&);   // ajustes del runner justo antes de dibujar (iconos de botones)
 
 int gWinW = 1024, gWinH = 576;
@@ -628,6 +629,7 @@ void Game::draw() {
             }
         }
         drawBgs(true);
+        if (gViewDrawHook && viewCurrent == 0) gViewDrawHook(*this);   // capa del runner dentro de la vista del juego
     };
 
     if (viewsEnabled) {
@@ -652,6 +654,7 @@ void Game::draw() {
 // ---- capa propia del runner por encima del juego (menu de trucos): coordenadas de ventana, fuente del juego
 void (*gOverlayHook)(Game&) = nullptr;
 void (*gPreDrawHook)(Game&) = nullptr;
+void (*gViewDrawHook)(Game&) = nullptr;
 void overlayBegin(Game& g) { (void)g; gfx::setCamera(0, 0, gWinW, gWinH, 0, 0, gWinW, gWinH, 0); gfx::setBlend(0); }
 void overlaySize(int& w, int& h) { w = gWinW; h = gWinH; }
 void overlayRect(float x1, float y1, float x2, float y2, uint32_t bgr, float alpha) {

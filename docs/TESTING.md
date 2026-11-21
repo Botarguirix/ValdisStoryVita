@@ -21,11 +21,25 @@
 | Maná infinito | El maná se rellena en cada frame (`mp = global.set_mp`). Archivo `save/infmana` |
 | Subir un nivel | Pone la experiencia al máximo y el propio juego sube el nivel (con su aviso y +1 punto de atributo y de habilidad). Máximo 20 |
 | +5 puntos | +5 puntos de atributo y +5 de habilidad, para gastar en el menú de pausa |
-| Personajes desbloqueados | Los cuatro personajes en la selección. Archivo `save/unlockchars` |
+| Personajes y Boss Rush desbloqueados | Los cuatro personajes en la selección y la entrada Boss Rush del menú principal. Archivo `save/unlockchars` |
 | Ir a sala | Izquierda/derecha elige la sala (L/R saltan de 10 en 10) y X viaja. Solo dentro de la partida. Si el personaje queda fuera de la sala se le coloca dentro, pero puede aparecer dentro de una pared: elige otra sala |
 | Mostrar rendimiento | fps, lógica y dibujo en ms, abajo a la derecha. Archivo `save/showperf` |
 
 Las opciones de encendido y apagado se recuerdan entre sesiones (son los mismos archivos de las herramientas de prueba). **Ojo:** el autoguardado guarda lo que cambies (nivel, puntos, la vida del modo dios); las partidas de la Vita no importan para probar.
+
+## Boss Rush (menú principal)
+
+Aparece como **-Boss Rush-** debajo de **-Salir-** en el menú principal cuando el juego está terminado con cualquier personaje (la misma señal que desbloquea los modos Goibniu y Arena del juego: `global.unlock_char`). El truco "Personajes y Boss Rush desbloqueados" también lo muestra. Código: `runner/src/bossrush.cpp`.
+
+- **Personaje:** Wyatt y Reina siempre; Vladyn y Gilda si están desbloqueados.
+- **Modo fiel a cada encuentro:** justo antes de cada jefe de la historia el juego guarda una copia completa del estado (lo que usa "Reintentar"). El runner la copia en `save/bossrush/pC_bN.ini` (C = personaje, N = número del jefe) cada vez que llegas a un jefe jugando normal, y el Boss Rush la carga con los mismos scripts que "Reintentar": nivel, atributos, armas, hechizos y objetos son los que tenías en ese encuentro.
+- **Jefes sin grabar:** se parte de tu partida guardada más avanzada de ese personaje con **todo el equipo** (armas, armaduras, accesorios, almas y remates). Funciona en 18 de 20; Ruckjahl y Dhistahn poseído solo con su grabación (su escena de historia necesita más estado), y sin ella se saltan. Entre jefe y jefe el juego vuelve al título por dentro y carga desde allí, como "Reintentar".
+- **Modo aleatorio:** como el fiel, pero armaduras, accesorios, almas y remates al azar, y armas extra al azar. Lo equipado se queda para no romper la partida.
+- **Tus partidas no se tocan:** durante el Boss Rush los guardados van a una copia en memoria (`bgio::setSandbox`) y al salir se descartan.
+- Al vencer a un jefe (pantalla de puntuación del juego) se pasa solo al siguiente. Si caes: reintentar ese jefe o terminar. Al final, tabla con el tiempo de cada jefe.
+- En PC: flechas, Enter y Escape en el menú del Boss Rush.
+
+Pruebas en PC: `VS_BRKILL=N` deja la vida del jefe en 0 a los N frames, `VS_BRSKIP=N` pasa al siguiente si no termina en N frames, `VS_BRONLY=1,10,...` elige jefes por número y `VS_BRENT=L|R|O` fuerza la entrada en los jefes sin grabar.
 
 ## Herramientas de prueba (archivos)
 
