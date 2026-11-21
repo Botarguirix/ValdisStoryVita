@@ -14,20 +14,22 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 
 > Commits nuevos: en GitHub Desktop, revisa la lista de cambios antes de **Commit to main** + **Push origin**. Si aparece cualquier archivo del juego, un `.vpk`, un `.dat` o `tools/local.env`, no lo subas.
 
-## 2. Crear el Release v0.6.0-alpha (20-11)
+## 2. Crear el Release v0.7.0-alpha (20-11)
+
+> La v0.6.0 no llegó a publicarse: la 0.7.0 incluye todo lo de la 0.6.0 (MODS, español, iconos, panel trasero, TRUCOS) más el Boss Rush. Si ya publicaste la 0.6.0, publica esta igual como nueva versión.
 
 1. En la web del repo: **Releases → Draft a new release**.
-2. **Choose a tag:** escribe `v0.6.0-alpha` → *Create new tag on publish* (sobre `main`).
-3. **Release title:** `Valdis Story PSVITA v0.6.0-alpha`
+2. **Choose a tag:** escribe `v0.7.0-alpha` → *Create new tag on publish* (sobre `main`).
+3. **Release title:** `Valdis Story PSVITA v0.7.0-alpha`
 4. Marca **Set as a pre-release**.
-5. Arrastra el VPK **sin código del juego** (probado en la Vita el 20-11 por la noche: título e intro en español, 60 fps): `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), 1 588 159 bytes, SHA-256 `64dcbb72f261a1d8506ad9e8e84cbdfc8cc2d8ac23185fb3899c5c507fbf5740`.
+5. Arrastra el VPK **sin código del juego** `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), 1 622 138 bytes, SHA-256 `be4a7dd855838580bb1ccae35c2a08561704304227b493a941ef3d847e5ff1b4`. El mismo código se probó en la Vita el 20-11 (versión AOT: menú principal con Boss Rush, submenú y primera pelea; versión sin AOT: título e intro en español a 60 fps).
    - **No subas** `build\vita\vsvita.vpk`: es la versión AOT, lleva código derivado del juego y es solo para uso personal.
 6. Pega las notas de abajo en la descripción y pulsa **Publish release**.
 
-### Notas del release v0.6.0 (copiar y pegar)
+### Notas del release v0.7.0 (copiar y pegar)
 
 ```markdown
-## Valdis Story PSVITA v0.6.0-alpha
+## Valdis Story PSVITA v0.7.0-alpha
 
 Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de GameMaker Studio 1.x en C++17 (no es emulador ni YoYo Loader). El juego se convierte desde **tu copia de Steam** en la propia consola.
 
@@ -36,6 +38,11 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 > ⚠️ **No incluye el juego.** Necesitas una copia legal de Steam (build 722041, App ID 252030; ver README). Este VPK solo trae el motor y la traducción al español (sin el texto original). Valdis Story es propiedad de Endless Fluff Games; proyecto de fans sin ánimo de lucro.
 
 ### Novedades
+- **Modo Boss Rush** en el menú principal (aparece al terminar el juego con cualquier personaje, como los modos extra del original): los 20 jefes de la historia seguidos, cada uno en su propia sala con su presentación.
+  - **Fiel a cada encuentro:** el port graba tu estado justo antes de cada jefe mientras juegas la historia (nivel, armas, hechizos, objetos) y el Boss Rush lo usa. Los jefes que aún no grabaste usan tu partida más avanzada con todo el equipo.
+  - **Aleatorio:** equipo al azar en cada jefe.
+  - Tus partidas no se tocan durante el modo. Al final, tabla con el tiempo de cada jefe.
+- **Versión rápida (AOT) con un solo comando:** `tools/build_aot_vpk.sh` genera tu VPK de 60 fps desde tu copia de Steam (guía en `docs/AOT_USUARIOS.md`).
 - **Menú de MODS (SELECT):**
   - **Idioma:** inglés original o **español**. La traducción de fans, en **español latino**, cubre el 99,5 % del texto: diálogos de los 4 personajes, historia, libro del saber, menús, objetos y habilidades.
   - **Fuente:** la del juego, que ahora también dibuja tildes, ñ y ¿ ¡, o la **fuente del sistema de la Vita**, más legible.
@@ -47,6 +54,7 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 - **Arranque más rápido:** de 21,6 a 7,6 s hasta el primer frame.
 - **Menos pausas al volver a salas ya visitadas:** se mantienen más texturas en memoria (en una sesión de 75 min, las entradas de más de 0,3 s bajaron de 9 a 4).
 - Corregido el número de fps del contador de rendimiento de TRUCOS.
+- Con teclado en PC: flechas, Enter y Escape en el menú del Boss Rush.
 
 ### Pruebas en la Vita (versión AOT, la de 60 fps)
 - Partida de 42 minutos jugada a mano (Wyatt, hasta el jefe de hielo): sin cuelgues.
@@ -61,6 +69,7 @@ Es la versión de **intérprete**: no lleva código del juego, por eso se puede 
 - En las ranuras de partida, "Lv/Time/Crew/Location" siguen en inglés: forman parte del dibujo del juego.
 - Con la fuente original, algún texto en español puede quedar justo en su cuadro; la fuente del sistema es más estrecha.
 - Primera entrada a una sala lejana (al cargar partida o saltar con TRUCOS): pausa de 0,3–0,6 s leyendo texturas de la tarjeta.
+- Boss Rush: Ruckjahl y Dhistahn poseído solo aparecen si ya los grabaste jugando la historia; el modo aleatorio es una primera versión.
 
 ### Instalación
 1. Instala `vsvita.vpk` con VitaShell. Necesitas `ur0:data/libshacccg.suprx` (extráelo con ShaRKBR33D).
