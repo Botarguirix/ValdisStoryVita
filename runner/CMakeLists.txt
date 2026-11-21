@@ -9,7 +9,10 @@ endif()
 
 # Codigo nativo (AOT) generado con vsaot a partir de TU game.vsd: build/aot_gen. Opcional; sin el, todo se interpreta.
 option(VS_AOT "Compilar los scripts del juego a codigo nativo (build/aot_gen)" ON)
-set(AOT_DIR ${CMAKE_SOURCE_DIR}/../build/aot_gen)
+set(VS_AOT_DIR "${CMAKE_SOURCE_DIR}/../build/aot_gen" CACHE PATH "Carpeta con el codigo AOT generado por vsaot")
+set(AOT_DIR ${VS_AOT_DIR})
+# Solo herramientas de PC (vsconv, vsaot, vsdinfo), sin el runner de PC ni SDL2: lo usa tools/build_aot_vpk.sh
+option(VS_TOOLS_ONLY "Compilar solo las herramientas de PC" OFF)
 set(AOT_SRC "")
 if(VS_AOT AND EXISTS ${AOT_DIR}/aot_table.cpp)
     file(GLOB AOT_SRC ${AOT_DIR}/aot_*.cpp)
@@ -79,7 +82,7 @@ if(VITA)
         FILE ${SCE_ART}/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
         FILE ${CMAKE_SOURCE_DIR}/vita/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
         FILE ${CMAKE_SOURCE_DIR}/../lang/es.txt lang/es.txt)
-else()
+elseif(NOT VS_TOOLS_ONLY)
     find_package(SDL2 REQUIRED)
     find_package(OpenGL REQUIRED)
     add_executable(vsrunner ${CORE_SRC} ${AOT_SRC} src/main_pc.cpp)
