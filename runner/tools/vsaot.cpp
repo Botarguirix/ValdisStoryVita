@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <filesystem>
 #include <map>
 #include <set>
 #include <string>
@@ -329,6 +331,7 @@ int main(int argc, char** argv) {
     GameData g; std::string err;
     if (!g.load(argv[1], err)) { std::printf("error: %s\n", err.c_str()); return 1; }
     std::string out = argv[2];
+    { std::error_code ec; std::filesystem::create_directories(out, ec); }   // la carpeta de salida puede no existir
     size_t perFile = argc > 3 ? (size_t)std::atoi(argv[3]) : 40000;
     std::vector<bool> compiled(g.codes.size(), false);
     std::map<std::string, int> whyCount;
@@ -338,6 +341,7 @@ int main(int argc, char** argv) {
         if (f) { std::fprintf(f, "} // namespace aot\n} // namespace vs\n"); std::fclose(f); }
         char name[64]; std::snprintf(name, sizeof name, "/aot_%03d.cpp", fileNo++);
         f = std::fopen((out + name).c_str(), "w");
+        if (!f) { std::printf("error: no se puede escribir %s%s\n", out.c_str(), name); std::exit(1); }
         std::fprintf(f, "// Generado por vsaot a partir de game.vsd. Codigo derivado del juego: solo para uso personal.\n"
                         "#include \"aot_rt.h\"\n#pragma GCC diagnostic ignored \"-Wunused-label\"\n#pragma GCC diagnostic ignored \"-Wunused-variable\"\n"
                         "namespace vs {\nnamespace aot {\n\n");
