@@ -41,7 +41,19 @@ inline void readSelf(Game& g, Ctx& ctx, int var, Value& out) {
     if (ctx.self) {
         int bv = g.varBuiltin[var];
         if (!bv) { if (const Value* v = ctx.self->vars.get(var)) { out = *v; return; } }
-        else if (g.getBuiltin(bv, ctx.self, -1, out)) return;
+        else {
+            // las integradas que mas se leen (cadenas de object_index == X en nme_immune/nme_status...): en linea, con el
+            // mismo valor que Game::getBuiltin
+            switch (bv) {
+                case BV_OBJECT_INDEX: out = Value((double)ctx.self->obj); return;
+                case BV_X: out = Value(ctx.self->x); return;
+                case BV_Y: out = Value(ctx.self->y); return;
+                case BV_HSPEED: out = Value(ctx.self->hspeed); return;
+                case BV_VSPEED: out = Value(ctx.self->vspeed); return;
+                default: break;
+            }
+            if (g.getBuiltin(bv, ctx.self, -1, out)) return;
+        }
     }
     g.vmRead(ctx, IT_SELF, var, false, 0, 0, out);
 }

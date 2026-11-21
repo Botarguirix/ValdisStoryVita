@@ -3,6 +3,7 @@
 #include "gfx.h"
 #include "debugtour.h"
 #include <unordered_map>
+#include <chrono>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -76,8 +77,50 @@ bool (*gFontOpen)(float px, float& ascent, float& lineH) = nullptr;
 bool (*gFontGlyph)(uint32_t cp, std::vector<uint8_t>& alpha, int& w, int& h, int& xoff, int& yoff, float& adv) = nullptr;
 struct AltGlyph { float u0, v0, u1, v1, xoff, yoff, w, h, adv; };
 static struct { bool tried = false, ok = false; int tex = -1; float px = 48, ascent = 0, lineH = 0; std::unordered_map<uint32_t, AltGlyph> g; } gAlt;
+static double fontNowMs() { return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
+// Cache del atlas (1.3: rasterizarlo con scePvf cuesta ~640 ms en el primer frame). La plataforma pone la ruta; se
+// genera en la propia consola a partir de su fuente del sistema, igual que el resto de vsdata.
+std::string gFontCachePath;
+static bool altFromCache(double tA) {
+    if (gFontCachePath.empty()) return false;
+    FILE* f = std::fopen(gFontCachePath.c_str(), "rb");
+    if (!f) return false;
+    char mg[4]; uint32_t ver = 0, W = 0, H = 0, n = 0; float px = 0, asc = 0, lh = 0;
+    bool ok = std::fread(mg, 1, 4, f) == 4 && !std::memcmp(mg, "VSFC", 4) && std::fread(&ver, 4, 1, f) == 1 && ver == 1 &&
+              std::fread(&px, 4, 1, f) == 1 && std::fread(&asc, 4, 1, f) == 1 && std::fread(&lh, 4, 1, f) == 1 &&
+              std::fread(&W, 4, 1, f) == 1 && std::fread(&H, 4, 1, f) == 1 && std::fread(&n, 4, 1, f) == 1 &&
+              px == gAlt.px && W > 0 && W <= 4096 && H > 0 && H <= 4096 && n > 20 && n < 2000 && std::isfinite(lh) && lh > 0;
+    std::unordered_map<uint32_t, AltGlyph> gl;
+    for (uint32_t k = 0; ok && k < n; k++) { uint32_t cp; AltGlyph a; ok = std::fread(&cp, 4, 1, f) == 1 && std::fread(&a, sizeof a, 1, f) == 1; gl[cp] = a; }
+    std::vector<uint8_t> alpha((size_t)W * H);
+    ok = ok && std::fread(alpha.data(), 1, alpha.size(), f) == alpha.size();
+    std::fclose(f);
+    if (!ok) return false;
+    std::vector<uint8_t> rgba((size_t)W * H * 4);
+    for (size_t i = 0; i < alpha.size(); i++) { rgba[i * 4] = rgba[i * 4 + 1] = rgba[i * 4 + 2] = 255; rgba[i * 4 + 3] = alpha[i]; }
+    gAlt.tex = gfx::createDynamic(rgba.data(), (int)W, (int)H, true);
+    if (gAlt.tex == -1) return false;
+    gAlt.ascent = asc; gAlt.lineH = lh; gAlt.g = std::move(gl); gAlt.ok = true;
+    logf("[fuente] fuente del sistema desde la cache: %d glifos en %.0f ms\n", (int)gAlt.g.size(), fontNowMs() - tA);
+    return true;
+}
+static void altToCache(int W, int H, const std::vector<uint8_t>& rgba) {
+    if (gFontCachePath.empty()) return;
+    FILE* f = std::fopen(gFontCachePath.c_str(), "wb");
+    if (!f) return;
+    uint32_t ver = 1, w = W, h = H, n = (uint32_t)gAlt.g.size();
+    std::fwrite("VSFC", 1, 4, f); std::fwrite(&ver, 4, 1, f); std::fwrite(&gAlt.px, 4, 1, f); std::fwrite(&gAlt.ascent, 4, 1, f);
+    std::fwrite(&gAlt.lineH, 4, 1, f); std::fwrite(&w, 4, 1, f); std::fwrite(&h, 4, 1, f); std::fwrite(&n, 4, 1, f);
+    for (auto& [cp, a] : gAlt.g) { std::fwrite(&cp, 4, 1, f); std::fwrite(&a, sizeof a, 1, f); }
+    std::vector<uint8_t> alpha((size_t)W * H);
+    for (size_t i = 0; i < alpha.size(); i++) alpha[i] = rgba[i * 4 + 3];
+    std::fwrite(alpha.data(), 1, alpha.size(), f);
+    std::fclose(f);
+}
 static bool altBuild() {
     gAlt.tried = true;
+    double tA = fontNowMs();
+    if (altFromCache(tA)) return true;
     if (!gFontOpen || !gFontGlyph || !gFontOpen(gAlt.px, gAlt.ascent, gAlt.lineH) || !std::isfinite(gAlt.lineH) || gAlt.lineH <= 0) { logf("[fuente] sin fuente del sistema\n"); return false; }
     std::vector<uint32_t> set;
     for (uint32_t c = 32; c < 127; c++) set.push_back(c);
@@ -106,7 +149,8 @@ static bool altBuild() {
     gAlt.tex = gfx::createDynamic(rgba.data(), W, H, true);
     int inked = 0; for (auto& r : raws) for (uint8_t v : r.a) if (v) { inked++; break; }
     gAlt.ok = gAlt.tex != -1 && !gAlt.g.empty() && inked > 20;   // sin tinta (fuente rota): se queda la fuente del juego
-    logf("[fuente] fuente del sistema: %d glifos (%d con tinta), atlas %dx%d, %.0f px (ascenso %.1f, linea %.1f)%s\n", (int)gAlt.g.size(), inked, W, H,
+    if (gAlt.ok) altToCache(W, H, rgba);
+    logf("[fuente] fuente del sistema: %d glifos (%d con tinta) en %.0f ms, atlas %dx%d, %.0f px (ascenso %.1f, linea %.1f)%s\n", (int)gAlt.g.size(), inked, fontNowMs() - tA, W, H,
          (double)gAlt.px, (double)gAlt.ascent, (double)gAlt.lineH, gAlt.ok ? "" : " -> NO se usa (queda la fuente del juego)");
     return gAlt.ok;
 }

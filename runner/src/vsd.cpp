@@ -4,6 +4,9 @@
 
 namespace vs {
 
+// tiempos de la ultima carga (1.3): la plataforma pone el reloj; sin reloj no se mide
+double (*gVsdClock)() = nullptr; double gVsdReadMs = 0, gVsdParseMs = 0;
+
 namespace {
 struct Reader {
     std::vector<uint8_t> buf; size_t p = 0; bool bad = false;
@@ -32,12 +35,15 @@ struct Reader {
 
 bool GameData::load(const std::string& path, std::string& err) {
     Reader r;
+    double t0 = gVsdClock ? gVsdClock() : 0;
     FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) { err = "no se puede abrir " + path; return false; }
+    std::setvbuf(f, nullptr, _IONBF, 0);   // lectura directa en bloques grandes: con el bufer pequeno de newlib la Vita leia a ~4 MB/s (8 s)
     std::fseek(f, 0, SEEK_END); long n = std::ftell(f); std::fseek(f, 0, SEEK_SET);
     r.buf.resize(n);
     if (std::fread(r.buf.data(), 1, n, f) != (size_t)n) { std::fclose(f); err = "lectura incompleta"; return false; }
     std::fclose(f);
+    double t1 = gVsdClock ? gVsdClock() : 0; gVsdReadMs = t1 - t0;
     if (n < 8 || std::memcmp(r.buf.data(), "VSD1", 4) != 0) { err = "no es un archivo VSD1"; return false; }
     r.p = 4;
     if (r.u32() != 1) { err = "version VSD no soportada"; return false; }
@@ -151,6 +157,7 @@ bool GameData::load(const std::string& path, std::string& err) {
     for (size_t i = 0; i < rooms.size(); i++) roomByName[rooms[i].name] = (int)i;
     for (size_t i = 0; i < scripts.size(); i++) scriptByName[scripts[i].name] = (int)i;
     for (size_t i = 0; i < fonts.size(); i++) fontByName[fonts[i].name] = (int)i;
+    gVsdParseMs = gVsdClock ? gVsdClock() - t1 : 0;
     return true;
 }
 

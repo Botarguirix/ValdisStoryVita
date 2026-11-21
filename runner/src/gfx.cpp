@@ -763,4 +763,4 @@ void endFrame() {
 
 // Relleno: vita-elf-create.exe (vitasdk) se cae con 0xC0000374 con ciertas distribuciones de direcciones del binario
 // (no depende del codigo). Si vuelve a fallar al convertir a vsvita.velf, cambia el tamano de este array.
-extern "C" __attribute__((used)) const char vs_pad_probe[12288] = {1};
+extern "C" __attribute__((used)) const char vs_pad_probe[16384] = {1};

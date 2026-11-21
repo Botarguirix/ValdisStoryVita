@@ -161,8 +161,11 @@ bool Game::init(const std::string& dd, const std::string& gd, const std::string&
     gfx::gLogHook = [](const char* s) { logf("%s", s); };
     dataDir = dd; gameDir = gd; saveDir = sd;
     gfx::flushLog();   // despues de saber la carpeta de partidas (antes fijaba la ruta del registro a "/vsrunner.log")
-    if (!d.load(dataDir + "/game.vsd", err)) return false;
+    double tInit0 = nowMs();   // 1.3: tiempo de cada fase del arranque
+    if (d.codes.empty() && !d.load(dataDir + "/game.vsd", err)) return false;   // la Vita ya lo cargo para gfx (una sola lectura)
+    logf("[arranque] game.vsd cargado: %.0f ms\n", nowMs() - tInit0);
     langInit(*this);   // idioma del menu de MODS (lang.cpp), antes de ejecutar nada
+    logf("[arranque] idioma: %.0f ms\n", nowMs() - tInit0);
     rng = new std::mt19937(det ? detSeed : (uint32_t)nowMs());
     startMs = nowMs();
 
@@ -239,6 +242,7 @@ bool Game::init(const std::string& dd, const std::string& gd, const std::string&
     }
 
     // codigo nativo: solo si se genero a partir de este mismo game.vsd (si no, todo se interpreta)
+    logf("[arranque] tablas de sprites/objetos/eventos: %.0f ms\n", nowMs() - tInit0);
     aot.assign(d.codes.size(), nullptr); aotEnabled = false;
 #ifdef VS_HAVE_AOT
     {
@@ -258,8 +262,11 @@ bool Game::init(const std::string& dd, const std::string& gd, const std::string&
         } else logf("[aot] game.vsd distinto del usado al compilar: se interpreta todo\n");
     }
 #endif
+    logf("[arranque] comprobacion del codigo nativo: %.0f ms\n", nowMs() - tInit0);
     audioInit();
+    logf("[arranque] audio: %.0f ms\n", nowMs() - tInit0);
     gotoRoom(d.roomOrder[0], true);
+    logf("[arranque] primera sala: %.0f ms\n", nowMs() - tInit0);
     return true;
 }
 

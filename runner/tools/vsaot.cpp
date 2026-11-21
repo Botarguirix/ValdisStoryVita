@@ -159,10 +159,49 @@ static void emitCode(FILE* f, const GameData& g, int id, const Analysis& A) {
         lit = b; return true;
     };
     auto isBinOp = [](uint8_t op) { return op == OP_ADD || op == OP_SUB || op == OP_MUL || op == OP_DIV || op == OP_REM || op == OP_MOD || op == OP_AND || op == OP_OR || op == OP_XOR || op == OP_SHL || op == OP_SHR; };
+    // Atajo de colisiones contra un tipo de objeto fijo (p. ej. nme_crowding_script: ~50 collision_rectangle por enemigo
+    // y frame, casi todos contra tipos que no estan en la sala). Si los argumentos solo son constantes o lecturas simples
+    // de variables (sin efectos), antes del primero se mira si el objeto tiene instancias: si no tiene ninguna el
+    // resultado es el de "no hay nada" (noone / 0) sin evaluar los argumentos ni llamar a la funcion. Mismo resultado.
+    struct Guard { int callPc, obj; double none; };
+    std::map<int, Guard> guards;   // pc del primer argumento -> atajo
+    for (int pc = 0; pc < n; pc++) {
+        const Ins& x = c.ins[pc];
+        if (x.op != OP_CALL || A.depth[pc] < 0 || x.a < 0 || x.a >= (int)g.functions.size()) continue;
+        const std::string& fn = g.functions[x.a]; int na = x.b, objArg = -1; double none = -4;
+        if (fn == "collision_rectangle" || fn == "collision_line") { if (na == 7) objArg = 4; }
+        else if (fn == "collision_point") { if (na == 5) objArg = 2; }
+        else if (fn == "collision_circle") { if (na == 6) objArg = 3; }
+        else if (fn == "instance_place") { if (na == 3) objArg = 2; }
+        else if (fn == "place_meeting" || fn == "position_meeting") { if (na == 3) { objArg = 2; none = 0; } }
+        if (objArg < 0) continue;
+        // hacia atras: na empujes (cada uno puede ir seguido de CONV), todos simples y sin etiquetas entre medias
+        std::vector<int> pushes; int q = pc - 1; bool ok = true;
+        while ((int)pushes.size() < na && q >= 0 && ok) {
+            const Ins& y = c.ins[q];
+            if (y.op == OP_CONV) { q--; continue; }
+            if (!isPush(y.op)) { ok = false; break; }
+            if (y.t1 == DT_VAR && (y.b == RT_ARRAY || y.b == RT_STACKTOP || !(y.inst == IT_SELF || y.inst == -5 || y.inst == IT_LOCAL))) { ok = false; break; }
+            if (y.t1 == DT_STRING) { ok = false; break; }
+            pushes.push_back(q); q--;
+        }
+        if (!ok || (int)pushes.size() != na) continue;
+        int first = pushes.back();
+        for (int k = first + 1; k <= pc; k++) if (need.count(k)) { ok = false; break; }
+        if (!ok) continue;
+        const Ins& o = c.ins[pushes[objArg]];   // pushes[0] = ultimo empujado = primer argumento
+        if (!(o.t1 == DT_INT32 || o.t1 == DT_INT16) || o.a < 0 || o.a >= (int)g.objects.size()) continue;
+        if (A.depth[first] < 0 || A.depth[pc + 1 < n ? pc + 1 : pc] < 0) continue;
+        guards[first] = Guard{pc, o.a, none};
+        need.insert(pc + 1);
+    }
     for (int pc = 0; pc < n; pc++) {
         if (A.depth[pc] < 0) continue;
         if (need.count(pc)) std::fprintf(f, "%s:;\n", lab(pc).c_str());
         const Ins& x = c.ins[pc]; const int d = A.depth[pc];
+        if (auto gi = guards.find(pc); gi != guards.end())
+            std::fprintf(f, "    if (g.instancesOf(%d).empty()) { s%d = Value(%s); goto %s; }\n", gi->second.obj, d,
+                         gi->second.none < 0 ? "-4.0" : "0.0", lab(gi->second.callPc + 1).c_str());
         std::fprintf(f, "    ");
         {
             std::string lit;
@@ -272,7 +311,9 @@ static void emitCode(FILE* f, const GameData& g, int id, const Analysis& A) {
                 else {
                     std::fprintf(f, "{ Value av[%d]; ", na);
                     for (int i = 0; i < na; i++) std::fprintf(f, "av[%d] = std::move(s%d); ", i, d - 1 - i);
-                    std::fprintf(f, "s%d = g.vmCallFn(%d, ctx, av, %d); }\n", d - na, x.a, na);
+                    if (x.a >= 0 && x.a < (int)g.functions.size() && g.functions[x.a] == "script_execute")   // directo, sin la tabla de integradas
+                        std::fprintf(f, "s%d = g.runScript(av[0].ival(), ctx, av + 1, %d); }\n", d - na, na - 1);
+                    else std::fprintf(f, "s%d = g.vmCallFn(%d, ctx, av, %d); }\n", d - na, x.a, na);
                 }
                 break;
             }

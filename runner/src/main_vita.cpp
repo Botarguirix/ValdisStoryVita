@@ -36,7 +36,7 @@
 int _newlib_heap_size_user = 120 * 1024 * 1024;
 unsigned int sceUserMainThreadStackSize = 4 * 1024 * 1024; // scripts GML anidados (script_execute en cascada)
 
-namespace vs { extern int gWinW, gWinH; extern std::vector<std::string> gLangDirs; }
+namespace vs { extern int gWinW, gWinH; extern std::vector<std::string> gLangDirs; extern double (*gVsdClock)(); extern double gVsdReadMs, gVsdParseMs; extern std::string gFontCachePath; }
 using namespace vs;
 
 static constexpr const char* kRoot = "ux0:data/valdis";
@@ -137,9 +137,13 @@ namespace vs { extern bool gProfPhaseOnly; extern bool gProfLight; }
 extern "C" int sceAppMgrGrowMemory(unsigned int size, int killMiniApps); // SceAppMgr (lo habilita el plugin DMR)
 
 // marcas de arranque escritas directamente (sin newlib/bgio): dicen hasta donde llego el programa si se cuelga
+// Cada marca lleva los ms desde la primera marca (1.3: medir el tiempo del logo de vitaGL y de cada fase).
+static uint64_t gBootT0 = 0;
 static void bootMark(const char* s) {
+    if (!gBootT0) gBootT0 = sceKernelGetProcessTimeWide();
+    char b[96]; int n = std::snprintf(b, sizeof b, "%s %u ms\n", s, (unsigned)((sceKernelGetProcessTimeWide() - gBootT0) / 1000));
     SceUID f = sceIoOpen("ux0:data/valdis/save/boot.txt", SCE_O_WRONLY | SCE_O_CREAT | SCE_O_APPEND, 0777);
-    if (f >= 0) { sceIoWrite(f, s, std::strlen(s)); sceIoWrite(f, "\n", 1); sceIoClose(f); }
+    if (f >= 0) { sceIoWrite(f, b, n); sceIoClose(f); }
 }
 
 // ---- muestreador de perfiles (save/sampler): un hilo en otro nucleo mira ~2000 veces por segundo que script
@@ -300,7 +304,11 @@ int main(int, char**) {
                         [dataDir, gameDir](const vs::ConvertProgress& p, std::string& e) { return vs::upgradeVdx(dataDir, gameDir, p, e); }, uerr))
                 logf("[vdx4] no se pudo recomprimir: %s (se siguen usando las texturas anteriores)\n", uerr.c_str());
         }
-        GameData tmp;
+        // game.vsd se carga una sola vez, directamente en el juego (antes se leia aqui en una copia temporal solo para
+        // los tamanos de textura y luego Game::init lo volvia a leer: ~8 s de mas en el arranque)
+        GameData& tmp = game.d;
+        vs::gVsdClock = []() { return sceKernelGetProcessTimeWide() / 1000.0; };
+        bootMark("leyendo game.vsd");
         if (!tmp.load(dataDir + "/game.vsd", err)) {
             showError("No se encuentran los datos del juego.\n\nGenera vsdata en el PC con tools/build_vsdata.py a partir de tu copia de Steam y copialo a\nux0:data/valdis/vsdata/\n\n(" + err + ")");
             sceKernelExitProcess(0); return 0;
@@ -323,6 +331,7 @@ int main(int, char**) {
          (unsigned)(vglMemFree(VGL_MEM_PHYCONT) >> 20), (unsigned)(vglMemFree(VGL_MEM_ALL) >> 20));
 
     bootMark("init ok");
+    logf("[arranque] game.vsd: lectura %.0f ms, analisis %.0f ms\n", vs::gVsdReadMs, vs::gVsdParseMs);
     if (sceIoGetstat((saveDir + "/prof").c_str(), &st) >= 0) game.prof = true; // perfilador: crea el archivo save/prof
     if (sceIoGetstat((saveDir + "/profphase").c_str(), &st) >= 0) { game.prof = true; vs::gProfPhaseOnly = true; } // fases + scripts con AOT
     if (sceIoGetstat((saveDir + "/proffases").c_str(), &st) >= 0) { game.prof = true; vs::gProfPhaseOnly = true; vs::gProfLight = true; } // solo fases
@@ -344,6 +353,7 @@ int main(int, char**) {
     }
     int roomEnterFrame = 0, lastRoom = -1;
     vs::gFontOpen = vitaFontOpen; vs::gFontGlyph = vitaFontGlyph;
+    vs::gFontCachePath = dataDir + "/fuente_sistema.cache";   // atlas de la fuente del sistema, generado en esta consola
     vs::debugTourInit(game, saveDir);   // save/tour.txt, stress.txt, godmode (pruebas de rendimiento)
     {   // save/nodrawskip: desactiva el dibujo a 30 fps (para medir el coste real de cada frame)
         gDrawSkip = !vs::testFileExists(saveDir, "nodrawskip");
@@ -439,6 +449,10 @@ int main(int, char**) {
         { uint64_t tf = sceKernelGetProcessTimeWide(); vs::debugTourAfterFrame(game, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (tf - prevFrameT) / 1000.0); prevFrameT = tf; }
         if (game.prof) { game.profPhase[11] += (double)(t2 - t1); if (game.profFrames >= 600) game.profDump(); }
 
+        {   // primeros frames presentados: cuanto tarda en verse el juego tras el logo
+            static int shown = 0;
+            if (shown < 3 && !noDraw && !discard) { shown++; char m[32]; std::snprintf(m, sizeof m, "frame %d (%d)", shown, game.frame); bootMark(m); }
+        }
         fpsFrames++;
         uint64_t now = sceKernelGetProcessTimeWide();
         if (now - fpsT >= 1000000) { game.fps = fpsFrames; fpsFrames = 0; fpsT = now; }
