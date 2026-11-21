@@ -20,7 +20,7 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 2. **Choose a tag:** escribe `v0.6.0-alpha` → *Create new tag on publish* (sobre `main`).
 3. **Release title:** `Valdis Story PSVITA v0.6.0-alpha`
 4. Marca **Set as a pre-release**.
-5. Arrastra el VPK **sin código del juego** (probado en la Vita el 20-11: título en español y menú MODS): `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), unos 1,6 MB, SHA-256 `8aae0ec0cbeff7f904423f29b8dda9e574277da50a8193519a70764127da1370`.
+5. Arrastra el VPK **sin código del juego** (probado en la Vita el 20-11 por la noche: título e intro en español, 60 fps): `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), 1 588 159 bytes, SHA-256 `64dcbb72f261a1d8506ad9e8e84cbdfc8cc2d8ac23185fb3899c5c507fbf5740`.
    - **No subas** `build\vita\vsvita.vpk`: es la versión AOT, lleva código derivado del juego y es solo para uso personal.
 6. Pega las notas de abajo en la descripción y pulsa **Publish release**.
 
@@ -44,6 +44,9 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 - **Menú de TRUCOS (SELECT + L + R):** modo dios, maná infinito, subir nivel, +5 puntos, personajes desbloqueados, ir a cualquier sala y contador de rendimiento.
 - **Salir → Menú principal** ya vuelve al título.
 - **"GFX : Low"** ya no causa parpadeos.
+- **Arranque más rápido:** de 21,6 a 7,6 s hasta el primer frame.
+- **Menos pausas al volver a salas ya visitadas:** se mantienen más texturas en memoria (en una sesión de 75 min, las entradas de más de 0,3 s bajaron de 9 a 4).
+- Corregido el número de fps del contador de rendimiento de TRUCOS.
 
 ### Pruebas en la Vita (versión AOT, la de 60 fps)
 - Partida de 42 minutos jugada a mano (Wyatt, hasta el jefe de hielo): sin cuelgues.
