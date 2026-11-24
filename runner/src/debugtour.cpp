@@ -343,7 +343,7 @@ void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) 
 // save/ (los mismos de las herramientas de prueba: godmode, unlockchars...), asi que siguen activas al volver a entrar.
 extern void (*gOverlayHook)(Game&);
 extern int gHudPercent;   // vm.cpp: tamano del HUD (MODS)
-int logrosTotal(); int logrosHechos(); bool logroInfo(int k, std::string& name);   // logros.cpp
+int logrosTotal(); int logrosHechos(); bool logroInfo(int k, std::string& name); void logrosReset();   // logros.cpp
 extern void (*gLogroToast)(const std::string&);
 bool logrosOverlay(Game& g);
 extern void (*gPreDrawHook)(Game&);
@@ -372,7 +372,8 @@ std::vector<int> gWarpRooms; int gWarpSel = 0; int gWarpTarget = -1;
 int gVarMp = -1, gVarSetMp = -1, gVarXp = -1, gVarXpMax = -1, gVarPStat = -1, gVarPSkill = -1;
 std::string gMsg; int gMsgFrames = 0;
 
-enum { C_GOD, C_MANA, C_LEVEL, C_POINTS, C_UNLOCK, C_WARP, C_PERF, C_CLOSE, C_COUNT };
+enum { C_GOD, C_MANA, C_LEVEL, C_POINTS, C_UNLOCK, C_WARP, C_PERF, C_LOGROS, C_CLOSE, C_COUNT };
+int gLogroResetArm = 0;   // C_LOGROS: el primer X pide confirmacion, el segundo borra
 enum { M_LANG, M_FONT, M_TSIZE, M_ICONS, M_TOUCH, M_HUD, M_LOGROS, M_CLOSE, M_COUNT };
 bool gLogroList = false; int gLogroTop = 0;   // lista de logros (MODS -> Logros)
 const char* kFontNames[] = {"Original", "Sistema negrita", "Sistema normal", "Sistema estrecha", "Sistema con remates"};
@@ -432,6 +433,8 @@ std::string label(Game& g, int k) {
             return "Ir a sala: < " + n + " >" + cnt;
         }
         case C_PERF: return "Mostrar rendimiento: " + onoff(gShowPerf);
+        case C_LOGROS: return gLogroResetArm ? "¿Seguro? X otra vez borra los " + std::to_string(logrosHechos()) + " logros"
+                                             : "Reiniciar logros (" + std::to_string(logrosHechos()) + " de " + std::to_string(logrosTotal()) + ")";
         default: return "Cerrar";
     }
 }
@@ -507,6 +510,11 @@ void activate(Game& g, int k, int dir) {   // dir 0 = X; -1/+1 = izquierda/derec
             say(gUnlockChars ? "Personajes desbloqueados y Boss Rush en el menú principal" : "Personajes y Boss Rush: como en la partida");
             break;
         case C_PERF: gShowPerf = !gShowPerf; setFlagFile("showperf", gShowPerf); break;
+        case C_LOGROS:
+            if (dir != 0) break;
+            if (!gLogroResetArm) { gLogroResetArm = 1; break; }
+            gLogroResetArm = 0; logrosReset(); say("Logros reiniciados: todos bloqueados otra vez");
+            break;
         case C_LEVEL:
             if (dir != 0) break;
             if (!inGameplay(g) || gVarXp < 0 || gVarXpMax < 0) { say("Solo dentro de la partida"); break; }
@@ -564,7 +572,7 @@ void drawOverlay(Game& g) {
         overlayText(g, x0 + 20, y0 + 12, mods ? "MODS" : "TRUCOS", 0.6, 0x00CCFF, 1);
         int n = mods ? M_COUNT : C_COUNT, sel = mods ? gSelMods : gSel;
         for (int k = 0; k < n; k++) {
-            float y = y0 + 60 + k * 36;
+            float y = y0 + 56 + k * 34;
             if (k == sel) overlayRect(x0 + 10, y - 4, x1 - 10, y + 28, 0x604020, 0.95f);
             overlayText(g, x0 + 24, y, mods ? modLabel(k) : label(g, k), 0.45, k == sel ? 0x00E0FF : 0xFFFFFF, 1);
         }
@@ -640,7 +648,7 @@ bool cheatsInput(Game& g, uint32_t b) {
         if (pr & 64) { gSelectHeld = true; gSelectUsed = false; gSelectLR = false; }
         if (gSelectHeld) {
             if ((b & 64) && (b & 128) && (b & 256) && !gSelectUsed) {
-                gSelectUsed = true; gMenu = 1; gMenuOpen = true; gRepeat = 0; clearPad(); return true;
+                gSelectUsed = true; gMenu = 1; gLogroResetArm = 0; gMenuOpen = true; gRepeat = 0; clearPad(); return true;
             }
             if (b & (128 | 256)) gSelectLR = true;   // tocar L o R con SELECT nunca abre MODS al soltar
             if (!(b & 64)) {
@@ -673,6 +681,7 @@ bool cheatsInput(Game& g, uint32_t b) {
         if (gMenuOpen && (pr & (32 | 64))) { gMenuOpen = false; gBlockInput = true; }
         return true;
     }
+    if (act & 3) gLogroResetArm = 0;   // al moverse se cancela la confirmacion
     if (act & 1) gSel = (gSel + C_COUNT - 1) % C_COUNT;
     if (act & 2) gSel = (gSel + 1) % C_COUNT;
     if (act & 4) activate(g, gSel, -1);

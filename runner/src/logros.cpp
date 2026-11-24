@@ -125,7 +125,9 @@ bool logrosOverlay(Game& g) {
 }
 
 int logrosTotal() { return kNumLogros; }
+// TRUCOS -> Reiniciar logros: borra los logros y los contadores (save/logros.ini queda vacio)
 int logrosHechos() { load(); int n = 0; for (auto& l : kLogros) if (gHave.count(l.id) && gHave[l.id]) n++; return n; }
+void logrosReset() { load(); int n = logrosHechos(); gHave.clear(); gStats.clear(); save(); logf("[logro] reiniciados (%d borrados)\n", n); }
 bool logroInfo(int k, std::string& name) { load(); if (k < 0 || k >= kNumLogros) return false; name = kLogros[k].nombre; return gHave.count(kLogros[k].id) && gHave[kLogros[k].id]; }
 
 // ---- Pantalla de logros dentro del menu de opciones de la pausa (sustituye a "Full Screen", que en la Vita no hace
