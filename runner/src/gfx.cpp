@@ -723,9 +723,29 @@ static void bindBatch(int tex, int verts) {
     if (tex != gBatchTex || gBatch.size() + verts > 6 * 4096) { flush(); gBatchTex = tex; }
 }
 
-void quad(int tex, const float xy[8], const float uvPix[8], const uint32_t c[4], float alpha) {
+static HudState gHud;
+HudState hudGet() { return gHud; }
+void hudSet(const HudState& st) { gHud = st; }
+void hudLock(bool on) { gHud.lock = on; }
+void hudAnchor(float x, float y) {
+    if (!gHud.on || gHud.lock) return;
+    gHud.ax = x < gHud.l + gHud.w * 0.3f ? gHud.l : x > gHud.l + gHud.w * 0.7f ? gHud.l + gHud.w : gHud.l + gHud.w * 0.5f;
+    gHud.ay = y < gHud.t + gHud.h * 0.75f ? gHud.t : gHud.t + gHud.h;   // casi todo el HUD esta arriba: abajo solo el ultimo cuarto
+}
+// copia escalada de los vertices (n puntos) si el HUD esta encogido; devuelve el puntero a usar
+static const float* hudXf(const float* xy, int n, float* out) {
+    if (!gHud.on) return xy;
+    float mn = xy[0], mx = xy[0], my = xy[1], My = xy[1];
+    for (int k = 1; k < n; k++) { mn = std::min(mn, xy[k * 2]); mx = std::max(mx, xy[k * 2]); my = std::min(my, xy[k * 2 + 1]); My = std::max(My, xy[k * 2 + 1]); }
+    if (mx - mn > gHud.w * 0.6f && My - my > gHud.h * 0.6f) return xy;   // velo de pantalla completa (ancho Y alto): tal cual
+    for (int k = 0; k < n; k++) { out[k * 2] = gHud.ax + (xy[k * 2] - gHud.ax) * gHud.s; out[k * 2 + 1] = gHud.ay + (xy[k * 2 + 1] - gHud.ay) * gHud.s; }
+    return out;
+}
+
+void quad(int tex, const float xy0[8], const float uvPix[8], const uint32_t c[4], float alpha) {
     int w, h; if (!resolve(tex, w, h)) return;
     if (gDiscard) return;
+    float hx[8]; const float* xy = hudXf(xy0, 4, hx);
     bindBatch(tex, 6);
     float iw = 1.f / w, ih = 1.f / h;
     Vtx v[4];
@@ -734,9 +754,11 @@ void quad(int tex, const float xy[8], const float uvPix[8], const uint32_t c[4],
     gBatch.push_back(v[0]); gBatch.push_back(v[2]); gBatch.push_back(v[3]);
 }
 
-void tris(int tex, int n, const float* xy, const float* uv, const uint32_t* c, const float* a) {
+void tris(int tex, int n, const float* xy0, const float* uv, const uint32_t* c, const float* a) {
     int w, h; if (!resolve(tex, w, h)) return;
     if (gDiscard) return;
+    static std::vector<float> hx; if (gHud.on) hx.resize(n * 2);
+    const float* xy = gHud.on ? hudXf(xy0, n, hx.data()) : xy0;
     bindBatch(tex, n);
     float iw = 1.f / w, ih = 1.f / h;
     for (int k = 0; k < n; k++) gBatch.push_back(mk(xy[k * 2], xy[k * 2 + 1], uv ? uv[k * 2] * iw : 0, uv ? uv[k * 2 + 1] * ih : 0, c[k], a[k]));

@@ -1,5 +1,6 @@
 // Interprete del bytecode GMS1 (BC13 normalizado por UTMT a los opcodes nuevos).
 #include "runtime.h"
+#include "gfx.h"
 #include <algorithm>
 #include <cstring>
 #include <new>
@@ -264,8 +265,53 @@ Value Game::vmCallFnSlow(int fn, Ctx& ctx, Value* av, int argc) {
     return Value();
 }
 
+// Escala del HUD (9.4, MODS): los scripts que dibujan el HUD se dibujan encogidos hacia su esquina (gfx::hudSet).
+// 1 = HUD (vida, mana, combos, avisos, panel de jefe derrotado); -1 = dentro del HUD pero a tamano normal (dialogos y
+// tutoriales: texto que hay que leer). En los menus (pausa, estado, muerte...) nunca se escala.
+int gHudPercent = 100;   // debugtour.cpp lo pone desde save/mods.ini
+static std::vector<int8_t> gHudCode;
+static bool gHudMenuRoom = false; static int gHudRoomSeen = -2;
+static void hudTableInit(Game& g) {
+    gHudCode.assign(g.d.codes.size(), 0);
+    static const char* on[] = {"gml_Script_ui_wyatt_script", "gml_Script_draw_ui_overlay_script", "gml_Script_draw_level_boss_script",
+                               "gml_Object_boss_rating_Draw_0"};   // panel de puntuacion del jefe (tapaba las recompensas, 9.5)
+    static const char* off[] = {"gml_Script_npc_ui_script", "gml_Script_tutorial_script"};
+    for (size_t i = 0; i < g.d.codes.size(); i++) {
+        for (const char* n : on) if (g.d.codes[i].name == n) gHudCode[i] = 1;
+        for (const char* n : off) if (g.d.codes[i].name == n) gHudCode[i] = -1;
+    }
+}
+struct HudScope {
+    bool active = false; gfx::HudState saved;
+    HudScope(Game& g, int codeId) {
+        if (gHudPercent >= 100) return;
+        if (gHudCode.size() != g.d.codes.size()) hudTableInit(g);
+        int8_t k = gHudCode[codeId];
+        if (!k) return;
+        if (g.room != gHudRoomSeen) {
+            gHudRoomSeen = g.room;
+            const std::string& n = g.d.rooms[g.room].name;
+            gHudMenuRoom = n == "status_room" || n == "quit_room" || n == "death_room" || n == "control_room" || n == "eqp_room" ||
+                           n == "spell_room" || n == "profile_room" || n == "start_game" || n == "char_room" || n == "lore_room" || n == "store_room";
+        }
+        if (gHudMenuRoom) return;
+        active = true; saved = gfx::hudGet();
+        gfx::HudState st = saved;
+        if (k > 0) {
+            const ViewState& v = g.views[0];
+            st.on = true; st.lock = false; st.s = gHudPercent / 100.f;
+            if (g.viewsEnabled && v.wview > 0) { st.l = (float)v.xview; st.t = (float)v.yview; st.w = (float)v.wview; st.h = (float)v.hview; }
+            else { st.l = 0; st.t = 0; st.w = (float)g.roomW; st.h = (float)g.roomH; }
+            st.ax = st.l; st.ay = st.t;
+        } else st.on = false;
+        gfx::hudSet(st);
+    }
+    ~HudScope() { if (active) gfx::hudSet(saved); }
+};
+
 Value Game::call(int codeId, Ctx ctx, Value* args, int argc) {
     if (codeId < 0 || codeId >= (int)d.codes.size()) return Value();
+    HudScope hudScope(*this, codeId);
     SampFnScope sfs(-1);   // dentro del script ya no se esta en la funcion integrada que lo llamo
     if (aotEnabled && aot[codeId] && !(prof && !profCode.empty())) {   // codigo nativo (sin perfilador por script)
         Value* savedArgs = curArgs; int savedArgc = curArgc; int savedCode = curCode;

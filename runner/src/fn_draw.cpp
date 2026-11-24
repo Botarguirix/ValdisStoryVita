@@ -29,6 +29,7 @@ void Game::drawFramePart(const SFrame& f, double left, double top, double w, dou
     float xy[8] = {X0, Y0, X1, Y0, X1, Y1, X0, Y1};
     float uv[8] = {u0, v0, u1, v0, u1, v1, u0, v1};
     uint32_t c[4] = {col, col, col, col};
+    gfx::hudAnchor((float)x, (float)y);
     gfx::quad(f.tex, xy, uv, c, (float)alpha);
 }
 
@@ -42,6 +43,7 @@ static void frameQuad(const SFrame& f, double ox, double oy, double x, double y,
     float xy[8];
     P(lx0, ly0, xy[0], xy[1]); P(lx1, ly0, xy[2], xy[3]); P(lx1, ly1, xy[4], xy[5]); P(lx0, ly1, xy[6], xy[7]);
     float uv[8] = {(float)f.sx, (float)f.sy, (float)(f.sx + f.sw), (float)f.sy, (float)(f.sx + f.sw), (float)(f.sy + f.sh), (float)f.sx, (float)(f.sy + f.sh)};
+    gfx::hudAnchor((float)x, (float)y);
     gfx::quad(f.tex, xy, uv, c, (float)alpha);
 }
 
@@ -266,6 +268,8 @@ static void splitLines(const RFont& f, const std::string& in, double maxW, std::
 const std::string* langDrawAlias(const std::string& s);   // lang.cpp
 void Game::drawText(double x, double y, const std::string& s0, double xs, double ys, double ang, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, double alpha, double sep, double w) {
     if (fontCur < 0 || fontCur >= (int)gFonts.size()) return;
+    gfx::hudAnchor((float)x, (float)y);   // un texto se escala entero hacia la misma ancla (no se parte)
+    struct HudLock { HudLock() { gfx::hudLock(true); } ~HudLock() { gfx::hudLock(false); } } hudLockGuard;
     const std::string* al = langDrawAlias(s0);
     const std::string& s = al ? *al : s0;
     const RFont& f = gFonts[fontCur];
@@ -539,6 +543,7 @@ VS_FN(draw_primitive_end) {
     else if (g.primKind == 6) { for (size_t i = 1; i + 1 < P.size(); i++) { emit(P[0]); emit(P[i]); emit(P[i + 1]); } } // pr_trianglefan
     else if (g.primKind == 4) { for (size_t i = 0; i + 2 < P.size(); i += 3) { emit(P[i]); emit(P[i + 1]); emit(P[i + 2]); } } // pr_trianglelist
     else g.warnOnce("primitiva no soportada " + std::to_string(g.primKind));
+    if (!xy.empty()) gfx::hudAnchor(xy[0], xy[1]);
     if (!col.empty()) gfx::tris(ok ? f.tex : -1, (int)col.size(), xy.data(), uv.data(), col.data(), al.data());
     P.clear();
     return Value();
@@ -547,6 +552,7 @@ VS_FN(draw_primitive_end) {
 VS_FN(draw_rectangle_color) {
     float x1 = (float)a[0].num(), y1 = (float)a[1].num(), x2 = (float)a[2].num(), y2 = (float)a[3].num();
     uint32_t c1 = bgr(a[4]), c2 = bgr(a[5]), c3 = bgr(a[6]), c4 = bgr(a[7]);
+    gfx::hudAnchor(x1, y1);
     if (a[8].truthy()) {
         gfx::line(x1, y1, x2, y1, c1, c2, 1, 1); gfx::line(x2, y1, x2, y2, c2, c3, 1, 1);
         gfx::line(x2, y2, x1, y2, c3, c4, 1, 1); gfx::line(x1, y2, x1, y1, c4, c1, 1, 1);
@@ -558,7 +564,7 @@ VS_FN(draw_rectangle_color) {
     }
     return Value();
 }
-VS_FN(draw_line_color) { gfx::line((float)a[0].num(), (float)a[1].num(), (float)a[2].num(), (float)a[3].num(), bgr(a[4]), bgr(a[5]), 1, 1); return Value(); }
+VS_FN(draw_line_color) { gfx::hudAnchor((float)a[0].num(), (float)a[1].num()); gfx::line((float)a[0].num(), (float)a[1].num(), (float)a[2].num(), (float)a[3].num(), bgr(a[4]), bgr(a[5]), 1, 1); return Value(); }
 
 VS_FN(draw_set_blend_mode) { g.blendMode = a[0].ival(); gfx::setBlend(g.blendMode); return Value(); }
 VS_FN(draw_set_blend_mode_ext) { gfx::setBlendExt(a[0].ival(), a[1].ival()); return Value(); }

@@ -22,6 +22,14 @@ void tris(int tex, int n, const float* xy, const float* uvPix, const uint32_t* b
 void line(float x1, float y1, float x2, float y2, uint32_t c1, uint32_t c2, float alpha, float width);
 void flush();
 void endFrame();
+// Escala del HUD (9.4): mientras esta activa, lo que se dibuja se encoge hacia una esquina o el centro de la vista.
+// hudAnchor elige el ancla por llamada de dibujo (segun su punto de origen); hudLock la fija durante un texto entero.
+// Los quads que cubren mas del 60 % de la vista a lo ancho y a lo alto (velos de pantalla completa) no se escalan.
+struct HudState { bool on = false; float s = 1, l = 0, t = 0, w = 1, h = 1, ax = 0, ay = 0; bool lock = false; };
+HudState hudGet();
+void hudSet(const HudState& st);
+void hudAnchor(float x, float y);
+void hudLock(bool on);
 
 bool texSize(int tex, int& w, int& h);
 int pageState(int tex);   // diagnostico: 1 cargada, 0 no, -1 fallida, -2 esperando reintento

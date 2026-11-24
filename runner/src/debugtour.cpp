@@ -337,6 +337,7 @@ void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) 
 // logica; los eventos Draw siguen dibujando la escena). Las opciones de encendido/apagado se guardan como archivos en
 // save/ (los mismos de las herramientas de prueba: godmode, unlockchars...), asi que siguen activas al volver a entrar.
 extern void (*gOverlayHook)(Game&);
+extern int gHudPercent;   // vm.cpp: tamano del HUD (MODS)
 extern void (*gPreDrawHook)(Game&);
 void overlayBegin(Game& g);
 void overlaySize(int& w, int& h);
@@ -364,9 +365,12 @@ int gVarMp = -1, gVarSetMp = -1, gVarXp = -1, gVarXpMax = -1, gVarPStat = -1, gV
 std::string gMsg; int gMsgFrames = 0;
 
 enum { C_GOD, C_MANA, C_LEVEL, C_POINTS, C_UNLOCK, C_WARP, C_PERF, C_CLOSE, C_COUNT };
-enum { M_LANG, M_FONT, M_ICONS, M_TOUCH, M_CLOSE, M_COUNT };
+enum { M_LANG, M_FONT, M_ICONS, M_TOUCH, M_HUD, M_CLOSE, M_COUNT };
+
+const int kHudSteps[] = {100, 85, 70, 60, 50};
 
 void modsLoad() {
+    gHudPercent = gMods.hud;   // sin mods.ini: el valor por defecto
     FILE* f = std::fopen((gSaveDir + "/mods.ini").c_str(), "r");
     if (!f) return;
     char k[64]; int v;
@@ -376,15 +380,17 @@ void modsLoad() {
         else if (s == "font") gMods.font = std::max(0, std::min(1, v));
         else if (s == "icons") gMods.icons = std::max(0, std::min(1, v));
         else if (s == "touch") gMods.touch = std::max(0, std::min(2, v));
+        else if (s == "hud") gMods.hud = std::max(50, std::min(100, v));
     }
     std::fclose(f);
+    gHudPercent = gMods.hud;
 }
 void modsSave() {
     if (FILE* f = std::fopen((gSaveDir + "/mods.ini").c_str(), "w")) {
-        std::fprintf(f, "lang=%d\nfont=%d\nicons=%d\ntouch=%d\n", gMods.lang, gMods.font, gMods.icons, gMods.touch);
+        std::fprintf(f, "lang=%d\nfont=%d\nicons=%d\ntouch=%d\nhud=%d\n", gMods.lang, gMods.font, gMods.icons, gMods.touch, gMods.hud);
         std::fclose(f);
     }
-    logf("[mods] lang=%d font=%d icons=%d touch=%d\n", gMods.lang, gMods.font, gMods.icons, gMods.touch);
+    logf("[mods] lang=%d font=%d icons=%d touch=%d hud=%d\n", gMods.lang, gMods.font, gMods.icons, gMods.touch, gMods.hud);
 }
 
 void setFlagFile(const char* name, bool on) {
@@ -459,6 +465,7 @@ std::string modLabel(int k) {
             const char* t[3] = {"Apagado / Off", "Solo arriba / Top only", "Entero / Full"};
             return std::string("Panel trasero / Rear touch: < ") + t[gMods.touch] + " >";
         }
+        case M_HUD: return std::string("HUD: < ") + std::to_string(gMods.hud) + " % >" + (gMods.hud == 100 ? " (original)" : "");
         default: return "Cerrar / Close";
     }
 }
@@ -469,6 +476,7 @@ void modActivate(Game& g, int k, int dir) {
         case M_FONT: gMods.font ^= 1; break;
         case M_ICONS: gMods.icons ^= 1; break;
         case M_TOUCH: gMods.touch = (gMods.touch + d + 3) % 3; break;
+        case M_HUD: { int i = 0; while (i < 4 && kHudSteps[i] != gMods.hud) i++; i = (i + d + 5) % 5; gMods.hud = kHudSteps[i]; gHudPercent = gMods.hud; break; }
         case M_CLOSE: if (dir == 0) { gMenuOpen = false; gBlockInput = true; } return;
     }
     (void)g; modsSave();

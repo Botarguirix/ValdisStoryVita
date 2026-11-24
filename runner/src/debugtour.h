@@ -21,6 +21,7 @@ struct ModsCfg {
     int font = 0;    // 0 fuente original del juego, 1 fuente del sistema de la Vita
     int icons = 1;   // 1 iconos de botones de la Vita, 0 nombres originales (mando de Xbox)
     int touch = 1;   // panel trasero: 0 apagado, 1 solo arriba (como Shotgun King Vita), 2 entero (mitades)
+    int hud = 50;    // tamano del HUD en % (9.4): 100 original, 50 por defecto (pedido del usuario: al menos 50 % mas pequeno)
 };
 extern ModsCfg gMods;
 // Archivo de prueba en save/ con su nombre exacto o con sufijo "_xxx" antes de la extension (ver debugtour.cpp)
