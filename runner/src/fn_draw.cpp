@@ -286,12 +286,14 @@ static void splitLines(const RFont& f, const std::string& in, double maxW, std::
 }
 
 const std::string* langDrawAlias(const std::string& s);   // lang.cpp
+const std::string* logroMenuAlias(const std::string& s);  // logros.cpp: "Full Screen" -> logros (en ingles)
 void Game::drawText(double x, double y, const std::string& s0, double xs, double ys, double ang, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, double alpha, double sep, double w) {
     if (fontCur < 0 || fontCur >= (int)gFonts.size()) return;
     // 9.9: tamano del texto (MODS). Letras mas pequenas con el mismo ancho de caja: menos lineas y cabe en el cuadro
     // (el ancho de ajuste w va en unidades sin escalar: se divide para que en pantalla siga midiendo lo mismo)
     if (gMods.tsize < 100) { double k = gMods.tsize / 100.0; xs *= k; ys *= k; if (w > 0) w /= k; }
-    const std::string* al = langDrawAlias(s0);
+    const std::string* al = logroMenuAlias(s0);
+    if (!al) al = langDrawAlias(s0);
     const std::string& s = al ? *al : s0;
     const RFont& f = gFonts[fontCur];
     std::vector<std::string> lines;

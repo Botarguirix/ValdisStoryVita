@@ -478,7 +478,7 @@ std::string modLabel(int k) {
             const char* t[3] = {"Apagado / Off", "Solo arriba / Top only", "Entero / Full"};
             return std::string("Panel trasero / Rear touch: < ") + t[gMods.touch] + " >";
         }
-        case M_LOGROS: return "Logros: " + std::to_string(logrosHechos()) + " de " + std::to_string(logrosTotal()) + "  (X: ver la lista)";
+        case M_LOGROS: return "Logros: " + std::to_string(logrosHechos()) + " de " + std::to_string(logrosTotal()) + "  (pausa > Opciones > Logros)";
         case M_HUD: return std::string("HUD: < ") + std::to_string(gMods.hud) + " % >" + (gMods.hud == 100 ? " (original)" : "");
         default: return "Cerrar / Close";
     }
@@ -492,7 +492,7 @@ void modActivate(Game& g, int k, int dir) {
         case M_ICONS: gMods.icons ^= 1; break;
         case M_TOUCH: gMods.touch = (gMods.touch + d + 3) % 3; break;
         case M_HUD: { int i = 0; while (i < 4 && kHudSteps[i] != gMods.hud) i++; i = (i + d + 5) % 5; gMods.hud = kHudSteps[i]; gHudPercent = gMods.hud; break; }
-        case M_LOGROS: if (dir == 0) { gLogroList = true; gLogroTop = 0; } return;
+        case M_LOGROS: return;   // la lista esta en el juego: pausa > Mapa/Opc. > Logros (logros.cpp)
         case M_CLOSE: if (dir == 0) { gMenuOpen = false; gBlockInput = true; } return;
     }
     (void)g; modsSave();
@@ -600,8 +600,10 @@ void cheatsInit(Game& g) {
     bossRushModeInit(g);
 }
 
+void logroScreenStep(Game& g); bool logroScreenInput(Game& g, uint32_t b, uint32_t pr);   // logros.cpp
 void cheatsStep(Game& g) {
     joyIconsApply(g);
+    logroScreenStep(g);
     bossRushModeStep(g);
     {   // Correccion del port (9.2, 23-11): al bajar del tren el jugador se quedaba en depth 9 (detras de los edificios).
         // tram_travel_script pone depth 0 y pide el cambio de sala, pero en ese mismo frame el End Step del jugador ve
@@ -630,6 +632,7 @@ void cheatsStep(Game& g) {
 bool cheatsInput(Game& g, uint32_t b) {
     uint32_t pr = b & ~gPrevBtn; gPrevBtn = b;
     auto clearPad = [&]() { for (bool& x : g.in.gpBtn) x = false; for (float& a : g.in.gpAxis) a = 0; };
+    if (!gMenuOpen && logroScreenInput(g, b, pr)) { clearPad(); return true; }   // pantalla de logros (opciones de la pausa)
     if (!gMenuOpen && bossRushModeInput(g, b, false)) return true;
     if (!gMenuOpen) {
         if (gBlockInput) { if (b == 0) gBlockInput = false; else { clearPad(); return false; } }

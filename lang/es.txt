@@ -1863,7 +1863,7 @@
 7aa62c344bbd899a	Una tela común para remendar ropa.
 7ab0831b46cba143	Reina, ¿tienes idea de qué hace esto?
 7ad8c478bef96429	Acabo de caer en esta ciudad. No soy de los malos.
-7ae025e84bb723ad	Activa o desactiva la pantalla completa.
+7ae025e84bb723ad	Mira los logros que llevas y los que faltan.
 7ae0f2b524c4d343	Esta era mucho más poderosa que cualquiera que hubiera sentido, pero dijo que siempre hay formas de atravesarlas.
 7afd871c74f2ae9a	Asesino:
 7b146e2b047d7553	Plaga Nv.2:
@@ -2284,7 +2284,7 @@
 951c73aaed011ec6	Combinación de dos armas de fuego con explosivos de magia oscura de área amplia.
 952c902c431d25f2	¿Qué deseas que haga, Madre de la Luz?
 95358a09931d12bc	Con la furia al máximo, ganas +
-953e8c8a66f34146	Ajusta controles/sonido/pantalla completa o sal del juego.#Mira el mapa de la zona actual.
+953e8c8a66f34146	Ajusta controles/sonido, mira tus logros o sal del juego.#Mira el mapa de la zona actual.
 955299fb0d2f0d2e	¡Me pongo con ello ahora mismo!
 955b989e57868d07	Eso dicen, pero yo no había nacido entonces. A las criaturas que viste las llamamos ferales.
 957f2ee24a994f93	Dudo que un hechizo perverso pudiera dominar tu mente mucho tiempo... ¿o quizá te sedujeron los placeres de la carne?
@@ -3420,7 +3420,7 @@ df47728a68c23e36	Lanzar un hechizo en sigilo aumenta su daño un 50%
 df5011328f8cb503	Nunca había visto un ángel así. ¿Qué está pasando en esta ciudad?
 df54fe2f71221fb7	Buen trabajo poniendo otra vez en marcha el tranvía.
 df58274e6a568837	Gran juicio [Afinidad de luz +6]
-df5afa00ad8e1140	Full Screen
+df5afa00ad8e1140	Logros
 df7255f3fea315fc	Los humanos no aprenden, ¿eh? Les advertimos que no se acercaran a nuestro... espera, ¿quién eres tú?
 df7b644487e91eae	Entrar en la Arena de combate
 df84eba2186e0668	Eres de fiar, forastero.

@@ -69,6 +69,7 @@ Otras builds (o versiones de otras tiendas) pueden funcionar, pero no están pro
 1. Descarga `vsvita.vpk` de [Releases](../../releases) e instálalo con VitaShell.
 2. Copia de tu carpeta de Steam `steamapps/common/ValdisStoryAbyssalCity/` a `ux0:data/valdis/game/`: `data.win`, las carpetas `data_1`, `data_2`, `data_5` y todos los `music_*.ogg`. El `.exe` y las `.dll` no hacen falta.
 3. Abre el juego. El primer arranque convierte los datos (unos minutos, con barra de progreso). Las partidas se guardan en `ux0:data/valdis/save/`.
+4. Opcional, imágenes de los logros: en el PC, `python tools/logros_iconos.py` baja los iconos de la página pública de logros de Steam a `build/vsdata/logros/`; copia esa carpeta a `ux0:data/valdis/vsdata/logros/`. Los logros se ven en la pausa: **Mapa/Opc. → Logros**. Sin las imágenes se usan los sprites del juego.
 
 ### Controles
 
@@ -164,6 +165,7 @@ The VPK on [Releases](../../releases) is the **interpreter** build (engine only,
 1. Install `vsvita.vpk` from [Releases](../../releases) with VitaShell. Requires `ur0:data/libshacccg.suprx` (extract it with ShaRKBR33D).
 2. Copy `data.win`, `data_1/`, `data_2/`, `data_5/` and every `music_*.ogg` from `steamapps/common/ValdisStoryAbyssalCity/` into `ux0:data/valdis/game/`.
 3. Launch the game. The first boot converts the data (a few minutes, with a progress bar).
+4. Optional, achievement pictures: on a PC run `python tools/logros_iconos.py` (downloads the icons from the public Steam achievements page into `build/vsdata/logros/`) and copy that folder to `ux0:data/valdis/vsdata/logros/`. Achievements are in the pause menu: **Map/Opt. → Achievements**.
 
 Runs at stock clocks (500/222 MHz). Overclocking is your own choice and risk (heat and battery wear).
 

@@ -310,9 +310,23 @@ struct HudScope {
     ~HudScope() { if (active) gfx::hudSet(saved); }
 };
 
+// Pantalla de logros (logros.cpp): se dibuja al terminar draw_option_menu_script, en el sitio del mapa
+void logroScreenBeforeMenu(Game& g, Instance* self); void logroScreenDraw(Game& g, Instance* self); bool logroScreenOpen();
+static int gOptMenuCode = -2;
+struct OptMenuHook {
+    Game* g = nullptr; Instance* self = nullptr;
+    OptMenuHook(Game& gm, int codeId, Instance* s) {
+        if (gOptMenuCode == -2) { gOptMenuCode = -1; for (size_t i = 0; i < gm.d.codes.size(); i++) if (gm.d.codes[i].name == "gml_Script_draw_option_menu_script") gOptMenuCode = (int)i; }
+        if (codeId != gOptMenuCode || !logroScreenOpen()) return;
+        g = &gm; self = s; logroScreenBeforeMenu(gm, s);
+    }
+    ~OptMenuHook() { if (g) logroScreenDraw(*g, self); }
+};
+
 Value Game::call(int codeId, Ctx ctx, Value* args, int argc) {
     if (codeId < 0 || codeId >= (int)d.codes.size()) return Value();
     HudScope hudScope(*this, codeId);
+    OptMenuHook optMenuHook(*this, codeId, ctx.self);
     SampFnScope sfs(-1);   // dentro del script ya no se esta en la funcion integrada que lo llamo
     if (aotEnabled && aot[codeId] && !(prof && !profCode.empty())) {   // codigo nativo (sin perfilador por script)
         Value* savedArgs = curArgs; int savedArgc = curArgc; int savedCode = curCode;
