@@ -202,13 +202,23 @@ static ScePvfLibId gPvfLib = nullptr; static ScePvfFontId gPvfFont = nullptr;
 static ScePvfPointer pvfAlloc(ScePvfPointer, ScePvfU32 n) { return std::malloc(n); }
 static ScePvfPointer pvfRealloc(ScePvfPointer, ScePvfPointer p, ScePvfU32 n) { return std::realloc(p, n); }
 static void pvfFree(ScePvfPointer, ScePvfPointer p) { std::free(p); }
+namespace vs { extern int gAltStyle; }
 static bool vitaFontOpen(float px, float& ascent, float& lineH) {
+    if (gPvfFont) { scePvfClose(gPvfFont); gPvfFont = nullptr; }   // cambio de estilo en MODS (9.9)
+    if (gPvfLib) { scePvfDoneLib(gPvfLib); gPvfLib = nullptr; }
     ScePvfInitRec init{}; init.maxNumFonts = 4; init.allocFunc = pvfAlloc; init.reallocFunc = pvfRealloc; init.freeFunc = pvfFree;
     ScePvfError err = 0;
     gPvfLib = scePvfNewLib(&init, &err);
     if (!gPvfLib) { vs::logf("[fuente] scePvfNewLib fallo 0x%08X\n", (unsigned)err); return false; }
     scePvfSetResolution(gPvfLib, 72.f, 72.f);   // 72 ppp: un punto = un pixel
-    ScePvfFontStyleInfo st{}; st.familyCode = SCE_PVF_FAMILY_SANSERIF; st.style = SCE_PVF_STYLE_BOLD; st.languageCode = SCE_PVF_LANGUAGE_LATIN;
+    // 9.9: 1 negrita, 2 normal, 3 estrecha, 4 con remates (si la consola no la tiene, scePvf da la mas parecida)
+    ScePvfFontStyleInfo st{}; st.languageCode = SCE_PVF_LANGUAGE_LATIN;
+    switch (vs::gAltStyle) {
+        case 2: st.familyCode = SCE_PVF_FAMILY_SANSERIF; st.style = SCE_PVF_STYLE_REGULAR; break;
+        case 3: st.familyCode = SCE_PVF_FAMILY_SANSERIF; st.style = SCE_PVF_STYLE_NARROW; break;
+        case 4: st.familyCode = SCE_PVF_FAMILY_SERIF; st.style = SCE_PVF_STYLE_REGULAR; break;
+        default: st.familyCode = SCE_PVF_FAMILY_SANSERIF; st.style = SCE_PVF_STYLE_BOLD; break;
+    }
     ScePvfFontIndex idx = scePvfFindOptimumFont(gPvfLib, &st, &err);
     if (idx >= 0) gPvfFont = scePvfOpen(gPvfLib, idx, SCE_PVF_FILEBASEDSTREAM, &err);
     if (!gPvfFont) gPvfFont = scePvfOpenDefaultLatinFontOnSharedMemory(gPvfLib, &err);
@@ -227,7 +237,7 @@ static bool vitaFontOpen(float px, float& ascent, float& lineH) {
     float desc = bearingY('g', gTop, gH) ? std::max(0.f, gH - gTop) : px * 0.2f;
     ascent = asc; lineH = asc + desc;
     if (!std::isfinite(lineH) || lineH <= 0) { ascent = px * 0.8f; lineH = px; }
-    vs::logf("[fuente] sistema: indice %d, ascenso %.1f, descenso %.1f\n", (int)idx, (double)asc, (double)desc);
+    vs::logf("[fuente] sistema (estilo %d): indice %d, ascenso %.1f, descenso %.1f\n", vs::gAltStyle, (int)idx, (double)asc, (double)desc);
     return true;
 }
 static bool vitaFontGlyph(uint32_t cp, std::vector<uint8_t>& alpha, int& w, int& h, int& xoff, int& yoff, float& adv) {

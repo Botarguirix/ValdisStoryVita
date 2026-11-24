@@ -365,7 +365,9 @@ int gVarMp = -1, gVarSetMp = -1, gVarXp = -1, gVarXpMax = -1, gVarPStat = -1, gV
 std::string gMsg; int gMsgFrames = 0;
 
 enum { C_GOD, C_MANA, C_LEVEL, C_POINTS, C_UNLOCK, C_WARP, C_PERF, C_CLOSE, C_COUNT };
-enum { M_LANG, M_FONT, M_ICONS, M_TOUCH, M_HUD, M_CLOSE, M_COUNT };
+enum { M_LANG, M_FONT, M_TSIZE, M_ICONS, M_TOUCH, M_HUD, M_CLOSE, M_COUNT };
+const char* kFontNames[] = {"Original", "Sistema negrita", "Sistema normal", "Sistema estrecha", "Sistema con remates"};
+const int kTsizeSteps[] = {100, 90, 80, 70};
 
 const int kHudSteps[] = {100, 85, 70, 60, 50};
 
@@ -377,7 +379,8 @@ void modsLoad() {
     while (std::fscanf(f, " %63[^=]=%d", k, &v) == 2) {
         std::string s = k;
         if (s == "lang") gMods.lang = std::max(0, std::min(1, v));
-        else if (s == "font") gMods.font = std::max(0, std::min(1, v));
+        else if (s == "font") gMods.font = std::max(0, std::min(4, v));
+        else if (s == "tsize") gMods.tsize = std::max(70, std::min(100, v));
         else if (s == "icons") gMods.icons = std::max(0, std::min(1, v));
         else if (s == "touch") gMods.touch = std::max(0, std::min(2, v));
         else if (s == "hud") gMods.hud = std::max(50, std::min(100, v));
@@ -387,10 +390,10 @@ void modsLoad() {
 }
 void modsSave() {
     if (FILE* f = std::fopen((gSaveDir + "/mods.ini").c_str(), "w")) {
-        std::fprintf(f, "lang=%d\nfont=%d\nicons=%d\ntouch=%d\nhud=%d\n", gMods.lang, gMods.font, gMods.icons, gMods.touch, gMods.hud);
+        std::fprintf(f, "lang=%d\nfont=%d\ntsize=%d\nicons=%d\ntouch=%d\nhud=%d\n", gMods.lang, gMods.font, gMods.tsize, gMods.icons, gMods.touch, gMods.hud);
         std::fclose(f);
     }
-    logf("[mods] lang=%d font=%d icons=%d touch=%d hud=%d\n", gMods.lang, gMods.font, gMods.icons, gMods.touch, gMods.hud);
+    logf("[mods] lang=%d font=%d tsize=%d icons=%d touch=%d hud=%d\n", gMods.lang, gMods.font, gMods.tsize, gMods.icons, gMods.touch, gMods.hud);
 }
 
 void setFlagFile(const char* name, bool on) {
@@ -459,7 +462,8 @@ void joyIconsApply(Game& g) {
 std::string modLabel(int k) {
     switch (k) {
         case M_LANG: return std::string("Idioma / Language: < ") + (gMods.lang ? "Español" : "English") + " >";
-        case M_FONT: return std::string("Fuente / Font: < ") + (gMods.font ? "Sistema de la Vita" : "Original") + " >";
+        case M_FONT: return std::string("Fuente / Font: < ") + kFontNames[gMods.font] + " >";
+        case M_TSIZE: return std::string("Tamaño del texto / Text size: < ") + std::to_string(gMods.tsize) + " % >";
         case M_ICONS: return std::string("Botones / Buttons: < ") + (gMods.icons ? "PS Vita" : "Original (Xbox)") + " >";
         case M_TOUCH: {
             const char* t[3] = {"Apagado / Off", "Solo arriba / Top only", "Entero / Full"};
@@ -473,7 +477,8 @@ void modActivate(Game& g, int k, int dir) {
     int d = dir == 0 ? 1 : dir;
     switch (k) {
         case M_LANG: gMods.lang ^= 1; say(gMods.lang ? "Español: se aplica al volver al menú principal (Salir) o al abrir el juego" : "English: applies when you return to the main menu (Quit) or restart"); break;
-        case M_FONT: gMods.font ^= 1; break;
+        case M_FONT: gMods.font = (gMods.font + d + 5) % 5; break;
+        case M_TSIZE: { int i = 0; while (i < 3 && kTsizeSteps[i] != gMods.tsize) i++; i = (i + d + 4) % 4; gMods.tsize = kTsizeSteps[i]; break; }
         case M_ICONS: gMods.icons ^= 1; break;
         case M_TOUCH: gMods.touch = (gMods.touch + d + 3) % 3; break;
         case M_HUD: { int i = 0; while (i < 4 && kHudSteps[i] != gMods.hud) i++; i = (i + d + 5) % 5; gMods.hud = kHudSteps[i]; gHudPercent = gMods.hud; break; }

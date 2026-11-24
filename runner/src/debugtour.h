@@ -18,7 +18,8 @@ bool cheatsInput(Game& g, uint32_t buttons);
 // Opciones del menu de MODS (save/mods.ini): no son trampas, son ajustes del port.
 struct ModsCfg {
     int lang = 0;    // 0 ingles (original), 1 espanol
-    int font = 0;    // 0 fuente original del juego, 1 fuente del sistema de la Vita
+    int font = 0;    // 0 original; fuente del sistema de la Vita: 1 negrita, 2 normal, 3 estrecha, 4 con remates (9.9)
+    int tsize = 100; // tamano del texto en % (9.9): 100, 90, 80, 70
     int icons = 1;   // 1 iconos de botones de la Vita, 0 nombres originales (mando de Xbox)
     int touch = 1;   // panel trasero: 0 apagado, 1 solo arriba (como Shotgun King Vita), 2 entero (mitades)
     int hud = 50;    // tamano del HUD en % (9.4): 100 original, 50 por defecto (pedido del usuario: al menos 50 % mas pequeno)

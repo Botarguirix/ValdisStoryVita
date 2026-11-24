@@ -84,9 +84,19 @@ static double fontNowMs() { return std::chrono::duration<double, std::milli>(std
 // Cache del atlas (1.3: rasterizarlo con scePvf cuesta ~640 ms en el primer frame). La plataforma pone la ruta; se
 // genera en la propia consola a partir de su fuente del sistema, igual que el resto de vsdata.
 std::string gFontCachePath;
+// 9.9: estilo de la fuente del sistema (MODS): 1 negrita, 2 normal, 3 estrecha, 4 con remates. La plataforma lo lee al
+// abrir la fuente. Cada estilo tiene su atlas y su cache (el 1 conserva el nombre de antes).
+int gAltStyle = 1;
+static int gAltBuiltStyle = 0;
+static std::string altCachePath() {
+    if (gFontCachePath.empty() || gAltStyle == 1) return gFontCachePath;
+    std::string p = gFontCachePath; size_t dot = p.rfind('.');
+    return (dot == std::string::npos ? p : p.substr(0, dot)) + "_" + std::to_string(gAltStyle) + (dot == std::string::npos ? "" : p.substr(dot));
+}
 static bool altFromCache(double tA) {
-    if (gFontCachePath.empty()) return false;
-    FILE* f = std::fopen(gFontCachePath.c_str(), "rb");
+    std::string cp = altCachePath();
+    if (cp.empty()) return false;
+    FILE* f = std::fopen(cp.c_str(), "rb");
     if (!f) return false;
     char mg[4]; uint32_t ver = 0, W = 0, H = 0, n = 0; float px = 0, asc = 0, lh = 0;
     bool ok = std::fread(mg, 1, 4, f) == 4 && !std::memcmp(mg, "VSFC", 4) && std::fread(&ver, 4, 1, f) == 1 && ver == 1 &&
@@ -108,8 +118,9 @@ static bool altFromCache(double tA) {
     return true;
 }
 static void altToCache(int W, int H, const std::vector<uint8_t>& rgba) {
-    if (gFontCachePath.empty()) return;
-    FILE* f = std::fopen(gFontCachePath.c_str(), "wb");
+    std::string cp = altCachePath();
+    if (cp.empty()) return;
+    FILE* f = std::fopen(cp.c_str(), "wb");
     if (!f) return;
     uint32_t ver = 1, w = W, h = H, n = (uint32_t)gAlt.g.size();
     std::fwrite("VSFC", 1, 4, f); std::fwrite(&ver, 4, 1, f); std::fwrite(&gAlt.px, 4, 1, f); std::fwrite(&gAlt.ascent, 4, 1, f);
@@ -158,7 +169,12 @@ static bool altBuild() {
     return gAlt.ok;
 }
 static bool altOn() {
-    if (gMods.font != 1) return false;
+    if (gMods.font < 1) return false;
+    if (gMods.font != gAltBuiltStyle) {   // cambio de estilo en MODS: atlas nuevo
+        if (gAlt.tex != -1) gfx::freeDynamic(gAlt.tex);
+        gAlt.tex = -1; gAlt.ok = false; gAlt.tried = false; gAlt.g.clear();
+        gAltStyle = gMods.font; gAltBuiltStyle = gMods.font;
+    }
     if (!gAlt.tried) altBuild();
     return gAlt.ok;
 }
@@ -268,6 +284,9 @@ static void splitLines(const RFont& f, const std::string& in, double maxW, std::
 const std::string* langDrawAlias(const std::string& s);   // lang.cpp
 void Game::drawText(double x, double y, const std::string& s0, double xs, double ys, double ang, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, double alpha, double sep, double w) {
     if (fontCur < 0 || fontCur >= (int)gFonts.size()) return;
+    // 9.9: tamano del texto (MODS). Letras mas pequenas con el mismo ancho de caja: menos lineas y cabe en el cuadro
+    // (el ancho de ajuste w va en unidades sin escalar: se divide para que en pantalla siga midiendo lo mismo)
+    if (gMods.tsize < 100) { double k = gMods.tsize / 100.0; xs *= k; ys *= k; if (w > 0) w /= k; }
     gfx::hudAnchor((float)x, (float)y);   // un texto se escala entero hacia la misma ancla (no se parte)
     struct HudLock { HudLock() { gfx::hudLock(true); } ~HudLock() { gfx::hudLock(false); } } hudLockGuard;
     const std::string* al = langDrawAlias(s0);

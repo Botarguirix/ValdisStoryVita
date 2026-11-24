@@ -24,11 +24,15 @@ namespace vs { extern int gWinW, gWinH; extern std::vector<std::string> gLangDir
 #include "../third_party/stb_truetype.h"
 namespace vs {
 extern bool (*gFontOpen)(float px, float& ascent, float& lineH);
+extern int gAltStyle;
 extern bool (*gFontGlyph)(uint32_t cp, std::vector<uint8_t>& alpha, int& w, int& h, int& xoff, int& yoff, float& adv);
 }
 static std::vector<unsigned char> gTtf; static stbtt_fontinfo gTtfInfo; static float gTtfScale = 1;
 static bool pcFontOpen(float px, float& ascent, float& lineH) {
-    for (const char* path : {"C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf"}) {
+    // 9.9: estilos como en la Vita (1 negrita, 2 normal, 3 estrecha, 4 con remates); si falta el archivo, Arial
+    const char* byStyle[] = {"C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf",
+                             "C:/Windows/Fonts/arialn.ttf", "C:/Windows/Fonts/times.ttf"};
+    for (const char* path : {byStyle[vs::gAltStyle >= 0 && vs::gAltStyle <= 4 ? vs::gAltStyle : 1], "C:/Windows/Fonts/arial.ttf"}) {
         FILE* f = std::fopen(path, "rb"); if (!f) continue;
         std::fseek(f, 0, SEEK_END); long n = std::ftell(f); std::fseek(f, 0, SEEK_SET);
         gTtf.resize(n); size_t rd = std::fread(gTtf.data(), 1, n, f); std::fclose(f);
