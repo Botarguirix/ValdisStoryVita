@@ -206,6 +206,31 @@ void watchDump(Game& g) {
     std::fill(gWatchFnMs.begin(), gWatchFnMs.end(), 0); std::fill(gWatchFnN.begin(), gWatchFnN.end(), 0);
     std::fill(gWatchCodeMs.begin(), gWatchCodeMs.end(), 0); std::fill(gWatchCodeN.begin(), gWatchCodeN.end(), 0);
 }
+// Pruebas en PC (VS_SLOWFRAME=ms): tras cada paso, si la logica paso del umbral, los scripts y funciones que mas
+// tiempo gastaron en ESE frame (tiempos inclusivos: un script incluye lo que llama). Siempre vacia los contadores.
+void watchFrame(Game& g, double stepMs, double thrMs) {
+    if (stepMs > thrMs) {
+        auto top = [&](std::vector<double>& ms, std::vector<int>& n, bool fn) {
+            std::vector<int> idx; for (size_t i = 0; i < ms.size(); i++) if (ms[i] > 0.05) idx.push_back((int)i);
+            std::sort(idx.begin(), idx.end(), [&](int a, int b) { return ms[a] > ms[b]; });
+            for (size_t k = 0; k < idx.size() && k < 8; k++)
+                logf("[lento]   %s %-40s %7.2f ms %6d llamadas\n", fn ? "fn  " : "code", fn ? g.d.functions[idx[k]].c_str() : g.d.codes[idx[k]].name.c_str(), ms[idx[k]], n[idx[k]]);
+        };
+        logf("[lento] frame %d sala %s: logica %.1f ms, %d instancias\n", g.frame, g.room >= 0 ? g.d.rooms[g.room].name.c_str() : "-", stepMs, (int)g.insts.size());
+        if (g.prof) {   // con --profphase: fases de este frame (us)
+            static double last[16] = {};
+            static const char* ph[] = {"begin", "alarmas", "teclado", "step", "movim", "fuera", "colis", "endstep", "anim", "part+vis+aud", "purga", "draw"};
+            char b[512]; int o = std::snprintf(b, sizeof b, "[lento]   fases us:");
+            for (int i = 0; i < 12; i++) o += std::snprintf(b + o, sizeof b - o, " %s %.0f", ph[i], (g.profPhase[i] - last[i]) * 1.0);
+            logf("%s\n", b);
+        }
+        top(gWatchCodeMs, gWatchCodeN, false);
+        top(gWatchFnMs, gWatchFnN, true);
+    }
+    std::fill(gWatchFnMs.begin(), gWatchFnMs.end(), 0); std::fill(gWatchFnN.begin(), gWatchFnN.end(), 0);
+    std::fill(gWatchCodeMs.begin(), gWatchCodeMs.end(), 0); std::fill(gWatchCodeN.begin(), gWatchCodeN.end(), 0);
+    if (g.prof) for (int i = 0; i < 16; i++) g.profPhase[i] = 0;   // las fases tambien por frame
+}
 // funcion integrada en curso, para el muestreador de perfiles de la Vita (save/sampler); -1 = codigo GML
 volatile int gSampFn = -1;
 struct SampFnScope { int prev; explicit SampFnScope(int f) : prev(gSampFn) { gSampFn = f; } ~SampFnScope() { gSampFn = prev; } };

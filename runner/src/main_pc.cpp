@@ -4,7 +4,7 @@
 #ifdef VS_OPSTATS
 namespace vs { void dumpOpStats(); }
 #endif
-namespace vs { void geomTouchObj(int obj); extern uint64_t gGeomEpoch; extern bool gProfPhaseOnly; }
+namespace vs { void geomTouchObj(int obj); extern uint64_t gGeomEpoch; extern bool gProfPhaseOnly; extern int gSlowFnWatch; class Game; void watchFrame(Game& g, double stepMs, double thrMs); }
 #include "gfx.h"
 #include "debugtour.h"
 #include "audio.h"
@@ -276,9 +276,12 @@ int main(int argc, char** argv) {
             }
             game.inputBeginFrame();
             vs::debugTourBeforeStep(game);
+            static double slowThr = std::getenv("VS_SLOWFRAME") ? std::atof(std::getenv("VS_SLOWFRAME")) : 0;
+            if (slowThr > 0) vs::gSlowFnWatch = 1 << 30;   // cronometrar cada script/funcion (desglose por frame)
             Uint64 s0 = SDL_GetPerformanceCounter();
             int roomBefore = game.room;
             game.step();
+            if (slowThr > 0) vs::watchFrame(game, (SDL_GetPerformanceCounter() - s0) * 1000.0 / freq, slowThr);
             if (game.prof && game.room != roomBefore) game.profDump(); // perfil aislado del frame de cambio de room
             if (hashEvery > 0 && game.frame % hashEvery == 0) std::printf("hash %d %s %016llx\n", game.frame, game.d.rooms[game.room].name.c_str(), (unsigned long long)game.stateHash());
             stepMs += (SDL_GetPerformanceCounter() - s0) * 1000.0 / freq;

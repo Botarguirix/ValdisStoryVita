@@ -574,6 +574,59 @@ bool Game::pointInInstance(const Instance* i, double px, double py) const {
     return s.masks[fr].get(sx, sy);
 }
 
+// Prueba de punto de una instancia con todo lo que pointInInstance recalculaba en cada pixel ya preparado (angulo,
+// escala, frame, caja). Mismas operaciones en el mismo orden: el resultado es identico a pointInInstance.
+namespace {
+struct PtXf {
+    double x = 0, y = 0, R = 1e300, l = 0, t = 0, r = 0, b = 0;
+    bool precise = false, rot = false, zero = false; double ca = 1, sa = 0, xs = 1, ys = 1; int ox = 0, oy = 0;
+    const Mask* m = nullptr;
+    void init(const Game& g, const Instance* i) {
+        x = i->x; y = i->y;
+        int m0 = g.maskOf(i);
+        const RSprite& s = g.sprites[m0];
+        double sc = std::max(std::abs(i->xscale), std::abs(i->yscale)); R = s.ext * sc;
+        g.bbox(i, l, t, r, b);
+        precise = s.precise && !s.masks.empty();
+        if (!precise) return;
+        rot = i->angle != 0;
+        if (rot) { double a = i->angle * M_PI / 180.0; ca = std::cos(a); sa = std::sin(a); }
+        xs = i->xscale; ys = i->yscale; zero = xs == 0 || ys == 0; ox = s.ox; oy = s.oy;
+        int fr = s.masks.size() == 1 ? 0 : ((int)std::floor(i->image_index) % (int)s.masks.size());
+        if (fr < 0) fr += (int)s.masks.size();
+        m = &s.masks[fr];
+    }
+    bool test(double px, double py) const {
+        if (std::abs(px - x) > R || std::abs(py - y) > R) return false;
+        if (px < l || px > r || py < t || py > b) return false;
+        if (!precise) return true;
+        double dx = px - x, dy = py - y;
+        if (rot) { double nx = dx * ca - dy * sa, ny = dx * sa + dy * ca; dx = nx; dy = ny; }
+        if (zero) return false;
+        int sx = (int)std::floor(dx / xs + ox), sy = (int)std::floor(dy / ys + oy);
+        return m->get(sx, sy);
+    }
+    // columnas de la fila py donde el punto PUEDE caer dentro de la mascara (con 2 px de margen): fuera es seguro false
+    void rowRange(double py, int& lo, int& hi) const {
+        if (!precise || zero) return;
+        double dy = py - y, lx = -1e18, hx = 1e18;
+        // sx = (dx*ca - dy*sa)/xs + ox en [0, w) ; sy = (dx*sa + dy*ca)/ys + oy en [0, h)
+        auto lim = [&](double A, double B, double W) {   // A*dx + B en [0, W)
+            if (std::abs(A) < 1e-12) { if (B < -1 || B > W + 1) { lx = 1; hx = 0; } return; }
+            double d0 = (0 - B) / A, d1 = (W - B) / A;
+            if (d0 > d1) std::swap(d0, d1);
+            lx = std::max(lx, d0); hx = std::min(hx, d1);
+        };
+        if (rot) { lim(ca / xs, -dy * sa / xs + ox, m->w); lim(sa / ys, dy * ca / ys + oy, m->h); }
+        else { lim(1 / xs, ox, m->w); if (dy / ys + oy < -1 || dy / ys + oy > m->h + 1) { lx = 1; hx = 0; } }
+        if (lx > hx) { lo = 1; hi = 0; return; }
+        double fl = std::floor(x + lx) - 2, fh = std::ceil(x + hx) + 2;
+        if (fl > lo) lo = fl > 2e9 ? 2000000000 : (int)fl;
+        if (fh < hi) hi = fh < -2e9 ? -2000000000 : (int)fh;
+    }
+};
+}
+
 bool Game::instancesCollide(const Instance* a, const Instance* b) const {
     if (maskOf(a) < 0 || maskOf(b) < 0) return false;
     double al, at, ar, ab, bl, bt, br, bb;
@@ -583,10 +636,29 @@ bool Game::instancesCollide(const Instance* a, const Instance* b) const {
     bool pa = sa.precise && !sa.masks.empty(), pb = sb.precise && !sb.masks.empty();
     if (!pa && !pb) return true;
     int l = (int)std::max(al, bl), r = (int)std::min(ar, br), t = (int)std::max(at, bt), bo = (int)std::min(ab, bb);
-    for (int y = t; y <= bo; y++)
-        for (int x = l; x <= r; x++)
-            if (pointInInstance(a, x + 0.5, y + 0.5) && pointInInstance(b, x + 0.5, y + 0.5)) return true;
-    return false;
+    // 9.3 (23-11): antes cada pixel del cruce de cajas llamaba dos veces a pointInInstance (trigonometria y cajas de
+    // nuevo en cada punto). Un rayo girado tiene una caja enorme: 5-8 ms de colisiones por frame en PC con El Manawar,
+    // 100-220 ms en la Vita. Ahora se prepara cada instancia una vez y en cada fila solo se prueban las columnas donde
+    // las mascaras precisas pueden estar. Resultado identico (VS_COLCHECK lo compara con el metodo anterior).
+    PtXf A, B; A.init(*this, a); B.init(*this, b);
+    bool hit = false;
+    for (int y = t; y <= bo && !hit; y++) {
+        int lo = l, hi = r;
+        A.rowRange(y + 0.5, lo, hi); B.rowRange(y + 0.5, lo, hi);
+        for (int x = lo; x <= hi; x++)
+            if (A.test(x + 0.5, y + 0.5) && B.test(x + 0.5, y + 0.5)) { hit = true; break; }
+    }
+    static const bool check = std::getenv("VS_COLCHECK") != nullptr;
+    if (check) {
+        bool old = false;
+        for (int y = t; y <= bo && !old; y++)
+            for (int x = l; x <= r; x++)
+                if (pointInInstance(a, x + 0.5, y + 0.5) && pointInInstance(b, x + 0.5, y + 0.5)) { old = true; break; }
+        static long nCheck = 0, nBad = 0; nCheck++;
+        if (old != hit) { nBad++; logf("[colcheck] DIFERENTE %s vs %s: antes %d ahora %d\n", d.objects[a->obj].name.c_str(), d.objects[b->obj].name.c_str(), (int)old, (int)hit); }
+        if (nCheck % 20000 == 0) logf("[colcheck] %ld comparaciones, %ld diferentes\n", nCheck, nBad);
+    }
+    return hit;
 }
 
 bool Game::rectInInstance(const Instance* i, double l, double t, double r, double b, bool prec) const {
@@ -598,8 +670,19 @@ bool Game::rectInInstance(const Instance* i, double l, double t, double r, doubl
     const RSprite& s = sprites[maskOf(i)];
     if (!prec || !s.precise || s.masks.empty()) return true;
     int L = (int)std::max(il, l), R = (int)std::min(ir, r), T = (int)std::max(it, t), B = (int)std::min(ib, b);
-    for (int y = T; y <= B; y++) for (int x = L; x <= R; x++) if (pointInInstance(i, x + 0.5, y + 0.5)) return true;
-    return false;
+    PtXf P; P.init(*this, i);   // igual que instancesCollide: preparado una vez y solo las columnas posibles de cada fila
+    bool hit = false;
+    for (int y = T; y <= B && !hit; y++) {
+        int lo = L, hi = R; P.rowRange(y + 0.5, lo, hi);
+        for (int x = lo; x <= hi; x++) if (P.test(x + 0.5, y + 0.5)) { hit = true; break; }
+    }
+    static const bool check = std::getenv("VS_COLCHECK") != nullptr;
+    if (check) {
+        bool old = false;
+        for (int y = T; y <= B && !old; y++) for (int x = L; x <= R; x++) if (pointInInstance(i, x + 0.5, y + 0.5)) { old = true; break; }
+        if (old != hit) logf("[colcheck] DIFERENTE rect %s: antes %d ahora %d\n", d.objects[i->obj].name.c_str(), (int)old, (int)hit);
+    }
+    return hit;
 }
 
 // ---------------------------------------------------------------- variables builtin
