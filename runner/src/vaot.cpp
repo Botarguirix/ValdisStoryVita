@@ -8,12 +8,15 @@
 // tal cual como ARM en la Vita (fase 2: vaot_arm.cpp).
 #include "aot_rt.h"
 #include <chrono>
+#include <cstdio>
+#include <cstring>
 #include <map>
 #include <set>
 #include <vector>
 
 namespace vs {
 void logf(const char* fmt, ...);
+bool testFileExists(const std::string& dir, const std::string& base);   // debugtour.cpp
 namespace vaot {
 using namespace aot;
 
@@ -115,7 +118,9 @@ struct Op {
     int jump = -1;                    // destino (indice de operacion) de K_COND / K_JUMP
     double k = 0;                     // constante (32 bytes por operacion en la Vita)
 };
-struct Prog { std::vector<Op> ops; int nSlots = 0, nLocals = 0; bool usesWith = false; };
+struct Fr;
+using NativeFn = void (*)(Fr*, void**);
+struct Prog { std::vector<Op> ops; int nSlots = 0, nLocals = 0; bool usesWith = false; NativeFn native = nullptr; };
 
 #define F_G (*F.g)
 #define F_C (*F.ctx)
@@ -371,6 +376,102 @@ static Prog* build(const GameData& g, const Code& c, const Analysis& A) {
     return P;
 }
 
+// ---------------------------------------------------------------- fase 2: codigo ARM (Thumb-2) generado en la consola
+// Cada operacion pasa a ser una llamada directa a su ayudante y cada salto del juego un salto del procesador: sin el
+// bucle de despacho de run(). Funcion generada: void f(Fr* F, void** tabla)  (r4 = F, r6 = tabla de ayudantes)
+//   push {r4, r5, r6, lr}; mov r4, r0; mov r6, r1
+//   por operacion: mov r0, r4; movw/movt r1, &op; ldr.w ip, [r6, #k*4]; blx ip
+//     K_COND: ... + lsls r0, r0, #24; bne.w destino      K_JUMP: b.w destino      K_RET: ... + b.w fin
+//   fin: pop {r4, r5, r6, pc}
+// En PC se genera igual (VS_VAOTARM_DUMP) para revisarlo con objdump; solo la Vita lo ejecuta.
+static void* gFnTab[256]; static int gFnCount = 0;
+static int fnIndex(void* fn) {
+    for (int i = 0; i < gFnCount; i++) if (gFnTab[i] == fn) return i;
+    if (gFnCount >= 256) return -1;
+    gFnTab[gFnCount] = fn; return gFnCount++;
+}
+struct ArmOut { std::vector<uint16_t> h; std::vector<int> label; int epilogue = 0; };
+static void movImm(std::vector<uint16_t>& h, int rd, uint32_t v, bool top) {   // movw (top = false) / movt (top = true)
+    uint32_t imm = top ? (v >> 16) : (v & 0xFFFF);
+    uint16_t i = (imm >> 11) & 1, imm4 = (imm >> 12) & 15, imm3 = (imm >> 8) & 7, imm8 = imm & 255;
+    h.push_back((uint16_t)((top ? 0xF2C0 : 0xF240) | (i << 10) | imm4));
+    h.push_back((uint16_t)((imm3 << 12) | (rd << 8) | imm8));
+}
+static bool branchW(uint16_t* at, int fromHw, int toHw, int cond) {   // cond < 0: b.w (T4); si no, b<cond>.w (T3)
+    int32_t off = (toHw - (fromHw + 2)) * 2;   // PC = direccion de la instruccion + 4
+    if (cond < 0) {
+        if (off < -(1 << 24) || off >= (1 << 24)) return false;
+        uint32_t S = (off >> 24) & 1, I1 = (off >> 23) & 1, I2 = (off >> 22) & 1, imm10 = (off >> 12) & 0x3FF, imm11 = (off >> 1) & 0x7FF;
+        uint32_t J1 = (~I1 ^ S) & 1, J2 = (~I2 ^ S) & 1;
+        at[0] = (uint16_t)(0xF000 | (S << 10) | imm10); at[1] = (uint16_t)(0x9000 | (J1 << 13) | (J2 << 11) | imm11);
+    } else {
+        if (off < -(1 << 20) || off >= (1 << 20)) return false;
+        uint32_t S = (off >> 20) & 1, J2 = (off >> 19) & 1, J1 = (off >> 18) & 1, imm6 = (off >> 12) & 0x3F, imm11 = (off >> 1) & 0x7FF;
+        at[0] = (uint16_t)(0xF000 | (S << 10) | ((uint32_t)cond << 6) | imm6); at[1] = (uint16_t)(0x8000 | (J1 << 13) | (J2 << 11) | imm11);
+    }
+    return true;
+}
+static bool armEmit(const Prog& P, ArmOut& A) {
+    auto& h = A.h; h.clear();
+    struct Fix { int at, op; int cond; };   // op = -1: al final
+    std::vector<Fix> fix;
+    h.push_back(0xB570); h.push_back(0x4604); h.push_back(0x460E);   // push {r4-r6,lr}; mov r4, r0; mov r6, r1
+    A.label.assign(P.ops.size(), 0);
+    for (size_t i = 0; i < P.ops.size(); i++) {
+        const Op& o = P.ops[i];
+        A.label[i] = (int)h.size();
+        if (o.fn) {
+            int k = fnIndex(o.fn); if (k < 0) return false;
+            uint32_t addr = (uint32_t)(uintptr_t)&o;
+            h.push_back(0x4620);                                  // mov r0, r4
+            movImm(h, 1, addr, false); movImm(h, 1, addr, true);  // r1 = &op
+            h.push_back(0xF8D6); h.push_back((uint16_t)(0xC000 | (k * 4)));   // ldr.w ip, [r6, #k*4]
+            h.push_back(0x47E0);                                  // blx ip
+        }
+        if (o.kind == K_COND) { h.push_back(0x0600); fix.push_back({(int)h.size(), o.jump, 1}); h.push_back(0); h.push_back(0); }   // lsls r0,r0,#24; bne.w
+        else if (o.kind == K_JUMP) { fix.push_back({(int)h.size(), o.jump, -1}); h.push_back(0); h.push_back(0); }
+        else if (o.kind == K_RET) { fix.push_back({(int)h.size(), -1, -1}); h.push_back(0); h.push_back(0); }
+    }
+    A.epilogue = (int)h.size();
+    h.push_back(0xBD70);                                          // pop {r4-r6,pc}
+    if (h.size() & 1) h.push_back(0xBF00);                        // nop: tamano multiplo de 4
+    for (auto& f : fix) {
+        int to = f.op < 0 ? A.epilogue : A.label[f.op];
+        if (!branchW(&h[f.at], f.at, to, f.cond)) return false;
+    }
+    return true;
+}
+#ifdef __vita__
+}  // namespace vaot
+}  // namespace vs
+#include <psp2/kernel/sysmem.h>
+namespace vs {
+namespace vaot {
+// Memoria ejecutable en bloques de 1 MB (sceKernelAllocMemBlockForVM, como los dynarec de la Vita)
+static uint8_t* gCodeBase = nullptr; static SceUID gCodeBlock = -1; static size_t gCodeUsed = 0, gCodeCap = 0, gCodeTotal = 0;
+static bool gArmBroken = false;
+static NativeFn armInstall(const ArmOut& A) {
+    size_t bytes = A.h.size() * 2;
+    if (gArmBroken || bytes > (1u << 20)) return nullptr;
+    if (!gCodeBase || gCodeUsed + bytes > gCodeCap) {
+        SceUID b = sceKernelAllocMemBlockForVM("vaot_code", 1u << 20);
+        void* base = nullptr;
+        if (b < 0 || sceKernelGetMemBlockBase(b, &base) < 0 || !base) {
+            logf("[vaot] sin memoria ejecutable (0x%08X): se sigue sin codigo ARM\n", (unsigned)b); gArmBroken = true; return nullptr;
+        }
+        gCodeBlock = b; gCodeBase = (uint8_t*)base; gCodeUsed = 0; gCodeCap = 1u << 20;
+        logf("[vaot] bloque de codigo ARM %zu MB\n", (gCodeTotal >> 20) + 1);
+        gCodeTotal += gCodeCap;
+    }
+    uint8_t* dst = gCodeBase + gCodeUsed;
+    sceKernelOpenVMDomain();
+    std::memcpy(dst, A.h.data(), bytes);
+    sceKernelCloseVMDomain();
+    sceKernelSyncVMDomain(gCodeBlock, dst, bytes);
+    gCodeUsed += (bytes + 15) & ~(size_t)15;
+    return (NativeFn)(uintptr_t)((uintptr_t)dst | 1);   // Thumb
+}
+#endif
 // ---------------------------------------------------------------- ejecucion
 // Ranuras de todas las llamadas en curso en un bloque fijo (sin reservar memoria en cada llamada)
 static Value gArena[32768]; static int gTop = 0;
@@ -382,6 +483,8 @@ static Value run(const Prog& P, Game& g, Ctx& ctx) {
     if (inArena) { base = gArena + gTop; gTop += need; } else { heap.resize(need); base = heap.data(); }
     std::vector<With> withs;
     Fr F; F.g = &g; F.ctx = &ctx; F.s = base; F.L = base + P.nSlots; F.withs = &withs;
+    if (P.native) { P.native(&F, gFnTab); goto done; }   // fase 2: codigo ARM generado en la consola
+    {
     const Op* ops = P.ops.data(); int pc = 0;
     for (;;) {
         const Op& o = ops[pc];
@@ -392,6 +495,7 @@ static Value run(const Prog& P, Game& g, Ctx& ctx) {
             default: if (o.fn) ((PlainFn)o.fn)(F, o); goto done;
         }
     }
+    }
 done:
     if (inArena) { gTop -= need; for (int i = 0; i < need; i++) base[i] = Value(); }   // ranuras y locales limpios para la siguiente llamada
     return std::move(F.ret);
@@ -399,6 +503,40 @@ done:
 
 static std::vector<Prog*> gProgs; static std::vector<uint8_t> gState;   // 0 sin mirar, 1 traducido, 2 al interprete
 static size_t gBuilt = 0, gRejected = 0, gOpsBytes = 0;
+// Fase 2: genera el codigo ARM de un programa recien traducido (Vita). En PC, VS_VAOTARM_DUMP=carpeta guarda el codigo
+// de los primeros programas (.bin) y sus etiquetas (.txt) para revisarlos con objdump.
+static void armPrepare(Game& g, int codeId, Prog& P) {
+    static int on = -1, dumped = 0; static const char* dump = std::getenv("VS_VAOTARM_DUMP");
+    if (on < 0) {
+#ifdef __vita__
+        on = !testFileExists(g.saveDir, "novaot_arm");
+        logf("[vaot] codigo ARM en la consola %s\n", on ? "activado" : "desactivado (save/novaot_arm)");
+#else
+        on = dump != nullptr;
+#endif
+    }
+    if (!on) return;
+    ArmOut A;
+    if (!armEmit(P, A)) return;
+    if (dump && dumped < 40) {
+        dumped++;
+        std::string base = std::string(dump) + "/c" + std::to_string(codeId);
+        if (FILE* f = std::fopen((base + ".bin").c_str(), "wb")) { std::fwrite(A.h.data(), 2, A.h.size(), f); std::fclose(f); }
+        if (FILE* f = std::fopen((base + ".txt").c_str(), "w")) {
+            std::fprintf(f, "epilogo %d\n", A.epilogue * 2);
+            for (size_t i = 0; i < P.ops.size(); i++) {
+                const Op& o = P.ops[i];
+                std::fprintf(f, "%zu %d %d %d %d %u\n", i, A.label[i] * 2, (int)o.kind, o.jump >= 0 ? A.label[o.jump] * 2 : -1,
+                             o.fn ? fnIndex(o.fn) : -1, (unsigned)(uint32_t)(uintptr_t)&o);
+            }
+            std::fclose(f);
+        }
+    }
+#ifdef __vita__
+    P.native = armInstall(A);
+#endif
+    (void)g; (void)codeId;
+}
 }  // namespace vaot
 
 bool gVaotOn = false;
@@ -414,6 +552,7 @@ bool vaotRun(Game& g, int codeId, Ctx& ctx, Value& out) {
         if (!A.ok) { gState[codeId] = 2; gRejected++; return false; }
         gProgs[codeId] = build(g.d, g.d.codes[codeId], A); gState[codeId] = 1; gBuilt++;
         gOpsBytes += gProgs[codeId]->ops.size() * sizeof(Op);
+        armPrepare(g, codeId, *gProgs[codeId]);
         if (gBuilt % 500 == 0) logf("[vaot] %zu codigos traducidos (%zu KB)\n", gBuilt, gOpsBytes / 1024);
     }
     if (gState[codeId] != 1) return false;
