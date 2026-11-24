@@ -37,6 +37,7 @@ int _newlib_heap_size_user = 108 * 1024 * 1024;   // pico medido 88 MB (recorrid
 unsigned int sceUserMainThreadStackSize = 4 * 1024 * 1024; // scripts GML anidados (script_execute en cascada)
 
 namespace vs { extern int gWinW, gWinH; extern std::vector<std::string> gLangDirs; extern double (*gVsdClock)(); extern double gVsdReadMs, gVsdParseMs; extern std::string gFontCachePath; }
+namespace vs { void geomTouchObj(int obj); extern uint64_t gGeomEpoch; }
 using namespace vs;
 
 static constexpr const char* kRoot = "ux0:data/valdis";
@@ -343,11 +344,16 @@ int main(int, char**) {
 
     // Depuracion: save/warp.txt con lineas "SALA FRAMES DESTINO" = room_goto(DESTINO) tras FRAMES frames en SALA
     // (como --warp en PC; sirve para medir entradas a salas con vita-agent sin jugar hasta ellas)
-    struct Warp { std::string from; int delay; std::string to; };
+    // Opcional "SALA FRAMES DESTINO X Y": 30 frames despues de llegar a DESTINO pone al jugador en (X, Y) (23-11: subir al tren)
+    struct Warp { std::string from; int delay; std::string to; double x = -1, y = -1; int posAt = -1; };
     std::vector<Warp> warps;
     if (FILE* wf = std::fopen((saveDir + "/warp.txt").c_str(), "r")) {
-        char a[128], c[128]; int dl;
-        while (std::fscanf(wf, "%127s %d %127s", a, &dl, c) == 3) warps.push_back({a, dl, c});
+        char line[512];
+        while (std::fgets(line, sizeof line, wf)) {
+            char a[128], c[128]; int dl; double x, y;
+            int n = std::sscanf(line, "%127s %d %127s %lf %lf", a, &dl, c, &x, &y);
+            if (n >= 3) { Warp w{a, dl, c}; if (n == 5) { w.x = x; w.y = y; } warps.push_back(w); }
+        }
         std::fclose(wf);
         vs::logf("[warp] %d saltos de depuracion cargados de save/warp.txt\n", (int)warps.size());
     }
@@ -379,7 +385,14 @@ int main(int, char**) {
             for (auto& w : warps)
                 if (w.delay >= 0 && game.d.rooms[game.room].name == w.from && game.frame - roomEnterFrame == w.delay) {
                     for (size_t r = 0; r < game.d.rooms.size(); r++) if (game.d.rooms[r].name == w.to) game.pendingRoom = (int)r;
-                    w.delay = -1;
+                    w.delay = -1; if (w.x >= 0) w.posAt = 0;
+                }
+            for (auto& w : warps)
+                if (w.posAt >= 0 && game.d.rooms[game.room].name == w.to && game.frame - roomEnterFrame == 30) {
+                    for (size_t o = 0; o < game.d.objects.size(); o++) if (game.d.objects[o].name == "player_wyatt")
+                        for (auto* in : game.instancesOf((int)o)) { in->x = w.x; in->y = w.y; vs::geomTouchObj(in->obj); vs::gGeomEpoch++; }
+                    vs::logf("[warp] jugador en %.0f, %.0f (%s)\n", w.x, w.y, w.to.c_str());
+                    w.posAt = -1;
                 }
         }
         SceCtrlData pad{}; sceCtrlPeekBufferPositive(0, &pad, 1);

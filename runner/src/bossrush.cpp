@@ -248,6 +248,11 @@ void finish(Game& g, bool toTitle) {
 void startRun(Game& g) {
     gRun.clear(); gResults.clear();
     const char* only = std::getenv("VS_BRONLY");   // pruebas: numeros de jefe separados por comas
+    std::string onlyFile;                           // en la Vita: save/bossrush_only.txt con los mismos numeros
+    if (!only && readFile(gSaveDir + "/bossrush_only.txt", onlyFile)) {
+        while (!onlyFile.empty() && (onlyFile.back() == '\n' || onlyFile.back() == '\r' || onlyFile.back() == ' ')) onlyFile.pop_back();
+        if (!onlyFile.empty()) { only = onlyFile.c_str(); logf("[bossrush] solo los jefes %s (save/bossrush_only.txt)\n", only); }
+    }
     for (int k = 0; k < kNumBosses; k++) {
         if (only) { std::string o = std::string(",") + only + ","; if (o.find("," + std::to_string(kBosses[k].n) + ",") == std::string::npos) continue; }
         gRun.push_back(k);
