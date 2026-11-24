@@ -4,7 +4,7 @@
 #ifdef VS_OPSTATS
 namespace vs { void dumpOpStats(); }
 #endif
-namespace vs { void geomTouchObj(int obj); extern uint64_t gGeomEpoch; }
+namespace vs { void geomTouchObj(int obj); extern uint64_t gGeomEpoch; extern bool gProfPhaseOnly; }
 #include "gfx.h"
 #include "debugtour.h"
 #include "audio.h"
@@ -166,6 +166,7 @@ int main(int argc, char** argv) {
         else if (!std::strcmp(argv[i], "--turbo")) turbo = true;
         else if (!std::strcmp(argv[i], "--discard-every") && i + 1 < argc) discardEvery = std::atoi(argv[++i]);   // prueba: 1 de cada N frames sin dibujar
         else if (!std::strcmp(argv[i], "--prof")) prof = true;
+        else if (!std::strcmp(argv[i], "--profphase")) { profCode = true; vs::gProfPhaseOnly = true; }   // perfil por script con el AOT activo (como save/profphase)
         else if (!std::strcmp(argv[i], "--profcode")) profCode = true;                       // scripts/builtins mas caros                               // [perf] cada segundo
         else if (!std::strcmp(argv[i], "--budget") && i + 1 < argc) budgetMB = std::atoi(argv[++i]); // MB de texturas (Vita: 140)
     }
