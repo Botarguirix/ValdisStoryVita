@@ -321,9 +321,14 @@ void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) 
     }
     if (const char* e = std::getenv("VS_VARDUMP")) if (g.frame == std::atoi(e)) {   // TEMPORAL: valores numericos de todo
         for (auto& p : g.insts) if (p->alive) p->vars.forEach([&](int k, const Value& v) {
-            if (v.isReal()) logf("[vardump] %s.%s = %.17g\n", g.d.objects[p->obj].name.c_str(), g.d.varNames[k].c_str(), v.r); });
-        for (size_t k = 0; k < g.globals.size(); k++) if (g.globals[k].isReal()) logf("[vardump] global.%s = %.17g\n", g.d.varNames[k].c_str(), g.globals[k].r);
-        for (auto& p : g.insts) if (p->alive) logf("[vardump] %s xy %.17g %.17g\n", g.d.objects[p->obj].name.c_str(), p->x, p->y);
+            if (v.isReal()) logf("[vardump] %s.%s = %.17g\n", g.d.objects[p->obj].name.c_str(), g.d.varNames[k].c_str(), v.r);
+            else logf("[vardump] %s.%s = <tipo %d> %s\n", g.d.objects[p->obj].name.c_str(), g.d.varNames[k].c_str(), (int)v.t, v.isStr() ? v.toString().c_str() : ""); });
+        for (size_t k = 0; k < g.d.varNames.size(); k++) if (const Value* gv = g.globals.get((int)k)) {   // todas (IntMap: size() no es el rango)
+            if (gv->isReal()) logf("[vardump] global.%s = %.17g\n", g.d.varNames[k].c_str(), gv->r);
+            else logf("[vardump] global.%s = <tipo %d> %s\n", g.d.varNames[k].c_str(), (int)gv->t, gv->isStr() ? gv->toString().c_str() : "");
+        }
+        for (auto& p : g.insts) if (p->alive) logf("[vardump] %s xy %.17g %.17g id %d img %.17g spd %.17g depth %.17g spr %d alarmas %d %d %d %d %d %d\n", g.d.objects[p->obj].name.c_str(), p->x, p->y,
+            (int)p->id, p->image_index, p->image_speed, p->depth, p->sprite, p->alarm[0], p->alarm[1], p->alarm[2], p->alarm[3], p->alarm[4], p->alarm[5]);
     }
     gLastStep = gLastStep * 0.9 + stepMs * 0.1; gLastDraw = gLastDraw * 0.9 + drawMs * 0.1;
     int inst = (int)g.insts.size();
@@ -338,6 +343,9 @@ void debugTourAfterFrame(Game& g, double stepMs, double drawMs, double frameMs) 
 // save/ (los mismos de las herramientas de prueba: godmode, unlockchars...), asi que siguen activas al volver a entrar.
 extern void (*gOverlayHook)(Game&);
 extern int gHudPercent;   // vm.cpp: tamano del HUD (MODS)
+int logrosTotal(); int logrosHechos(); bool logroInfo(int k, std::string& name);   // logros.cpp
+extern void (*gLogroToast)(const std::string&);
+bool logrosOverlay(Game& g);
 extern void (*gPreDrawHook)(Game&);
 void overlayBegin(Game& g);
 void overlaySize(int& w, int& h);
@@ -365,7 +373,8 @@ int gVarMp = -1, gVarSetMp = -1, gVarXp = -1, gVarXpMax = -1, gVarPStat = -1, gV
 std::string gMsg; int gMsgFrames = 0;
 
 enum { C_GOD, C_MANA, C_LEVEL, C_POINTS, C_UNLOCK, C_WARP, C_PERF, C_CLOSE, C_COUNT };
-enum { M_LANG, M_FONT, M_TSIZE, M_ICONS, M_TOUCH, M_HUD, M_CLOSE, M_COUNT };
+enum { M_LANG, M_FONT, M_TSIZE, M_ICONS, M_TOUCH, M_HUD, M_LOGROS, M_CLOSE, M_COUNT };
+bool gLogroList = false; int gLogroTop = 0;   // lista de logros (MODS -> Logros)
 const char* kFontNames[] = {"Original", "Sistema negrita", "Sistema normal", "Sistema estrecha", "Sistema con remates"};
 const int kTsizeSteps[] = {100, 90, 80, 70};
 
@@ -469,6 +478,7 @@ std::string modLabel(int k) {
             const char* t[3] = {"Apagado / Off", "Solo arriba / Top only", "Entero / Full"};
             return std::string("Panel trasero / Rear touch: < ") + t[gMods.touch] + " >";
         }
+        case M_LOGROS: return "Logros: " + std::to_string(logrosHechos()) + " de " + std::to_string(logrosTotal()) + "  (X: ver la lista)";
         case M_HUD: return std::string("HUD: < ") + std::to_string(gMods.hud) + " % >" + (gMods.hud == 100 ? " (original)" : "");
         default: return "Cerrar / Close";
     }
@@ -482,6 +492,7 @@ void modActivate(Game& g, int k, int dir) {
         case M_ICONS: gMods.icons ^= 1; break;
         case M_TOUCH: gMods.touch = (gMods.touch + d + 3) % 3; break;
         case M_HUD: { int i = 0; while (i < 4 && kHudSteps[i] != gMods.hud) i++; i = (i + d + 5) % 5; gMods.hud = kHudSteps[i]; gHudPercent = gMods.hud; break; }
+        case M_LOGROS: if (dir == 0) { gLogroList = true; gLogroTop = 0; } return;
         case M_CLOSE: if (dir == 0) { gMenuOpen = false; gBlockInput = true; } return;
     }
     (void)g; modsSave();
@@ -524,6 +535,7 @@ void activate(Game& g, int k, int dir) {   // dir 0 = X; -1/+1 = izquierda/derec
 void drawOverlay(Game& g) {
     static const char* textTest = std::getenv("VS_TEXTTEST");   // prueba de texto (acentos, iconos) en PC
     bossRushModeOverlay(g);
+    logrosOverlay(g);   // aviso de logro (9.10)
     if (!gMenuOpen && !gShowPerf && gMsgFrames <= 0 && !textTest) return;
     overlayBegin(g);
     int W, H; overlaySize(W, H);
@@ -539,6 +551,16 @@ void drawOverlay(Game& g) {
         overlayRect(x0, y0, x1, y1, 0x201010, 0.92f);
         overlayRect(x0, y0, x1, y0 + 3, 0x00CCFF, 1);
         bool mods = gMenu == 2;
+        if (mods && gLogroList) {
+            overlayText(g, x0 + 20, y0 + 12, "LOGROS: " + std::to_string(logrosHechos()) + " de " + std::to_string(logrosTotal()), 0.6, 0x00CCFF, 1);
+            for (int k = 0; k < 14; k++) {
+                int i = gLogroTop + k; std::string nm; if (i >= logrosTotal()) break;
+                bool have = logroInfo(i, nm);
+                overlayText(g, x0 + 24, y0 + 52 + k * 22, std::string(have ? "[X] " : "[  ] ") + nm, 0.38, have ? 0x40E080 : 0x909090, 1);
+            }
+            overlayText(g, x0 + 20, y1 - 32, "Arriba/Abajo mover - X u O volver", 0.35, 0xB0B0B0, 1);
+            return;
+        }
         overlayText(g, x0 + 20, y0 + 12, mods ? "MODS" : "TRUCOS", 0.6, 0x00CCFF, 1);
         int n = mods ? M_COUNT : C_COUNT, sel = mods ? gSelMods : gSel;
         for (int k = 0; k < n; k++) {
@@ -572,6 +594,7 @@ void cheatsInit(Game& g) {
         gWarpRooms.push_back((int)r);
     }
     gOverlayHook = drawOverlay;
+    gLogroToast = say;   // aviso de logro desbloqueado
     joyIconsInit(g);
     gPreDrawHook = joyIconsApply;
     bossRushModeInit(g);
@@ -630,6 +653,14 @@ bool cheatsInput(Game& g, uint32_t b) {
     if (gMsgFrames > 0) gMsgFrames--;
     uint32_t dirs = b & 15, act = pr;   // repeticion al mantener una direccion
     if (dirs) { if (++gRepeat > 24 && gRepeat % 4 == 0) act |= dirs; } else gRepeat = 0;
+    if (gMenu == 2 && gLogroList) {   // lista de logros: arriba/abajo, X u O vuelve a MODS
+        int n = logrosTotal();
+        if (act & 1) gLogroTop = std::max(0, gLogroTop - 1);
+        if (act & 2) gLogroTop = std::min(std::max(0, n - 14), gLogroTop + 1);
+        if (pr & (16 | 32)) gLogroList = false;
+        if (pr & 64) { gLogroList = false; gMenuOpen = false; gBlockInput = true; }
+        return true;
+    }
     if (gMenu == 2) {
         if (act & 1) gSelMods = (gSelMods + M_COUNT - 1) % M_COUNT;
         if (act & 2) gSelMods = (gSelMods + 1) % M_COUNT;

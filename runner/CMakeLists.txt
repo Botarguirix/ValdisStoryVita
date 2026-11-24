@@ -32,7 +32,7 @@ set(CORE_SRC
     src/vsd.cpp src/vm.cpp src/runtime.cpp
     src/fn_core.cpp src/fn_draw.cpp src/fn_audio.cpp src/particles.cpp
     src/gfx.cpp src/audio.cpp src/bgio.cpp
-    src/convert.cpp src/convert_vsd.cpp src/stbimpl.cpp src/debugtour.cpp src/lang.cpp src/bossrush.cpp)
+    src/convert.cpp src/convert_vsd.cpp src/stbimpl.cpp src/debugtour.cpp src/lang.cpp src/bossrush.cpp src/logros.cpp)
 
 # vsdinfo: herramienta de volcado (sin dependencias)
 if(NOT VITA)

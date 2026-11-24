@@ -570,15 +570,9 @@ VS_FN(json_decode) {
 }
 
 // ------------------------------------------------------------------ Steam (sin Steam en Vita)
-VS_FN(steam_initialised) { return Value(0.0); }
-VS_FN(steam_stats_ready) { return Value(0.0); }
 VS_FN(steam_is_cloud_enabled_for_account) { return Value(0.0); }
 VS_FN(steam_is_cloud_enabled_for_app) { return Value(0.0); }
 VS_FN(steam_is_screenshot_requested) { return Value(0.0); }
-VS_FN(steam_get_achievement) { return Value(0.0); }
-VS_FN(steam_set_achievement) { return Value(); }
-VS_FN(steam_get_stat_int) { return Value(0.0); }
-VS_FN(steam_set_stat_int) { return Value(); }
 VS_FN(steam_get_quota_total) { return Value(0.0); }
 VS_FN(steam_file_persisted) { return Value(0.0); }
 VS_FN(steam_file_share) { return Value(-1.0); }
