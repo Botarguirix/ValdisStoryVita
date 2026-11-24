@@ -275,19 +275,20 @@ static void hudTableInit(Game& g) {
     gHudCode.assign(g.d.codes.size(), 0);
     static const char* on[] = {"gml_Script_ui_wyatt_script", "gml_Script_draw_ui_overlay_script", "gml_Script_draw_level_boss_script",
                                "gml_Object_boss_rating_Draw_0"};   // panel de puntuacion del jefe (tapaba las recompensas, 9.5)
+    static const char* always[] = {"gml_Object_boss_rating_Draw_0"};   // se encoge siempre (como mucho al 70 %), aunque el HUD este al 100 %
     static const char* off[] = {"gml_Script_npc_ui_script", "gml_Script_tutorial_script"};
     for (size_t i = 0; i < g.d.codes.size(); i++) {
         for (const char* n : on) if (g.d.codes[i].name == n) gHudCode[i] = 1;
         for (const char* n : off) if (g.d.codes[i].name == n) gHudCode[i] = -1;
+        for (const char* n : always) if (g.d.codes[i].name == n) gHudCode[i] = 2;
     }
 }
 struct HudScope {
     bool active = false; gfx::HudState saved;
     HudScope(Game& g, int codeId) {
-        if (gHudPercent >= 100) return;
         if (gHudCode.size() != g.d.codes.size()) hudTableInit(g);
         int8_t k = gHudCode[codeId];
-        if (!k) return;
+        if (!k || (gHudPercent >= 100 && k != 2)) return;
         if (g.room != gHudRoomSeen) {
             gHudRoomSeen = g.room;
             const std::string& n = g.d.rooms[g.room].name;
@@ -299,7 +300,7 @@ struct HudScope {
         gfx::HudState st = saved;
         if (k > 0) {
             const ViewState& v = g.views[0];
-            st.on = true; st.lock = false; st.s = gHudPercent / 100.f;
+            st.on = true; st.lock = false; st.s = (k == 2 ? std::min(gHudPercent, 70) : gHudPercent) / 100.f;
             if (g.viewsEnabled && v.wview > 0) { st.l = (float)v.xview; st.t = (float)v.yview; st.w = (float)v.wview; st.h = (float)v.hview; }
             else { st.l = 0; st.t = 0; st.w = (float)g.roomW; st.h = (float)g.roomH; }
             st.ax = st.l; st.ay = st.t;

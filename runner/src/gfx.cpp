@@ -729,7 +729,7 @@ void hudSet(const HudState& st) { gHud = st; }
 void hudLock(bool on) { gHud.lock = on; }
 void hudAnchor(float x, float y) {
     if (!gHud.on || gHud.lock) return;
-    gHud.ax = x < gHud.l + gHud.w * 0.3f ? gHud.l : x > gHud.l + gHud.w * 0.7f ? gHud.l + gHud.w : gHud.l + gHud.w * 0.5f;
+    gHud.ax = x < gHud.l + gHud.w * 0.4f ? gHud.l : x > gHud.l + gHud.w * 0.6f ? gHud.l + gHud.w : gHud.l + gHud.w * 0.5f;
     gHud.ay = y < gHud.t + gHud.h * 0.75f ? gHud.t : gHud.t + gHud.h;   // casi todo el HUD esta arriba: abajo solo el ultimo cuarto
 }
 // copia escalada de los vertices (n puntos) si el HUD esta encogido; devuelve el puntero a usar
@@ -738,6 +738,7 @@ static const float* hudXf(const float* xy, int n, float* out) {
     float mn = xy[0], mx = xy[0], my = xy[1], My = xy[1];
     for (int k = 1; k < n; k++) { mn = std::min(mn, xy[k * 2]); mx = std::max(mx, xy[k * 2]); my = std::min(my, xy[k * 2 + 1]); My = std::max(My, xy[k * 2 + 1]); }
     if (mx - mn > gHud.w * 0.6f && My - my > gHud.h * 0.6f) return xy;   // velo de pantalla completa (ancho Y alto): tal cual
+    if (!gHud.lock) hudAnchor((mn + mx) * 0.5f, (my + My) * 0.5f);   // sprites, carteles, rectangulos: ancla segun su centro
     for (int k = 0; k < n; k++) { out[k * 2] = gHud.ax + (xy[k * 2] - gHud.ax) * gHud.s; out[k * 2 + 1] = gHud.ay + (xy[k * 2 + 1] - gHud.ay) * gHud.s; }
     return out;
 }

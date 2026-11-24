@@ -287,8 +287,6 @@ void Game::drawText(double x, double y, const std::string& s0, double xs, double
     // 9.9: tamano del texto (MODS). Letras mas pequenas con el mismo ancho de caja: menos lineas y cabe en el cuadro
     // (el ancho de ajuste w va en unidades sin escalar: se divide para que en pantalla siga midiendo lo mismo)
     if (gMods.tsize < 100) { double k = gMods.tsize / 100.0; xs *= k; ys *= k; if (w > 0) w /= k; }
-    gfx::hudAnchor((float)x, (float)y);   // un texto se escala entero hacia la misma ancla (no se parte)
-    struct HudLock { HudLock() { gfx::hudLock(true); } ~HudLock() { gfx::hudLock(false); } } hudLockGuard;
     const std::string* al = langDrawAlias(s0);
     const std::string& s = al ? *al : s0;
     const RFont& f = gFonts[fontCur];
@@ -299,6 +297,13 @@ void Game::drawText(double x, double y, const std::string& s0, double xs, double
     double maxW = 0; for (auto& l : lines) maxW = std::max(maxW, textLineWidth(f, l, 0, l.size()));
     double yoff = drawValign == 1 ? -totalH / 2 : drawValign == 2 ? -totalH : 0;
     double a = ang * M_PI / 180.0, ca = std::cos(a), sa = std::sin(a);
+    // HUD encogido: el texto entero va hacia el ancla que corresponde al CENTRO del bloque (no a su origen): asi un texto
+    // centrado sobre un cartel elige la misma esquina que el cartel y no se separan (24-11)
+    {
+        double cxl = drawHalign == 1 ? 0 : drawHalign == 2 ? -maxW / 2 : maxW / 2, cyl = yoff + totalH / 2;
+        gfx::hudAnchor((float)(x + cxl * xs * ca + cyl * ys * sa), (float)(y - cxl * xs * sa + cyl * ys * ca));
+    }
+    struct HudLock { HudLock() { gfx::hudLock(true); } ~HudLock() { gfx::hudLock(false); } } hudLockGuard;
     auto lerpc = [](uint32_t p, uint32_t q, double t) {
         auto ch = [&](int sh) { return (uint32_t)std::lround(((p >> sh) & 255) * (1 - t) + ((q >> sh) & 255) * t) << sh; };
         return ch(0) | ch(8) | ch(16);
