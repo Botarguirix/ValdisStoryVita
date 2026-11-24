@@ -143,3 +143,20 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | 8.4 | Editor de partida / trucos de inventario | Todos los objetos, armas, hechizos, habilidades, oro y nivel. El juego guarda todo en variables GML (~400 con prefijos `item_`, `wep_`, `skill_`, `spell_`, `talent_`, además de `g_item`) y en el `.dat` de la partida: el runner puede escribirlas igual que hace el modo sin morir con `hp`. Antes hay que mapear qué significa cada variable y respetar los límites del juego para no romper la progresión |
 | 8.6 | Traducción al español | Archivo de traducción (frase original → frase en español) que el runner aplica al cargar las cadenas del juego. El archivo no puede llevar el texto original en inglés si se publica: usar una huella de cada frase como clave. Mucho texto (~10 000 frases): hacerlo por zonas |
 | 8.5 | Modo **Boss Rush** | ✅ **Hecho (20-11)** (`runner/src/bossrush.cpp`, ver `docs/TESTING.md`). Entrada **-Boss Rush-** debajo de "-Salir-" en el menú principal, desbloqueada como los modos extra del juego al terminar la historia con cualquier personaje (`global.unlock_char`; el truco de personajes también la muestra). Submenú: personaje y modo. 20 jefes de la historia en orden, cada uno en su propia sala con su presentación. **Fiel:** justo antes de cada jefe el juego guarda el estado completo (lo que usa "Reintentar"); el runner lo copia en `save/bossrush/pC_bN.ini` cada vez que llegas a un jefe jugando y el Boss Rush lo carga con los scripts de "Reintentar": nivel, armas, hechizos y objetos de ese encuentro. Sin grabación: tu partida más avanzada con todo el equipo; funciona en 18 de 20 (Ruckjahl y Dhistahn poseído solo con su grabación). **Aleatorio:** armaduras, accesorios, almas y remates al azar, conservando lo equipado. Entre jefes vuelve al título por dentro y carga desde allí (cargar en mitad de la escena de victoria arrastraba estado). Tus partidas no se tocan: los guardados van a memoria durante el modo. Derrota: reintentar o terminar; al final, tabla de tiempos. Probado en PC: recorrido completo, 18 victorias con la vida del jefe a 0, partidas idénticas byte a byte después, huellas idénticas. Vita: entrada, submenú y primera pelea. Pendiente: jugarlo a mano, el modo aleatorio más fino (qué es "requerido" por jefe) y los jefes finales del castillo (hall_*), que no tienen guardado previo |
+
+## 9. Reporte de la campaña jugada a mano (23-11)
+
+| # | Problema o mejora | Estado |
+|---|---|---|
+| 9.1 | **Cuelgue (dump en `ux0:data`)** tras una sesión larga, al abrir un cofre | ⬜ Analizar el `.psp2dmp` |
+| 9.2 | **Tren (viaje rápido):** las texturas se dibujan delante del personaje, en todos los trenes. Se arregla saliendo al menú y volviendo a entrar | ⬜ |
+| 9.3 | **El Manawar y Abbigail** (ataques de rayos): bajan a 30–10 fps | ⬜ Medir y optimizar |
+| 9.4 | **HUD demasiado grande:** medidor de combos e información en pantalla; reducirlo al menos un 50 % para que todo quepa | ⬜ |
+| 9.5 | **Recompensas del jefe** tapadas por el anuncio de derrotado: hacer más pequeño ese HUD | ⬜ |
+| 9.6 | **Traducción:** objetos que aún salen en inglés (otros además de los revisados), zonas (p. ej. "WEST WING…") y descripciones de enemigos en el LORE (p. ej. el soldado ángel) | ⬜ |
+| 9.7 | **Cofres:** a veces el icono que sale no corresponde con lo que es. Comprobar si pasa en el original (el usuario cree que no) | ⬜ |
+| 9.8 | **GFX Low:** ya no parpadea, pero hace la partida más lenta en vez de subir o estabilizar los fps | ⬜ |
+| 9.9 | Mejora: **3 fuentes extra y de distintos tamaños**, porque varias descripciones se salen de las cajas | ⬜ |
+| 9.10 | Mejora: **logros locales** (los de Steam, guardados en la consola) | ⬜ |
+| 9.11 | Mejora (al final): **modo Nivel 1**: sin subir de nivel, pero con todas las armas, hechizos y habilidades principales (doble salto, etc.). Definir qué hace falta | ⬜ |
+| 9.12 | Seguir optimizando | ⬜ |

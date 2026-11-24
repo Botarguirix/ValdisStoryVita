@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
     } else if (mode == "findobj" && argc > 3) {   // salas donde esta colocado cada objeto pedido
         for (int a = 3; a < argc; a++) {
             std::printf("%s:", argv[a]);
+            for (auto& o : g.objects) if (o.name == argv[a]) std::printf(" [depth %d persistent %d visible %d parent %d]", o.depth, (int)o.persistent, (int)o.visible, o.parent);
             for (auto& r : g.rooms) { int n = 0; for (auto& in : r.insts) if (in.obj >= 0 && g.objects[in.obj].name == argv[a]) n++; if (n) std::printf(" %s(%d)", r.name.c_str(), n); }
             std::printf("\n");
         }

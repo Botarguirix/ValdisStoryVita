@@ -1,0 +1,32 @@
+// Traducciones al dibujar (textos que el juego tambien compara): huella FNV-1a 64 del original <TAB> espanol
+d02c2078610fcb46	Restos de Tagrum
+9b8be9e826c9c875	Arena Cielo o Infierno
+5389b8d923ba2ce5	Jardines abandonados
+4616b5ba4efb4a51	Mausoleo antiguo
+f626490917a09510	Criptas congeladas
+b9fc2dca706d24fa	Salón de los Caídos
+11517c69f07c4915	La Hondonada
+e5bcced2771a90f7	Laboratorio contaminado
+c0672135930a14f0	Biblioteca
+dc6159ea50b467c9	Jardines perdidos
+59410d52a0a0660b	Mina de cristal de maná
+bb08849710178c81	Aldea de Tagrum
+c1e61f682ab7141a	Sombrerería
+6056ef0434c83042	Palacio del Ingeniero
+d70ed3112ab0a531	El Foso
+ddde755c01490e00	Prisión hundida
+7f08e05ba6dfbcf5	Pasarela central inferior
+7b705bffaca7c144	Sala de ejecución
+e0188fdbf3dad6a9	Tumba de la Diosa
+682d3f34b7d8c772	El Santuario
+beec5c6827e52db6	Alcantarillas
+e0305a27f18d592e	Pasarela central
+74a1c4137ca9af6b	Templo del Guardián
+5d8c8b14d448c8eb	Pasarela occidental
+0fe30fd97bfcc5c8	Zigurat
+4d7e7ded87d4f79a	Toca dos veces [<] o [>] para correr.
+de3957ab92849faa	Q.E.P.D.#Peche
+83cd32b685ccc9b7	Controles
+fe386c25c1567ecf	Objetos
+463b8c4e92751ba5	Opciones
+9e7b560d36f84739	Comercio

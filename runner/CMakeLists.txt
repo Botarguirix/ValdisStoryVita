@@ -81,7 +81,8 @@ if(VITA)
         FILE ${SCE_ART}/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
         FILE ${SCE_ART}/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
         FILE ${CMAKE_SOURCE_DIR}/vita/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
-        FILE ${CMAKE_SOURCE_DIR}/../lang/es.txt lang/es.txt)
+        FILE ${CMAKE_SOURCE_DIR}/../lang/es.txt lang/es.txt
+        FILE ${CMAKE_SOURCE_DIR}/../lang/es_draw.txt lang/es_draw.txt)
 elseif(NOT VS_TOOLS_ONLY)
     find_package(SDL2 REQUIRED)
     find_package(OpenGL REQUIRED)

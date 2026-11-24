@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace vs {
@@ -71,6 +72,10 @@ static bool loadTable(const char* code, std::unordered_map<uint64_t, std::string
 // Textos que la partida guarda como texto (p. ej. el objetivo actual, global.mission, con ini_write_string): al leerlos
 // con ini_read_string se pasan al idioma activo, para que una partida guardada en un idioma se vea bien en el otro.
 static std::unordered_map<std::string, std::string> gToEs, gToEn;
+// lang/es_draw.txt: textos que el juego tambien compara (zonas...): solo se traducen al dibujarlos
+static std::unordered_map<uint64_t, std::string> gDrawTr;
+static std::unordered_set<uint64_t> gEsOut;      // huellas de todo el texto ya en espanol (para el registro de abajo)
+static std::unordered_set<uint64_t> gLoggedEn;   // textos en ingles ya anotados en el registro
 
 // lang: 0 ingles (original), 1 espanol. Se llama al arrancar y en game_restart.
 void langApply(Game& g, int lang) {
@@ -81,6 +86,13 @@ void langApply(Game& g, int lang) {
     bool have = loadTable("es", tr, from);
     gToEs.clear(); gToEn.clear();
     if (have) for (auto& o : gOrigStrings) { auto it = tr.find(fnv1a64(o)); if (it != tr.end()) { gToEs[o] = it->second; gToEn[it->second] = o; } }
+    gDrawTr.clear(); gEsOut.clear();
+    if (lang == 1) {
+        std::string fromDraw;
+        if (loadTable("es_draw", gDrawTr, fromDraw)) logf("[idioma] %d textos que se traducen al dibujarlos (%s)\n", (int)gDrawTr.size(), fromDraw.c_str());
+        for (auto& kv : tr) gEsOut.insert(fnv1a64(kv.second));
+        for (auto& kv : gDrawTr) gEsOut.insert(fnv1a64(kv.second));
+    }
     int hits = 0;
     if (lang == 1) {
         if (!have) logf("[idioma] no se encontro lang/es.txt: el juego sigue en ingles\n");
@@ -99,11 +111,31 @@ void langTranslateRead(std::string& s) {
 }
 // Textos visibles que el juego tambien usa como identificadores (secciones del ini de la partida): no se pueden cambiar
 // en la tabla de cadenas, asi que solo se sustituyen al dibujarlos (drawText), con el juego en espanol.
+// Ademas, con el juego en espanol, cada texto dibujado que siga en ingles se anota una vez en vsrunner.log
+// ("[idioma] sin traducir: ...", hasta 400) para encontrar lo que falta jugando (23-11).
+static bool looksEnglish(const std::string& s) {
+    int run = 0, words = 0;
+    for (unsigned char c : s) {
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) { if (++run == 3) words++; }
+        else if (c >= 0x80) return false;   // tildes o simbolos: ya es espanol o no es texto
+        else run = 0;
+    }
+    return words >= 1;
+}
 const std::string* langDrawAlias(const std::string& s) {
-    if (gLangApplied != 1) return nullptr;
-    static const std::unordered_map<std::string, std::string> alias = {{"Controls", "Controles"}, {"Items", "Objetos"}};
-    auto it = alias.find(s);
-    return it == alias.end() ? nullptr : &it->second;
+    if (gLangApplied != 1 || s.empty()) return nullptr;
+    uint64_t h = fnv1a64(s);
+    auto it = gDrawTr.find(h);
+    if (it != gDrawTr.end()) return &it->second;
+    // solo si se dibuja al menos 20 veces: el efecto maquina de escribir dibuja frases a medias que cambian cada frame
+    static std::unordered_map<uint64_t, int> seen;
+    if (gLoggedEn.size() >= 400 || gEsOut.count(h) || gLoggedEn.count(h) || s.back() == ' ' || !looksEnglish(s)) return nullptr;
+    if (seen.size() > 20000) seen.clear();
+    if (++seen[h] == 20 && gLoggedEn.insert(h).second) {
+        std::string one = s; for (char& c : one) if (c == '\n' || c == '\r') c = '|';
+        logf("[idioma] sin traducir: %s\n", one.c_str());
+    }
+    return nullptr;
 }
 void langInit(Game& g) { langApply(g, readModsLang(g.saveDir)); }
 

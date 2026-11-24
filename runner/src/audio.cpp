@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <new>
 #include <map>
 #include <pthread.h>
 #include <memory>
@@ -12,13 +14,20 @@
 
 namespace audio {
 
-struct Pcm { int rate = 44100, ch = 2; std::vector<int16_t> data; size_t frames() const { return data.size() / ch; } };
+// Muestras en memoria propia (malloc): si no hay memoria, el sonido se salta en vez de cerrar el juego (con
+// -fno-exceptions un std::vector sin memoria aborta). Ver el volcado del 22-11: el hilo cargador se cayo leyendo un wav.
+struct Pcm {
+    int rate = 44100, ch = 2; int16_t* data = nullptr; size_t samples = 0; uint64_t lastUse = 0;
+    ~Pcm() { std::free(data); }
+    size_t frames() const { return samples / ch; }
+    size_t bytes() const { return samples * 2; }
+};
 
 struct Voice {
     int id = 0, tag = -1; bool loop = false, done = false;
     float gain = 1, target = 1, gainStep = 0, pitch = 1;
     // memoria
-    const Pcm* pcm = nullptr; double pos = 0;   // propiedad de gCache (nunca se libera)
+    const Pcm* pcm = nullptr; double pos = 0;   // propiedad de gCache (no se libera mientras una voz lo use)
     bool pending = false;                       // wav aun cargandose en segundo plano (suena en silencio hasta entonces)
     bool opening = false;                       // ogg abriendose en el hilo cargador: no se libera hasta que acabe
     // streaming
@@ -31,33 +40,52 @@ struct Voice {
 static vs::SysMutex gMx;
 static std::vector<std::unique_ptr<Voice>> gVoices;
 static std::map<std::string, Pcm*> gCache;   // protegido por gMx (lo rellena el hilo cargador); nullptr = fallo
+// Tope de la cache de efectos: los 137 wav suman ~37 MB y antes no se liberaba ninguno (en una sesion larga se juntaban
+// todos y, con el heap a 108 MB, faltaba memoria). Se libera el menos usado que no este sonando.
+static const size_t kWavBudget = 16u * 1024 * 1024;
+static uint64_t gUseTick = 0;   // con gMx
 static int gNextId = 1;
 static float gMaster = 1;
 
 void init() {}
 void setMasterGain(float g) { gMaster = g; }
 
-// lee y decodifica un wav del disco (sin tocar estructuras compartidas)
+// lee y decodifica un wav del disco (sin tocar estructuras compartidas). Lee los datos directamente a su sitio:
+// antes se cargaba el archivo entero y luego se copiaba (el doble de memoria durante la carga).
 static Pcm* readWav(const std::string& path) {
     FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) return nullptr;
-    std::vector<uint8_t> b; std::fseek(f, 0, SEEK_END); b.resize(std::ftell(f)); std::fseek(f, 0, SEEK_SET);
-    size_t rd = std::fread(b.data(), 1, b.size(), f); std::fclose(f);
-    if (rd != b.size() || b.size() < 44 || std::memcmp(b.data(), "RIFF", 4) || std::memcmp(b.data() + 8, "WAVE", 4)) return nullptr;
-    std::unique_ptr<Pcm> p(new Pcm());
-    int bits = 16; size_t o = 12;
-    while (o + 8 <= b.size()) {
-        uint32_t sz; std::memcpy(&sz, &b[o + 4], 4);
-        if (!std::memcmp(&b[o], "fmt ", 4)) { uint16_t c, bt; uint32_t r; std::memcpy(&c, &b[o + 10], 2); std::memcpy(&r, &b[o + 12], 4); std::memcpy(&bt, &b[o + 22], 2); p->ch = c; p->rate = r; bits = bt; }
-        else if (!std::memcmp(&b[o], "data", 4)) {
-            size_t n = std::min<size_t>(sz, b.size() - o - 8);
-            if (bits == 16) { p->data.resize(n / 2); std::memcpy(p->data.data(), &b[o + 8], (n / 2) * 2); }
-            else if (bits == 8) { p->data.resize(n); for (size_t i = 0; i < n; i++) p->data[i] = (int16_t)((b[o + 8 + i] - 128) << 8); }
-            break;
-        }
-        o += 8 + sz + (sz & 1);
+    uint8_t h[12];
+    if (std::fread(h, 1, 12, f) != 12 || std::memcmp(h, "RIFF", 4) || std::memcmp(h + 8, "WAVE", 4)) { std::fclose(f); return nullptr; }
+    std::unique_ptr<Pcm> p(new (std::nothrow) Pcm());
+    if (!p) { std::fclose(f); return nullptr; }
+    int bits = 16; bool ok = false; uint8_t c[8];
+    while (std::fread(c, 1, 8, f) == 8) {
+        uint32_t sz; std::memcpy(&sz, c + 4, 4);
+        if (!std::memcmp(c, "fmt ", 4)) {
+            uint8_t fm[16] = {}; size_t got = std::fread(fm, 1, std::min<uint32_t>(sz, 16), f);
+            if (got >= 16) { uint16_t ch, bt; uint32_t r; std::memcpy(&ch, fm + 2, 2); std::memcpy(&r, fm + 4, 4); std::memcpy(&bt, fm + 14, 2); p->ch = ch; p->rate = (int)r; bits = bt; }
+            if (sz > got) std::fseek(f, (long)(sz - got + (sz & 1)), SEEK_CUR); else if (sz & 1) std::fseek(f, 1, SEEK_CUR);
+        } else if (!std::memcmp(c, "data", 4)) {
+            size_t n = bits == 16 ? sz / 2 : sz;   // muestras
+            p->data = (int16_t*)std::malloc(n * 2 + 2);
+            if (!p->data) { std::fclose(f); std::printf("[audio] sin memoria para %s (%u KB)\n", path.c_str(), (unsigned)(n * 2 / 1024)); return nullptr; }
+            if (bits == 16) p->samples = std::fread(p->data, 2, n, f);
+            else if (bits == 8) {
+                uint8_t tmp[4096]; size_t done = 0;
+                while (done < n) {
+                    size_t k = std::fread(tmp, 1, std::min<size_t>(sizeof tmp, n - done), f);
+                    if (!k) break;
+                    for (size_t i = 0; i < k; i++) p->data[done + i] = (int16_t)((tmp[i] - 128) << 8);
+                    done += k;
+                }
+                p->samples = done;
+            }
+            ok = true; break;
+        } else std::fseek(f, (long)(sz + (sz & 1)), SEEK_CUR);
     }
-    if (p->ch < 1 || p->ch > 2) return nullptr;
+    std::fclose(f);
+    if (!ok || p->ch < 1 || p->ch > 2) return nullptr;
     return p.release();
 }
 
@@ -90,6 +118,20 @@ static void* loaderThread(void*) {
         Pcm* p = readWav(path);
         vs::SysLock lk(gMx);
         gCache[path] = p;
+        if (p) {
+            p->lastUse = ++gUseTick;
+            size_t total = 0; for (auto& kv : gCache) if (kv.second) total += kv.second->bytes();
+            while (total > kWavBudget) {
+                auto victim = gCache.end();
+                for (auto it = gCache.begin(); it != gCache.end(); ++it) {
+                    Pcm* q = it->second; if (!q || q == p) continue;
+                    bool inUse = false; for (auto& v : gVoices) if (v->pcm == q) { inUse = true; break; }
+                    if (!inUse && (victim == gCache.end() || q->lastUse < victim->second->lastUse)) victim = it;
+                }
+                if (victim == gCache.end()) break;
+                total -= victim->second->bytes(); delete victim->second; gCache.erase(victim);
+            }
+        }
         for (auto& v : gVoices) if (v->pending && v->path == path) { v->pending = false; v->pcm = p; if (!p) v->done = true; }
         if (!p) std::printf("[audio] wav invalido %s\n", path.c_str());
     }
@@ -112,7 +154,7 @@ static bool startLoader() {
 static const Pcm* requestWav(const std::string& path, bool& queued) {
     queued = false;
     auto it = gCache.find(path);
-    if (it != gCache.end()) return it->second;
+    if (it != gCache.end()) { if (it->second) it->second->lastUse = ++gUseTick; return it->second; }
     {
         vs::SysLock lk(loadMx());
         if (!startLoader()) { Pcm* p = readWav(path); gCache[path] = p; return p; }   // sin hilo: sincrono

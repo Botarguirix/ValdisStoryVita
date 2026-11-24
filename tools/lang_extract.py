@@ -38,6 +38,9 @@ BAD_FUNCS = re.compile(r'\b(ini_\w+|file_\w+|sprite_add|background_add|sound_add
 def main():
     strings = open(os.path.join(DEC, 'strings.txt'), encoding='utf-8', errors='replace').read().split('\n')
     table = set(strings)
+    # UndertaleModTool escribe entre comillas las cadenas con espacios al principio o al final (" Low ranking..."):
+    # sin esto quedaban fuera las descripciones del LORE y otros textos que empiezan por espacio (23-11)
+    table |= {s[1:-1] for s in strings if len(s) >= 2 and s[0] == '"' and s[-1] == '"'}
     names = set()   # nombres de variables/recursos: nunca se traducen
     for line in strings:   # identificadores: con guion bajo o en minusculas (las palabras sueltas en mayuscula son texto)
         if re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', line) and ('_' in line or line[0].islower()):
@@ -90,6 +93,21 @@ def main():
     with open(path, 'w', encoding='utf-8', newline='\n') as f:
         for s in out:
             f.write('%s\t%s\t%s\n' % (fnv1a64(s), s.replace('\t', ' ').replace('\n', '\\n'), where[s]))
+    # textos que parecen visibles pero el juego tambien compara (zonas, etc.): se traducen solo al dibujarlos
+    # (lang/es_draw.txt). Lista aparte en build/lang/en_draw.tsv (23-11)
+    draw = []
+    for s in good:
+        if s not in bad or s in names or not re.search(r'[A-Za-z]{3}', s):
+            continue
+        if re.fullmatch(r'[A-Za-z0-9_]+', s) and ('_' in s or s.islower()):
+            continue
+        if re.search(r'\.(png|ogg|wav|ini|dat|txt|sav)$|[\\/]', s, re.I):
+            continue
+        draw.append(s)
+    with open(os.path.join(ROOT, 'build', 'lang', 'en_draw.tsv'), 'w', encoding='utf-8', newline='\n') as f:
+        for s in draw:
+            f.write('%s\t%s\t%s\n' % (fnv1a64(s), s.replace('\t', ' ').replace('\n', '\\n'), where[s]))
+    print('%d textos comparados que parecen visibles -> build/lang/en_draw.tsv' % len(draw))
     words = sum(len(s.split()) for s in out)
     print('%d textos visibles (%d palabras) -> %s; descartadas como identificador: %d' % (len(out), words, path, len(bad)))
 
