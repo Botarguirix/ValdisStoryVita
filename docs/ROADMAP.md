@@ -148,12 +148,12 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 
 | # | Problema o mejora | Estado |
 |---|---|---|
-| 9.1 | **Cuelgue (dump en `ux0:data`)** tras una sesión larga, al abrir un cofre | ⬜ Analizar el `.psp2dmp` |
+| 9.1 | **Cuelgue (dump en `ux0:data`)** tras una sesión larga, al abrir un cofre | ✅ (23-11) Analizado con `tools/vita_core.py`: falló el hilo cargador de audio (`audio::readWav`) al pedir memoria para un efecto nuevo. La caché de efectos nunca liberaba nada (137 wav, ~37 MB) y, tras bajar el heap a 108 MB (1.11), en una sesión larga se acababa la memoria. Ahora: lectura directa sin copia doble, `malloc` comprobado (si falta memoria se salta el sonido) y caché con tope de 16 MB que libera el menos usado que no suena. Falta: sesión larga en la Vita para confirmarlo |
 | 9.2 | **Tren (viaje rápido):** las texturas se dibujan delante del personaje, en todos los trenes. Se arregla saliendo al menú y volviendo a entrar | ⬜ |
-| 9.3 | **El Manawar y Abbigail** (ataques de rayos): bajan a 30–10 fps | ⬜ Medir y optimizar |
+| 9.3 | **El Manawar y Abbigail** (ataques de rayos): bajan a 30–10 fps | 🔶 En el registro de la partida del usuario (west_5): la lógica **sube sin parar** 24 → 38 → 95 → 171 → 228 ms por frame con las instancias constantes (~121): algo se acumula durante una fase del combate. Reproducido en PC (Boss Rush solo Manawar): de 1 a 17–34 ms en esa fase. Falta aislar qué crece (no son partículas: el juego las limpia y su contador está bien) |
 | 9.4 | **HUD demasiado grande:** medidor de combos e información en pantalla; reducirlo al menos un 50 % para que todo quepa | ⬜ |
 | 9.5 | **Recompensas del jefe** tapadas por el anuncio de derrotado: hacer más pequeño ese HUD | ⬜ |
-| 9.6 | **Traducción:** objetos que aún salen en inglés (otros además de los revisados), zonas (p. ej. "WEST WING…") y descripciones de enemigos en el LORE (p. ej. el soldado ángel) | ⬜ |
+| 9.6 | 🔶 **Traducción:** objetos que aún salen en inglés (otros además de los revisados), zonas (p. ej. "WEST WING…") y descripciones de enemigos en el LORE (p. ej. el soldado ángel) | 🔶 (23-11) Zonas: el juego compara sus nombres en el código y por eso no estaban en la tabla; ahora `lang/es_draw.txt` los traduce al dibujarlos (31 textos, con los nombres que ya usaban los diálogos: "Pasarela occidental", "Restos de Tagrum"…). Las descripciones del LORE sí están traducidas en los datos; el caso del soldado ángel falta verlo. **Nuevo registro:** con el juego en español, cada texto dibujado que siga en inglés se anota una vez en `vsrunner.log` (`[idioma] sin traducir: ...`): jugando se juntan todos |
 | 9.7 | **Cofres:** a veces el icono que sale no corresponde con lo que es. Comprobar si pasa en el original (el usuario cree que no) | ⬜ |
 | 9.8 | **GFX Low:** ya no parpadea, pero hace la partida más lenta en vez de subir o estabilizar los fps | ⬜ |
 | 9.9 | Mejora: **3 fuentes extra y de distintos tamaños**, porque varias descripciones se salen de las cajas | ⬜ |
