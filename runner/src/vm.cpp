@@ -310,6 +310,19 @@ struct HudScope {
     ~HudScope() { if (active) gfx::hudSet(saved); }
 };
 
+// AOT en la consola (vaot.cpp, 5.6): activado por defecto; solo actua donde no hay AOT de PC para ese codigo.
+// Se apaga con VS_VAOT=0 o con el archivo save/novaot (para comparar con el interprete).
+extern bool gVaotOn; bool vaotRun(Game& g, int codeId, Ctx& ctx, Value& out);
+bool testFileExists(const std::string& dir, const std::string& base);   // debugtour.cpp
+static inline bool vaotEnabled(const std::string& saveDir) {
+    static int st = -1;
+    if (st < 0) {
+        const char* e = std::getenv("VS_VAOT");
+        st = !(e && e[0] == '0') && !testFileExists(saveDir, "novaot"); gVaotOn = st;
+        logf("[vaot] AOT en la consola %s\n", st ?"activado" : "desactivado (save/novaot o VS_VAOT=0)");
+    }
+    return st;
+}
 // Pantalla de logros (logros.cpp): se dibuja al terminar draw_option_menu_script, en el sitio del mapa
 void logroScreenBeforeMenu(Game& g, Instance* self); void logroScreenDraw(Game& g, Instance* self); bool logroScreenOpen();
 static int gOptMenuCode = -2;
@@ -343,6 +356,13 @@ Value Game::call(int codeId, Ctx ctx, Value* args, int argc) {
         }
         curArgs = savedArgs; curArgc = savedArgc; curCode = savedCode;
         return r;
+    }
+    if (vaotEnabled(saveDir) && !(prof && !profCode.empty())) {   // AOT en la consola (vaot.cpp, 5.6): traducido en la propia Vita
+        Value* savedArgs = curArgs; int savedArgc = curArgc; int savedCode = curCode;
+        curCode = codeId; curArgs = args; curArgc = argc;
+        Value r; bool ok = vaotRun(*this, codeId, ctx, r);
+        curArgs = savedArgs; curArgc = savedArgc; curCode = savedCode;
+        if (ok) return r;
     }
     const Code& code = d.codes[codeId];
     const Ins* ins = code.ins.data();
