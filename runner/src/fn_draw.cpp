@@ -183,7 +183,11 @@ static const AltGlyph* altGlyph(uint32_t cp) {
     if (it == gAlt.g.end()) { int mk; uint32_t b = baseChar(cp, mk); it = gAlt.g.find(b); if (it == gAlt.g.end()) return nullptr; }
     return &it->second;
 }
-static double altScale(const RFont& f) { return f.lineH * 0.82 / gAlt.lineH; }
+// 24-11 (pedido del usuario): las fuentes del sistema que no son negrita se veian pequenas: uno o dos tamanos mas
+static double altScale(const RFont& f) {
+    double k = gAltBuiltStyle == 2 ? 1.12 : gAltBuiltStyle == 3 ? 1.20 : gAltBuiltStyle == 4 ? 1.15 : 1.0;   // normal, estrecha, remates
+    return f.lineH * 0.82 / gAlt.lineH * k;
+}
 
 // ---- Texto del runner: UTF-8, letras acentuadas compuestas e iconos de botones
 // Las cadenas del juego son ASCII; las traducciones vienen en UTF-8. Un byte que no forma UTF-8 valido se toma como

@@ -12,6 +12,7 @@
 #include <vector>
 #include <vorbis/vorbisfile.h>
 
+namespace vs { void logf(const char* fmt, ...); }   // los errores de audio van a vsrunner.log (9.1: antes solo a la consola)
 namespace audio {
 
 // Muestras en memoria propia (malloc): si no hay memoria, el sonido se salta en vez de cerrar el juego (con
@@ -69,7 +70,7 @@ static Pcm* readWav(const std::string& path) {
         } else if (!std::memcmp(c, "data", 4)) {
             size_t n = bits == 16 ? sz / 2 : sz;   // muestras
             p->data = (int16_t*)std::malloc(n * 2 + 2);
-            if (!p->data) { std::fclose(f); std::printf("[audio] sin memoria para %s (%u KB)\n", path.c_str(), (unsigned)(n * 2 / 1024)); return nullptr; }
+            if (!p->data) { std::fclose(f); vs::logf("[audio] sin memoria para %s (%u KB)\n", path.c_str(), (unsigned)(n * 2 / 1024)); return nullptr; }
             if (bits == 16) p->samples = std::fread(p->data, 2, n, f);
             else if (bits == 8) {
                 uint8_t tmp[4096]; size_t done = 0;
@@ -111,7 +112,7 @@ static void* loaderThread(void*) {
             bool ok = openOgg(*job.ogg);
             vs::SysLock lk(gMx);
             job.ogg->pending = false; job.ogg->opening = false;
-            if (!ok) { job.ogg->done = true; std::printf("[audio] no se pudo abrir %s\n", job.ogg->path.c_str()); }
+            if (!ok) { job.ogg->done = true; vs::logf("[audio] no se pudo abrir %s\n", job.ogg->path.c_str()); }
             continue;
         }
         const std::string& path = job.path;
@@ -133,7 +134,7 @@ static void* loaderThread(void*) {
             }
         }
         for (auto& v : gVoices) if (v->pending && v->path == path) { v->pending = false; v->pcm = p; if (!p) v->done = true; }
-        if (!p) std::printf("[audio] wav invalido %s\n", path.c_str());
+        if (!p) vs::logf("[audio] wav invalido %s\n", path.c_str());
     }
     return nullptr;
 }
@@ -205,7 +206,7 @@ int play(const std::string& path, bool isOgg, bool loop, float gain, float pitch
             loadSema().post();
             return id;
         }
-        if (!openOgg(*v)) { std::printf("[audio] no se pudo abrir %s\n", path.c_str()); return 0; }
+        if (!openOgg(*v)) { vs::logf("[audio] no se pudo abrir %s\n", path.c_str()); return 0; }
     }
     vs::SysLock lk(gMx);
     if (!isOgg) {

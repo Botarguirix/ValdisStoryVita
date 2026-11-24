@@ -11,6 +11,7 @@
 #include <psp2/touch.h>
 #include <psp2/io/stat.h>
 #include <psp2/io/fcntl.h>
+#include <psp2/io/dirent.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/message_dialog.h>
@@ -374,6 +375,28 @@ int main(int, char**) {
     {   // save/nodrawskip: desactiva el dibujo a 30 fps (para medir el coste real de cada frame)
         gDrawSkip = !vs::testFileExists(saveDir, "nodrawskip");
         vs::logf("[sistema] dibujo a 30 fps cuando la logica no llega: %s\n", gDrawSkip ? "activo" : "desactivado (save/nodrawskip)");
+    }
+    {   // 9.1: si la sesion anterior termino en un fallo, la Vita dejo un volcado nuevo en ux0:data: se anota aqui
+        std::string seenPath = saveDir + "/volcados_vistos.txt", seen, list;
+        if (FILE* f = std::fopen(seenPath.c_str(), "rb")) { char b[4096]; size_t n; while ((n = std::fread(b, 1, sizeof b, f)) > 0) seen.append(b, n); std::fclose(f); }
+        SceUID d = sceIoDopen("ux0:data");
+        int nuevos = 0;
+        if (d >= 0) {
+            SceIoDirent e;
+            while (sceIoDread(d, &e) > 0) {
+                std::string n = e.d_name;
+                if (n.compare(0, 9, "psp2core-") != 0 || n.find("eboot.bin") == std::string::npos) continue;
+                list += n + "\n";
+                if (seen.find(n) == std::string::npos) {
+                    nuevos++;
+                    vs::logf("[cuelgue] la Vita guardo un volcado de un fallo del juego: ux0:data/%s (%04d-%02d-%02d %02d:%02d). Envialo para revisarlo\n",
+                             n.c_str(), e.d_stat.st_mtime.year, e.d_stat.st_mtime.month, e.d_stat.st_mtime.day, e.d_stat.st_mtime.hour, e.d_stat.st_mtime.minute);
+                }
+            }
+            sceIoDclose(d);
+        }
+        if (nuevos || seen.empty()) if (FILE* f = std::fopen(seenPath.c_str(), "wb")) { std::fwrite(list.data(), 1, list.size(), f); std::fclose(f); }
+        if (!nuevos) vs::logf("[cuelgue] sin fallos nuevos desde la ultima sesion\n");
     }
     bool discardNext = false;
     uint64_t sampDumpAt = 0;
