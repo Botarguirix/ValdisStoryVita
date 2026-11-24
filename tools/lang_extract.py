@@ -77,6 +77,13 @@ def main():
                 if ctx_bad:
                     bad.add(s); continue
                 good.setdefault(s, None); where.setdefault(s, fn[:-4])
+    # 24-11: los textos que llevan comillas dobles van entre comillas simples en el GML ('dijo "hola"') y LIT no los
+    # veia (7 lineas de dialogo de Gilda, Reina y Vladyn sin traducir). Se toman de la tabla de cadenas.
+    for s in strings:
+        # (UndertaleModTool solo pone comillas alrededor si hay espacios en los extremos: "texto" sin ellos es literal)
+        utmtQuoted = s.startswith('"') and s.endswith('"') and s.count('"') == 2 and s[1:-1] != s[1:-1].strip()
+        if '"' in s and not utmtQuoted and len(re.findall(r'[A-Za-z]{2,}', s)) >= 3:
+            good.setdefault(s, None); where.setdefault(s, 'comillas_simples')
     out = []
     for s in good:
         if s in bad or s in names:

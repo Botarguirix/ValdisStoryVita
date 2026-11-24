@@ -64,6 +64,7 @@
 04242bfc62559215	La mayoría de los otros niños se volvieron locos. Los tenían atados todo el tiempo para que no se mataran.
 042e1a641f731ba5	+9 Ataque / +10% prob. de crítico
 043d06d8e5cfc5d8	Aparte de Reina, no hemos visto a ningún otro forastero.
+044af7fc65265efe	"¡DEVUÉLVEMELO!", gritó ella...#...y entonces...
 044bee18b5d5732c	Ahora Wintersun habla a través de mí.
 044d7c919aec3456	La zona se convirtió enseguida en destino sagrado para quienes creían en el Juez.
 045aa46115dcb29a	No deberías prometerle cosas que no puedes cumplir; dicen que tiene mal genio.
@@ -114,6 +115,7 @@
 07026c125f65fd54	Puede que sepa algo, pero no me fío lo bastante de ti para contártelo.
 070d0fde9b3c85eb	¿Quieres ayuda?#¡Ja!
 070ff22784c0b5ed	¡Alto ahí, hereje!
+071990a3e071c843	Una vez me rendí. Hasta le dije a un amigo: "O te unes a los dioses, o mueres."
 0737d850e45ca982	Estos cuerpos parecen de ángeles y demonios. ¿Qué estaba pasando aquí abajo?
 0746f4e76aba70ba	Lo siento, no hemos visto al hombre que buscas... pero quizá podamos ayudarnos mutuamente.
 075a6a251302fa12	He encontrado a alguien, pero no a mi amigo.
@@ -972,6 +974,7 @@
 3fe85b5de52bb676	¿Y a ti qué te pasa?#¿Ese demonio es tu hermano y tú eres una traidora?
 400ecc9d04227f8a	¡Alabado sea el nombre de Valdis!#¿Necesitas que mejore tu equipo?
 402ecbc13dda21e9	¡Qué susceptible!#Está bien, pero no podrás detenerme siempre.
+40336f72072c3b0a	Goibniu, ¿eh? Tengo un amigo con ese apellido. En fin, me voy a ganarme tu "confianza".
 404f5e8947660c18	Mmm, estás listo para aprender mi técnica de remate de enfoque, Furia huracanada.
 4050a4566a93abbe	Eres como nosotros: has perdido la fe en tu dios.
 4051593dd6e33e6c	¿No te avergüenzas de aquello en lo que te has convertido?
@@ -1991,6 +1994,7 @@
 82b60074db946baa	...ah.
 82f0eae6468e122e	Qué ingenioso. Veamos si esa espada está tan afilada como tu lengua.
 83323bce230f21ae	Volver al menú principal.
+83367127feeb054f	El asesino le sonrió a Valdis y dijo: "Iqara te ha cobrado el hermano que le robaste".
 833f13f5dc51e070	Una piedra myrgatiana que borra todo miedo y crea soldados perfectos.
 83467bbba5a8ae64	Gran martillo
 835bdf07b2d07604	Has usado la Llave angélica.
@@ -2262,6 +2266,7 @@
 944bb400d713204f	Nuestro calefactor de maná está fallando últimamente.
 945a33dbe2efe864	Quiero decir, sabía que acabarías apareciendo.
 945d045b9a619e38	Deidad:
+9480c99fa1c4425b	¿Quién te estaba ofreciendo ayuda? ¡Hablábamos en "plural mayestático"!
 948ab744d40e5073	Tiene la lengua afilada, pero no percibo mala intención.
 948fc580aa44647b	Las luchas entre los señores de la guerra costaron la vida a mucha gente inocente.
 9491a85046c81d52	Has usado la Llave demoníaca.
@@ -2436,6 +2441,7 @@
 9f871ab167f13bb2	Te borraré de este mundo para que no sigas siendo una carga para tu apellido.
 9f8d1a640202c004	¿Qué haces aquí abajo?
 9f97c5947b3e1e6c	¿Templo del Guardián?#¿Este lugar no se llama Ishk?
+9fbad9154ed5eb84	Nunca había oído de ese tal "Juez". ¿Cuántos dioses ha tenido ya nuestro mundo?
 9fc4341bf3f76160	El daño de ataque aumenta con el estilo del combo.
 9fd6bacd44014514	¡La demo termina aquí!# #Gracias por jugar# #Envía tus comentarios y consultas a Admin@endlessfluff.com# #Pulsa cualquier botón para volver al menú
 9fe71cd24af21c1d	La tripulación se reúne en una biblioteca al este. Por ahora será nuestra base de operaciones.
@@ -2882,6 +2888,7 @@ bd82e64308fd2760	]  para salir del comercio-
 bdb79fea29baa4a5	% daño de ataque
 be30af9bde4bf7e5	Hace 3 años...
 be4d8d5c303de16b	¡Oh, oh, jaja!#¿Te has enfadado?
+be597b2fbe02e29c	 Aunque nunca lo nombraron general del ejército oscuro, muchos de los demonios menores respetan y temen a este autoproclamado "Gran asesino".
 be6a51ba7ab2c8a2	¡Espera, eso lo acabas de sacar del bolsillo!#¿Tenías una Llave divina todo el rato?
 be7b5aeb9bcae5d2	Ahora las diosas envían a sus peones a esta ciudad perdida para hacerse con el alma de Valdis.
 be8ad6e2c07fce4e	Libera pequeños fuegos sagrados que giran a tu alrededor durante un tiempo.
@@ -2979,6 +2986,7 @@ c47adb950a153b49	Con la muerte de Kudeki, el dominio de los Dioses Tiranos sobre
 c48ddb86a07bdb3c	Zelote y sacerdotisa ángeles
 c49164a115f2f142	¿Moira?
 c4a22719ec1c16b1	Les encanta la carne angélica y demoníaca, y tú tienes un poco de ambas.
+c4b68d6995ff2115	"Entonces elijo morir, y camino a la tumba me llevaré conmigo a tantos de ellos como pueda."
 c4d314ba541acf2e	¡¿QUÉ ES ESO?!
 c4dd778c77d269fc	] para usar la piedra llave de maná.
 c4e14e777836ae0b	El yermo helado era el hogar de una docena de tribus nómadas.

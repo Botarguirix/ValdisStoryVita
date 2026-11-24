@@ -30,3 +30,14 @@ de3957ab92849faa	Q.E.P.D.#Peche
 fe386c25c1567ecf	Objetos
 463b8c4e92751ba5	Opciones
 9e7b560d36f84739	Comercio
+f6e313dfe54654f9	Pulsa [      ] para abrir el menú de pausa y equipar tu nueva alma mágica.
+83d94431fddbf430	Pulsa [      ] para abrir el menú de pausa y gastar tus puntos de atributo y habilidad.
+ffc3245c37038f68	Pulsa [     ] para llamar a tu ayudante.
+1c78545de102dfc8	Pulsa [     +     ] en modo Enfoque para hacer un remate de enfoque.
+80778533e59dd51a	Salón de los Caídos
+cd663c51e2cc8b23	Templario ángel
+b27d3f1f61f0af5d	Zelote ángel
+297cf00ff2c7d9b9	Calavera ardiente
+d08c37c2b875ce2b	Murciélago demonio
+bfb90054fb2abca8	Joleen, la Bruja de las Espadas
+27e2e5a85ac47391	Filo ruinoso
