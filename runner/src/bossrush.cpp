@@ -350,8 +350,16 @@ bool bossRushModeInput(Game& g, uint32_t b, bool menuOpen) {
 }
 
 // Cada paso de la logica (antes del paso del juego)
+bool testFileExists(const std::string& saveDir, const std::string& base);   // debugtour.cpp
 void bossRushModeStep(Game& g) {
     recorderStep(g);
+    {   // pruebas en la Vita: save/bossrush_auto arranca el Boss Rush solo en el titulo (Wyatt, modo fiel)
+        static int autoState = -1;
+        if (autoState < 0) autoState = testFileExists(gSaveDir, "bossrush_auto") ? 1 : 0;
+        if (autoState == 1 && gSt == St::Off && roomName(g) == "start_game" && gc(g) && g.frame > 300) {
+            autoState = 2; gChar = 1; gModeRandom = 0; logf("[bossrush] arranque automatico (save/bossrush_auto)\n"); startRun(g);
+        }
+    }
     if (gSt == St::Off || gSt == St::Menu || gSt == St::Done) return;
     const std::string& rn = roomName(g);
     if (gSt == St::Restart) {
