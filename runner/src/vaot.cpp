@@ -5,7 +5,7 @@
 // los mismos ayudantes de aot_rt.h, ya compilados dentro del runner. No necesita PC ni compilador: lo hace la propia
 // Vita con los datos del juego de Steam del usuario, y no deja nada derivado del juego en el VPK.
 // La lista tiene forma de codigo de maquina (operacion normal, salto condicional, salto, fin) para poder emitirla
-// tal cual como ARM en la Vita (fase 2: vaot_arm.cpp).
+// tal cual como ARM en la Vita (fase 2, mas abajo; opcional con save/vaot_arm).
 #include "aot_rt.h"
 #include <chrono>
 #include <cstdio>
@@ -509,8 +509,9 @@ static void armPrepare(Game& g, int codeId, Prog& P) {
     static int on = -1, dumped = 0; static const char* dump = std::getenv("VS_VAOTARM_DUMP");
     if (on < 0) {
 #ifdef __vita__
-        on = !testFileExists(g.saveDir, "novaot_arm");
-        logf("[vaot] codigo ARM en la consola %s\n", on ? "activado" : "desactivado (save/novaot_arm)");
+        // Opcional hasta medirlo en la Vita (decision del usuario para v0.9.0): se activa con save/vaot_arm
+        on = testFileExists(g.saveDir, "vaot_arm");
+        logf("[vaot] codigo ARM en la consola %s\n", on ? "activado (save/vaot_arm)" : "desactivado (se activa con save/vaot_arm)");
 #else
         on = dump != nullptr;
 #endif
