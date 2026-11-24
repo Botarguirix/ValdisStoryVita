@@ -14,7 +14,61 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 
 > Commits nuevos: en GitHub Desktop, revisa la lista de cambios antes de **Commit to main** + **Push origin**. Si aparece cualquier archivo del juego, un `.vpk`, un `.dat` o `tools/local.env`, no lo subas.
 
-## 2. Crear el Release v0.7.0-alpha (20-11)
+## 2. Crear el Release v0.8.0-alpha (24-11)
+
+1. En la web del repo: **Releases → Draft a new release** (o abrir el borrador si ya está creado).
+2. **Choose a tag:** `v0.8.0-alpha` (ya subida).
+3. **Release title:** `Valdis Story PSVITA v0.8.0-alpha`
+4. Marca **Set as a pre-release**.
+5. Arrastra el VPK **sin código del juego** (probado en la Vita el 24-11: arranca en español, menú MODS con las opciones nuevas, 60 fps en el título): `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), 1 653 039 bytes, SHA-256 `051d276bb5604bc6868a5447555ffd5807a419b8ff07add60fe0c3dfdb9e2e25`.
+   - **No subas** `build\vita\vsvita.vpk`: es la versión AOT, lleva código derivado del juego y es solo para uso personal.
+6. Pega las notas de abajo en la descripción y pulsa **Publish release**.
+
+### Notas del release v0.8.0 (copiar y pegar)
+
+```markdown
+## Valdis Story PSVITA v0.8.0-alpha
+
+Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de GameMaker Studio 1.x en C++17 (no es emulador ni YoYo Loader). El juego se convierte desde **tu copia de Steam** en la propia consola.
+
+**ULTRA IA VIBECODED!** Todo el código, las herramientas y la documentación los escribió una IA (Claude Opus 5.5 como modelo principal y Claude Sonnet 5.5 en subagentes, con Claude Code); el usuario dirigió y probó cada build en una PS Vita real.
+
+> ⚠️ **No incluye el juego.** Necesitas una copia legal de Steam (build 722041, App ID 252030; ver README). Este VPK solo trae el motor y la traducción al español (sin el texto original). Valdis Story es propiedad de Endless Fluff Games; proyecto de fans sin ánimo de lucro.
+
+Esta versión sale del reporte de una partida larga jugada a mano en la Vita.
+
+### Correcciones
+- **Cuelgue al abrir un cofre tras una sesión larga:** la memoria de los efectos de sonido no se liberaba nunca y acababa agotándose. Ahora tiene un tope y, si alguna vez falta memoria, se salta ese sonido en vez de cerrar el juego.
+- **El Manawar y Abbigail ya no bajan a 10–30 fps:** las colisiones de los rayos giratorios se calculaban píxel a píxel sobre un área enorme. Ahora solo se revisa donde puede estar el rayo, con el mismo resultado que antes.
+- **Al bajar del tren** el personaje ya no se queda detrás de los edificios.
+- **Recompensas de los jefes:** ya no quedan tapadas por el panel de puntuación.
+
+### Novedades (menú MODS, SELECT)
+- **HUD más pequeño:** 100 / 85 / 70 / 60 / 50 %. La vida, el maná, los combos y los avisos se encogen hacia su esquina; los diálogos y los menús quedan igual.
+- **Tres fuentes nuevas:** además de la original y la del sistema en negrita, ahora están la del sistema normal, la estrecha y la de remates.
+- **Tamaño del texto:** 100 / 90 / 80 / 70 %. Las letras se achican sin cambiar el ancho de las cajas, así las descripciones caben.
+- **Logros locales:** los 68 logros del juego se guardan en la consola, con aviso e icono al conseguirlos y la lista en MODS → Logros.
+
+### Traducción
+- Nombres de zona en español (Pasarela occidental, Restos de Tagrum, Prisión hundida…).
+- Diálogos que faltaban (Gilda, Reina, Vladyn), avisos de tutorial y nombres del bestiario (Templario ángel, Zelote ángel…).
+
+### Rendimiento de este VPK
+Es la versión de **intérprete**: no lleva código del juego, por eso se puede compartir. En las salas más cargadas baja a unos 34 fps. La versión rápida (AOT, 60 fps) se genera desde tu propia copia con `tools/build_aot_vpk.sh` (guía en `docs/AOT_USUARIOS.md`).
+
+### Problemas conocidos
+- En las ranuras de partida, "Lv/Time/Crew/Location" siguen en inglés: forman parte del dibujo del juego.
+- A veces el icono del objeto que sale de un cofre no coincide con lo que es (en investigación).
+- "GFX : Low" hace el juego más lento en vez de más fluido (pendiente).
+- Boss Rush: Ruckjahl y Dhistahn poseído solo aparecen si ya los grabaste jugando la historia.
+
+### Instalación
+1. Instala `vsvita.vpk` con VitaShell. Necesitas `ur0:data/libshacccg.suprx` (extráelo con ShaRKBR33D).
+2. Copia `data.win`, `data_1/`, `data_2/`, `data_5/` y los `music_*.ogg` de tu carpeta de Steam a `ux0:data/valdis/game/`.
+3. Abre el juego: el primer arranque convierte los datos (unos minutos). Pulsa SELECT para elegir español y el resto de opciones.
+```
+
+## Release anterior: v0.7.0-alpha (20-11, publicado)
 
 > La v0.6.0 no llegó a publicarse: la 0.7.0 incluye todo lo de la 0.6.0 (MODS, español, iconos, panel trasero, TRUCOS) más el Boss Rush. Si ya publicaste la 0.6.0, publica esta igual como nueva versión.
 
