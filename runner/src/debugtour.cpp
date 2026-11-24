@@ -567,6 +567,17 @@ void cheatsInit(Game& g) {
 void cheatsStep(Game& g) {
     joyIconsApply(g);
     bossRushModeStep(g);
+    {   // Correccion del port (9.2, 23-11): al bajar del tren el jugador se quedaba en depth 9 (detras de los edificios).
+        // tram_travel_script pone depth 0 y pide el cambio de sala, pero en ese mismo frame el End Step del jugador ve
+        // tram.go > 0 y lo vuelve a poner a 9. Solo el tren usa depth 9: si no hay un tren en marcha, se devuelve a 0.
+        static int objTram = -2, varGo = -1;
+        if (objTram == -2) { objTram = objByName(g, "tram"); varGo = varByName(g, "go"); }
+        if (Instance* p = player(g)) if (p->depth == 9) {
+            bool riding = false;
+            if (objTram >= 0 && varGo >= 0) for (Instance* t : g.instancesOf(objTram)) { const Value* v = t->vars.get(varGo); if (v && v->num() > 0) riding = true; }
+            if (!riding) p->depth = 0;
+        }
+    }
     if (gInfMana && gVarMp >= 0 && gVarSetMp >= 0)
         if (Instance* p = player(g)) p->vars[gVarMp] = g.globals[gVarSetMp];
     // tras saltar de sala: si el jugador queda fuera de los limites de la sala, se le pone dentro
