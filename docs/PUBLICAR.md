@@ -14,7 +14,48 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 
 > Commits nuevos: en GitHub Desktop, revisa la lista de cambios antes de **Commit to main** + **Push origin**. Si aparece cualquier archivo del juego, un `.vpk`, un `.dat` o `tools/local.env`, no lo subas.
 
-## 2. Crear el Release v0.9.1-alpha (24-11)
+## 2. Crear el Release v0.9.2-alpha (25-11)
+
+1. En la web del repo: **Releases → Draft a new release** (o abrir el borrador si ya está creado).
+2. **Choose a tag:** `v0.9.2-alpha` (ya subida).
+3. **Release title:** `Valdis Story PSVITA v0.9.2-alpha`
+4. Marca **Set as a pre-release**.
+5. Arrastra el VPK **sin código del juego**: `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), 2 156 074 bytes, SHA-256 `1ee2013bb2c075bb56a1f8126a5f28622c337e832b3cbc6e1b10e0ccff121407`.
+   - Probado en la Vita el 25-11: se instala (la consola acepta las imágenes nuevas) y arranca a 60 fps, AOT en la consola activo, sin fallos.
+   - **No subas** `build\vita\vsvita.vpk`: es la versión AOT, lleva código derivado del juego y es solo para uso personal.
+6. Pega las notas de abajo en la descripción y pulsa **Publish release**.
+
+### Notas del release v0.9.2 (copiar y pegar)
+
+```markdown
+## Valdis Story PSVITA v0.9.2-alpha
+
+Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de GameMaker Studio 1.x en C++17 (no es emulador ni YoYo Loader). El juego se convierte desde **tu copia de Steam** en la propia consola.
+
+**ULTRA IA VIBECODED!** Todo el código, las herramientas y la documentación los escribió una IA (Claude Opus 5.5 como modelo principal y Claude Sonnet 5.5 en subagentes, con Claude Code); el usuario dirigió y probó cada build en una PS Vita real.
+
+> ⚠️ **No incluye el juego.** Necesitas una copia legal de Steam (build 722041, App ID 252030; ver README). Este VPK solo trae el motor y la traducción al español (sin el texto original). Valdis Story es propiedad de Endless Fluff Games; proyecto de fans sin ánimo de lucro.
+
+### Novedades
+- **Icono y LiveArea nuevos:** ilustraciones originales para la burbuja, la imagen de arranque, el fondo de la LiveArea y el botón Iniciar.
+- La versión se ve en la burbuja y en la LiveArea (**v0.9.2 PÚB** en esta versión, **v0.9.2 AOT** en la que compiles tú), colocada donde no tapa la ilustración.
+
+Todo lo de la v0.9.1 sigue igual: Modo Lvl1 en el menú principal, traducción del juego en la propia Vita más rápida, GFX Low corregido y logros en la pausa (Mapa/Opc. → Logros).
+
+### Problemas conocidos
+- Algunas descripciones del bestiario (Lore) siguen en inglés.
+- En las ranuras de partida, "Lv/Time/Crew/Location" siguen en inglés: forman parte del dibujo del juego.
+- Se han visto cierres por error de la GPU con el reloj de la consola subido (PSVshell al máximo); si te pasa, prueba con los relojes de serie.
+
+### Instalación
+1. Instala `vsvita.vpk` con VitaShell. Necesitas `ur0:data/libshacccg.suprx` (extráelo con ShaRKBR33D).
+2. Copia `data.win`, `data_1/`, `data_2/`, `data_5/` y los `music_*.ogg` de tu carpeta de Steam a `ux0:data/valdis/game/`.
+3. Abre el juego: el primer arranque convierte los datos (unos minutos). Pulsa SELECT para elegir español y el resto de opciones.
+```
+
+## Release anterior: v0.9.1-alpha (24-11, publicado)
+
+### Pasos que se siguieron (v0.9.1)
 
 1. En la web del repo: **Releases → Draft a new release** (o abrir el borrador si ya está creado).
 2. **Choose a tag:** `v0.9.1-alpha` (ya subida).
