@@ -1106,6 +1106,19 @@ void Game::step() {
     auto phase = [&](int k) { if (prof) { double t = profNow(); profPhase[k] += t - pt; pt = t; } };
     std::vector<Instance*> list = orderedAlive();
 
+    // animacion (9.7, 24-11): al principio del paso, antes del Begin Step. Antes iba despues del End Step, asi que
+    // entre el Step y el dibujo la imagen avanzaba un frame: basic_item hace image_index = type en su Step y en el suelo
+    // salia el icono del objeto siguiente (el aviso de recompensa, que dibuja el frame type, si coincidia; y los tipos
+    // 82-85 que el juego trata como fuego/hielo/luz/oscuridad son justo esos frames del sprite). Lo que el Step deja en
+    // image_index es lo que se dibuja, como en GameMaker 1.x.
+    for (Instance* i : list) {
+        if (!i->alive) continue;
+        int n = imageNumber(i);
+        if (n <= 0) continue;
+        i->image_index += i->image_speed;
+        if (i->image_index >= n) { i->image_index -= n; fireEvent(i, EV_OTHER, OTHER_ANIMEND); }
+        else if (i->image_index < 0) { i->image_index += n; fireEvent(i, EV_OTHER, OTHER_ANIMEND); }
+    }
     for (Instance* i : list) fireEvent(i, EV_STEP, STEP_BEGIN);
     phase(0);
     // alarmas
@@ -1213,15 +1226,6 @@ void Game::step() {
     phase(6);
     for (Instance* i : list) fireEvent(i, EV_STEP, STEP_END);
     phase(7);
-    // animacion
-    for (Instance* i : list) {
-        if (!i->alive) continue;
-        int n = imageNumber(i);
-        if (n <= 0) continue;
-        i->image_index += i->image_speed;
-        if (i->image_index >= n) { i->image_index -= n; fireEvent(i, EV_OTHER, OTHER_ANIMEND); }
-        else if (i->image_index < 0) { i->image_index += n; fireEvent(i, EV_OTHER, OTHER_ANIMEND); }
-    }
     phase(8);
     updateParticles();
     updateViewsFollow();
