@@ -20,8 +20,9 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 2. **Choose a tag:** `v0.9.0-alpha` (ya subida).
 3. **Release title:** `Valdis Story PSVITA v0.9.0-alpha`
 4. Marca **Set as a pre-release**.
-5. Arrastra el VPK **sin código del juego**: `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), 1 705 338 bytes, SHA-256 `f5fb0377761e30af96b420d1bd28c491bcab0ea1b6969c9b0fd62bbca044dfec`.
-   - **Ojo:** esta build no se ha probado todavía en la Vita (la consola estaba apagada; probada en PC: huellas idénticas al intérprete y al AOT). Conviene instalarla y abrir una partida antes de publicar.
+5. Arrastra el VPK **sin código del juego**: `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), 1 750 225 bytes, SHA-256 `7970e930eeb3104bc166e97a05830a5562036b9e9bddba7c9dc399d234a81287`.
+   - Probada en la Vita el 24-11: El Manawar con los tres modos (intérprete, fase 1 y ARM), sin cuelgues; burbuja y LiveArea con el sello "v0.9.0 PÚBLICA".
+   - El tag `v0.9.0-alpha` quedó en el commit anterior a la LiveArea nueva (moverlo necesita un push forzado): el VPK adjunto es el bueno.
    - **No subas** `build\vita\vsvita.vpk`: es la versión AOT, lleva código derivado del juego y es solo para uso personal.
 6. Pega las notas de abajo en la descripción y pulsa **Publish release**.
 
@@ -38,10 +39,13 @@ Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de 
 
 ### Novedad principal: AOT en la consola
 Hasta ahora, la versión rápida (AOT) había que compilarla en un PC desde tu copia del juego. **Ahora la propia Vita traduce el código del juego** la primera vez que ejecuta cada parte, sin PC ni compilador y sin nada del juego dentro del VPK. Es automático y viene activado.
-- En PC, la lógica del juego pasa de 0,78 ms a **0,52 ms** por frame (el AOT compilado en PC: 0,47 ms). En la Vita aún no está medido.
+- **En la Vita** (El Manawar, la pelea de los rayos): de 49 fps de media con 14,1 ms de lógica por frame a **56,5 fps con 8,1 ms** (−43 %). El AOT compilado en PC da 59–63 fps en esa pelea.
 - El resultado es idéntico al del juego interpretado (comprobado cuadro a cuadro en un recorrido de 170 salas).
 - Si quieres comparar, crea el archivo vacío `ux0:data/valdis/save/novaot` para volver al intérprete.
-- Experimental: con `ux0:data/valdis/save/vaot_arm` la Vita además genera código ARM nativo. Viene apagado hasta medirlo en la consola.
+- Experimental: con `ux0:data/valdis/save/vaot_arm` la Vita además genera código ARM nativo. Funciona, pero en las pruebas no mejora a la traducción normal, así que viene apagado.
+
+### Icono y LiveArea nuevos
+- Arte original nuevo (ciudad abisal y emblema), con la versión y el tipo de build en la burbuja y la LiveArea: **v0.9.0 PÚBLICA** en esta, **v0.9.0 AOT** en la que compiles tú.
 
 ### Logros
 - **Pantalla de logros dentro del juego:** pausa → **Mapa/Opc. → Logros** (sustituye a "Full Screen", que en la Vita no hacía nada). Cuadrícula con todos los logros, nombre, descripción y estado.
