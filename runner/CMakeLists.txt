@@ -72,7 +72,28 @@ if(VITA)
     if(VS_AOT AND EXISTS ${CMAKE_SOURCE_DIR}/vita/sce_sys_personal/icon0.png)
         set(SCE_ART ${CMAKE_SOURCE_DIR}/vita/sce_sys_personal)
     endif()
-    message(STATUS "LiveArea: ${SCE_ART}")
+    # Version y tipo de build selladas en las imagenes (tools/livearea_stamp.py): AOT (personal) o PUBLICA. Se rehace
+    # al configurar (cambiar VITA_VERSION / VS_VERSION_STR reconfigura). Sin Python + Pillow se usan sin sellar.
+    set(VS_VERSION_STR "0.9.0-alpha")
+    if(AOT_SRC)
+        set(VS_BUILD_KIND AOT)
+    else()
+        set(VS_BUILD_KIND PUBLICA)
+    endif()
+    set(SCE_ART_SRC ${SCE_ART})
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_Interpreter_FOUND)
+        execute_process(COMMAND ${Python3_EXECUTABLE} -I ${CMAKE_SOURCE_DIR}/../tools/livearea_stamp.py
+                                ${SCE_ART} ${CMAKE_BINARY_DIR}/sce_art ${VS_VERSION_STR} ${VS_BUILD_KIND}
+                        RESULT_VARIABLE STAMP_RC OUTPUT_QUIET ERROR_QUIET)
+        if(STAMP_RC EQUAL 0)
+            set(SCE_ART ${CMAKE_BINARY_DIR}/sce_art)
+        endif()
+    endif()
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/../tools/livearea_stamp.py
+                 ${SCE_ART_SRC}/icon0.png ${SCE_ART_SRC}/pic0.png ${SCE_ART_SRC}/livearea/contents/bg.png
+                 ${SCE_ART_SRC}/livearea/contents/startup.png)
+    message(STATUS "LiveArea: ${SCE_ART} (${VS_VERSION_STR} ${VS_BUILD_KIND})")
     vita_create_vpk(vsvita.vpk ${VITA_TITLEID} eboot.bin
         VERSION ${VITA_VERSION}
         NAME ${VITA_APP_NAME}

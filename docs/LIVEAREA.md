@@ -73,6 +73,21 @@ Si el icono del `.exe` es más pequeño que 128 px, se escala con `LANCZOS`; si 
 
 Nunca se suben al repo ni se adjuntan a un Release.
 
+## 3b. Versión y tipo de build en las imágenes (Valdis, 24-11)
+
+Para saber en la burbuja y en la LiveArea qué se está jugando o instalando, CMake sella las cuatro imágenes al configurar
+cada build de la Vita con `tools/livearea_stamp.py <origen> <destino> <versión> <AOT|PUBLICA>`:
+
+| Build | Sello | Dónde |
+|---|---|---|
+| Personal con AOT (`build/vita`) | `v0.9.0 AOT`, rojo y dorado; "Versión AOT (compilada en tu PC)" | banda abajo en `icon0`, etiqueta abajo a la derecha en `bg`, `pic0` y `startup` |
+| Pública (`build/vita_noaot`, la del Release) | `v0.9.0 PÚBLICA`, cian; "Versión pública (la Vita traduce el juego)" | igual |
+
+La versión sale de `VS_VERSION_STR` en `runner/CMakeLists.txt` (junto a `VITA_VERSION`): al cambiarla, CMake reconfigura y
+vuelve a sellar. El resultado va a `build/<build>/sce_art/` (8 bits con paleta, comprobado). Sin Python + Pillow se usan
+las imágenes sin sellar. El arte original se rehízo el 24-11 (`tools/make_livearea.py`): ciudad abisal iluminada,
+emblema dorado con la "V" y una espada, y el título VALDIS STORY · ABYSSAL CITY · PS VITA.
+
 ## 4. Comprobar en la consola
 
 1. Instalar el VPK (si el juego ya estaba instalado, la LiveArea se actualiza al reinstalar).

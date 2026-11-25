@@ -385,11 +385,14 @@ int main(int, char**) {
             SceIoDirent e;
             while (sceIoDread(d, &e) > 0) {
                 std::string n = e.d_name;
-                if (n.compare(0, 9, "psp2core-") != 0 || n.find("eboot.bin") == std::string::npos) continue;
+                // eboot.bin: fallo del programa; GPUCRASH: fallo de la GPU (9.13: la consola se apaga; puede venir de otra app)
+                bool gpu = n.find("GPUCRASH") != std::string::npos;
+                if (n.compare(0, 9, "psp2core-") != 0 || (n.find("eboot.bin") == std::string::npos && !gpu)) continue;
                 list += n + "\n";
                 if (seen.find(n) == std::string::npos) {
                     nuevos++;
-                    vs::logf("[cuelgue] la Vita guardo un volcado de un fallo del juego: ux0:data/%s (%04d-%02d-%02d %02d:%02d). Envialo para revisarlo\n",
+                    vs::logf("[cuelgue] la Vita guardo un volcado de %s: ux0:data/%s (%04d-%02d-%02d %02d:%02d). Envialo para revisarlo\n",
+                             gpu ? "un fallo de la GPU (puede ser de otra app)" : "un fallo del juego",
                              n.c_str(), e.d_stat.st_mtime.year, e.d_stat.st_mtime.month, e.d_stat.st_mtime.day, e.d_stat.st_mtime.hour, e.d_stat.st_mtime.minute);
                 }
             }

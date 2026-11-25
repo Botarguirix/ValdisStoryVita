@@ -460,7 +460,7 @@ static NativeFn armInstall(const ArmOut& A) {
             logf("[vaot] sin memoria ejecutable (0x%08X): se sigue sin codigo ARM\n", (unsigned)b); gArmBroken = true; return nullptr;
         }
         gCodeBlock = b; gCodeBase = (uint8_t*)base; gCodeUsed = 0; gCodeCap = 1u << 20;
-        logf("[vaot] bloque de codigo ARM %zu MB\n", (gCodeTotal >> 20) + 1);
+        logf("[vaot] bloque de codigo ARM %u MB\n", (unsigned)((gCodeTotal >> 20) + 1));   // la Vita no entiende %zu
         gCodeTotal += gCodeCap;
     }
     uint8_t* dst = gCodeBase + gCodeUsed;
@@ -554,7 +554,7 @@ bool vaotRun(Game& g, int codeId, Ctx& ctx, Value& out) {
         gProgs[codeId] = build(g.d, g.d.codes[codeId], A); gState[codeId] = 1; gBuilt++;
         gOpsBytes += gProgs[codeId]->ops.size() * sizeof(Op);
         armPrepare(g, codeId, *gProgs[codeId]);
-        if (gBuilt % 500 == 0) logf("[vaot] %zu codigos traducidos (%zu KB)\n", gBuilt, gOpsBytes / 1024);
+        if (gBuilt % 500 == 0) logf("[vaot] %u codigos traducidos (%u KB)\n", (unsigned)gBuilt, (unsigned)(gOpsBytes / 1024));
     }
     if (gState[codeId] != 1) return false;
     out = run(*gProgs[codeId], g, ctx);
@@ -575,7 +575,7 @@ void vaotBuildAll(Game& g) {
         }
         if (gState[id] == 1) { ops += gProgs[id]->ops.size(); ins += g.d.codes[id].ins.size(); }
     }
-    logf("[vaot] %zu codigos traducidos, %zu al interprete; %zu instrucciones -> %zu operaciones (%zu KB), %.0f ms\n",
-         gBuilt, gRejected, ins, ops, ops * sizeof(Op) / 1024, nowMsVaot() - t0);
+    logf("[vaot] %u codigos traducidos, %u al interprete; %u instrucciones -> %u operaciones (%u KB), %.0f ms\n",
+         (unsigned)gBuilt, (unsigned)gRejected, (unsigned)ins, (unsigned)ops, (unsigned)(ops * sizeof(Op) / 1024), nowMsVaot() - t0);
 }
 }  // namespace vs
