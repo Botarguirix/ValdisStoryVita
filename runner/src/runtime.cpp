@@ -833,6 +833,8 @@ std::vector<Instance*> Game::orderedAlive() {
 extern int gSlowFnWatch;   // vm.cpp: >0 = avisar de funciones builtin lentas
 extern uint64_t gTileEpoch; // fn_core.cpp: indices de tiles
 void watchDump(Game& g);   // vm.cpp: desglose de los frames vigilados
+int gRoomLoads = 0;   // salas cargadas desde cero (Masterquest: cada carga se multiplica una vez)
+
 void Game::gotoRoom(int r, bool first) {
     stepGridsReset();
     if (r < 0 || r >= (int)d.rooms.size()) { warnOnce("room invalida " + std::to_string(r)); return; }
@@ -901,6 +903,7 @@ void Game::gotoRoom(int r, bool first) {
         preloadRoomPages();   // tambien al volver a una sala persistente (antes no habia precarga ni vecinas)
         return;
     }
+    gRoomLoads++;
     tiles.clear(); gTileEpoch++;
     for (auto& t : rm.tiles) {
         Tile tl; tl.id = (int)t.id; tl.bg = t.bg; tl.x = t.x; tl.y = t.y; tl.sx = t.sx; tl.sy = t.sy; tl.w = t.w; tl.h = t.h;

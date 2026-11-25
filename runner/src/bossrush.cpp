@@ -28,6 +28,8 @@
 
 namespace vs {
 extern std::string gSaveDir;
+extern int gRoomLoads;                    // runtime.cpp
+bool isMenuRoomPub(const std::string& n);   // debugtour.cpp
 void geomTouchObj(int obj); extern uint64_t gGeomEpoch;
 extern void (*gRenameHook)(Game&, const std::string&, const std::string&);
 extern void (*gViewDrawHook)(Game&);
@@ -283,6 +285,7 @@ void viewDraw(Game& g) {
     else g.drawText(mx + 200 + tr, my + 482, "-Boss Rush-", 0.75, 0.75, 0, 0, 0, 0x404040, 0x404040, fade, -1, -1);
     g.drawHalign = ha;
     void viewDrawLv1(Game& g); viewDrawLv1(g);
+    void viewDrawMq(Game& g); viewDrawMq(g);
 }
 
 int countSnaps(int ch) { int n = 0; for (auto& b : kBosses) if (fileThere(snapPath(ch, b.n))) n++; return n; }
@@ -315,6 +318,144 @@ void viewDrawLv1(Game& g) {
     const char* t = gMods.lang == 1 ? "-Modo Lvl1-" : "-Lvl1 Mode-";
     if (gSelLv1) g.drawText(mx + 200 + tr, my + 528, t, 0.75, 0.75, 0, 0x5FB1FF, 0x5FB1FF, 0x00CCFF, 0x00CCFF, fade, -1, -1);
     else g.drawText(mx + 200 + tr, my + 528, t, 0.75, 0.75, 0, 0, 0, 0x404040, 0x404040, fade, -1, -1);
+    g.drawHalign = ha;
+}
+
+// ---- Modo Masterquest (8.2, pedido del usuario): "-Masterquest-" encima del menu principal, desbloqueado igual que Boss
+// Rush y Lvl1 (al terminar el juego). Es una partida nueva normal en la que cada sala, al cargarse, multiplica sus
+// enemigos normales (x1 a x3) y suma enemigos extra al azar. Las salas con jefe no se tocan. Las ranuras se anotan en
+// save/masterquest.txt ("ranura multiplicador extras todos").
+const char* kMqEnemies[] = {"archer", "archer_fire", "archer_poison", "archon", "assassin", "assassin_fire", "assassin_poison",
+    "bat_fire", "bat_poison", "hermit", "hermit_ice", "hermit_void", "mistress", "mistress_poison", "ogre", "puffer", "ranger",
+    "reaper", "risen", "shepherd", "siren_ice", "siren_poison", "soldier", "templar", "warlock", "warlock_void", "widow",
+    "zealot", "zealot_thunder"};
+const char* kMqBossExtra[] = {"itahn", "shin_azudor", "true_arm", "ruckjahl_core", "ruckjahl_chest", "ruckjahl_back", "ruckjahl_shoulder"};
+struct MqCfg { int mult = 2, extra = 2, any = 0; };
+bool gSelMq = false, gMqMenu = false, gMqPending = false, gMqActive = false;
+int gMqRow = 0, gMqLoadSeen = -1;
+MqCfg gMqSet, gMqRun;
+uint32_t gMqRnd = 1;
+std::map<int, MqCfg> mqSlots() {
+    std::map<int, MqCfg> m; std::string t;
+    if (!bgio::read(gSaveDir + "/masterquest.txt", t)) return m;
+    for (size_t p = 0; p < t.size();) {
+        int s = 0; MqCfg c;
+        if (std::sscanf(t.c_str() + p, "%d %d %d %d", &s, &c.mult, &c.extra, &c.any) == 4 && s > 0) m[s] = c;
+        size_t e = t.find('\n', p); if (e == std::string::npos) break; p = e + 1;
+    }
+    return m;
+}
+void mqWrite(const std::map<int, MqCfg>& m) {
+    std::string o = "; Ranuras en modo Masterquest: ranura multiplicador extras todos\n";
+    for (auto& [s, c] : m) o += std::to_string(s) + " " + std::to_string(c.mult) + " " + std::to_string(c.extra) + " " + std::to_string(c.any) + "\n";
+    bgio::write(gSaveDir + "/masterquest.txt", o);
+}
+void mqClamp(MqCfg& c) { c.mult = std::max(1, std::min(3, c.mult)); c.extra = std::max(0, std::min(6, c.extra)); c.any = c.any ? 1 : 0; }
+
+// Multiplica la sala recien cargada
+void mqPopulate(Game& g) {
+    const Room& rm = g.d.rooms[g.room];
+    for (auto& b : kBosses) { int o = objIdx(g, b.obj); if (o >= 0 && g.firstOf(o)) return; }
+    for (const char* n : kMqBossExtra) { int o = objIdx(g, n); if (o >= 0 && g.firstOf(o)) return; }
+    std::vector<int> types; for (const char* n : kMqEnemies) { int o = objIdx(g, n); if (o >= 0) types.push_back(o); }
+    auto isEnemy = [&](int o) { return std::find(types.begin(), types.end(), o) != types.end(); };
+    // solo los colocados en la sala que siguen vivos (el juego quita en Create los que no tocan)
+    std::vector<size_t> base;
+    for (size_t k = 0; k < rm.insts.size(); k++)
+        if (isEnemy(rm.insts[k].obj) && g.findInstance((int)rm.insts[k].id)) base.push_back(k);
+    if (base.empty()) return;
+    auto spawn = [&](const auto& ri, int obj, bool sameType) {
+        Instance* i = g.createInstance(ri.x, ri.y, obj, false);
+        if (!i) return;
+        i->xscale = ri.sx; i->yscale = ri.sy; i->angle = ri.rot; i->blend = ri.color & 0xFFFFFF; geomTouchObj(i->obj);
+        g.fireEvent(i, EV_CREATE, 0);
+        if (sameType && ri.code >= 0 && i->alive) { Ctx c{i, i}; g.call(ri.code, c, nullptr, 0); }
+        if (i->alive) g.fireEvent(i, EV_OTHER, OTHER_ROOMSTART);
+        // los extra no tienen el codigo de creacion que el editor pone a cada enemigo colocado: valores que faltan
+        auto fill = [&](const char* n, double v) { int k = var(g, n); if (k >= 0 && i->alive && !i->vars.get(k)) i->vars[k] = Value(v); };
+        if (!sameType) {
+            fill("patrol_range", 300);
+            if (g.d.objects[obj].name.compare(0, 7, "warlock") == 0) {   // destinos de teletransporte: puntos de otros enemigos
+                const auto& a = rm.insts[base[(size_t)obj % base.size()]];
+                const auto& b = rm.insts[base[(size_t)(obj + 1) % base.size()]];
+                fill("tele_x_2", a.x); fill("tele_y_2", a.y); fill("tele_x_3", b.x); fill("tele_y_3", b.y);
+            }
+        }
+    };
+    int copies = 0, extras = 0;
+    for (int m = 1; m < gMqRun.mult; m++)
+        for (size_t k : base) { spawn(rm.insts[k], rm.insts[k].obj, true); copies++; }
+    // extras: en puntos donde la sala ya tiene un enemigo (suelo valido); tipos de la zona (mismo prefijo de sala) o todos
+    std::vector<int> pool;
+    if (gMqRun.any) pool = types;
+    else {
+        std::string zone = rm.name.substr(0, rm.name.rfind('_'));
+        for (auto& other : g.d.rooms) {
+            if (other.name.substr(0, other.name.rfind('_')) != zone) continue;
+            for (auto& ri : other.insts) if (isEnemy(ri.obj) && std::find(pool.begin(), pool.end(), ri.obj) == pool.end()) pool.push_back(ri.obj);
+        }
+    }
+    auto next = [&]() { gMqRnd = gMqRnd * 1103515245u + 12345u; return gMqRnd >> 16; };
+    for (int e = 0; e < gMqRun.extra && !pool.empty(); e++) {
+        size_t at = base[next() % base.size()];
+        spawn(rm.insts[at], pool[next() % pool.size()], false); extras++;
+    }
+    logf("[masterquest] %s: %d enemigos de la sala, +%d copias (x%d), +%d extra\n", rm.name.c_str(), (int)base.size(), copies, gMqRun.mult, extras);
+}
+
+// Cada paso: decide si la partida que empieza es Masterquest y puebla cada sala recien cargada
+void mqStep(Game& g) {
+    static int envState = -1; static MqCfg envCfg;   // pruebas: VS_MQ="mult,extras,todos" (PC) o save/mq_auto (Vita)
+    if (envState < 0) {
+        envState = 0;
+        if (const char* e = std::getenv("VS_MQ")) if (std::sscanf(e, "%d,%d,%d", &envCfg.mult, &envCfg.extra, &envCfg.any) == 3) envState = 1;
+        std::string t;
+        if (!envState && readFile(gSaveDir + "/mq_auto", t) && std::sscanf(t.c_str(), "%d %d %d", &envCfg.mult, &envCfg.extra, &envCfg.any) == 3) envState = 1;
+        if (envState) { mqClamp(envCfg); logf("[masterquest] forzado para pruebas: x%d, %d extra, todos %d\n", envCfg.mult, envCfg.extra, envCfg.any); }
+    }
+    if (gSt != St::Off) { gMqActive = false; return; }
+    const std::string& rn = roomName(g);
+    static bool decided = false, newGame = false;
+    if (rn == "start_game") { gMqActive = false; decided = false; if (!gMqPending) newGame = false; return; }
+    if (rn == "char_room") newGame = true;
+    if (isMenuRoomPub(rn)) return;
+    int po = objIdx(g, "player_wyatt");
+    if (po < 0 || !g.firstOf(po)) return;
+    if (!decided) {
+        decided = true;
+        int slot = (int)gnum(g, "save_current");
+        std::map<int, MqCfg> m = mqSlots();
+        if (newGame) {
+            bool had = m.count(slot) != 0;
+            if (gMqPending) { m[slot] = gMqSet; mqWrite(m); }
+            else if (had) { m.erase(slot); mqWrite(m); }
+            gMqActive = gMqPending; gMqRun = gMqSet;
+        } else { gMqActive = m.count(slot) != 0; if (gMqActive) gMqRun = m[slot]; }
+        gMqPending = false; newGame = false;
+        if (envState) { gMqActive = true; gMqRun = envCfg; }
+        mqClamp(gMqRun);
+        gMqRnd = (uint32_t)std::time(nullptr) | 1;
+        if (gMqActive) logf("[masterquest] activo en la ranura %d: x%d, %d extra por sala, %s\n", slot, gMqRun.mult, gMqRun.extra, gMqRun.any ? "cualquier enemigo" : "de la zona");
+    }
+    if (!gMqActive || g.pendingRoom >= 0 || gMqLoadSeen == gRoomLoads) return;
+    gMqLoadSeen = gRoomLoads;
+    mqPopulate(g);
+}
+
+// "-Masterquest-" va encima de la primera opcion (con "Reintentar" disponible, una fila mas arriba)
+int mqTopLevel(Game& g, Instance* c) { return ivar(g, c, "menu_level_max") == 6 ? 6 : 1; }
+int mqTopCursor(Game& g, Instance* c) { return mqTopLevel(g, c) == 6 ? 226 : 272; }
+int mqCursor(Game& g, Instance* c) { return mqTopCursor(g, c) - 46; }
+void viewDrawMq(Game& g) {
+    Instance* c = gc(g);
+    double mx = ivar(g, c, "menu_x"), my = ivar(g, c, "menu_y"), sx = ivar(g, c, "splash_x"), vert = ivar(g, c, "vert");
+    double tr = ivar(g, c, "intro_trans_5"), fade = ivar(g, c, "intro_menu_fade");
+    int cy = mqCursor(g, c);
+    auto sit = g.d.spriteByName.find("ui_start");
+    if (sit != g.d.spriteByName.end()) g.drawSpriteFrame(sit->second, 2, sx + 92 + tr, vert + cy - 42, 1, 1, 0, 0xFFFFFF, fade);
+    int ha = g.drawHalign; g.drawHalign = 1;
+    if (gSelMq) g.drawText(mx + 200 + tr, my + cy - 20, "-Masterquest-", 0.75, 0.75, 0, 0x5F5FFF, 0x5F5FFF, 0x00CCFF, 0x00CCFF, fade, -1, -1);
+    else g.drawText(mx + 200 + tr, my + cy - 20, "-Masterquest-", 0.75, 0.75, 0, 0, 0, 0x404040, 0x404040, fade, -1, -1);
     g.drawHalign = ha;
 }
 } // namespace
@@ -358,6 +499,20 @@ static void lv1Step(Game& g) {
     for (const char* w : {"wep_1", "wep_2", "wep_3", "wep_4", "wep_5"}) if (gnum(g, w) < 1) gset(g, w, 1);
     for (const char* s : {"purgatory_lv", "raven_lv", "seraphic_lv", "shell_lv"}) if (gnum(g, s) < 1) gset(g, s, 1);
     if (gnum(g, "skill_jump") < 1) gset(g, "skill_jump", 1);
+    // todas las armaduras: nivel base (se pueden seguir mejorando); la 15 solo existe a nivel 3 (como la da el juego)
+    for (int k = 1; k <= 16; k++) {
+        std::string a = "armor_" + std::to_string(k);
+        if (gnum(g, a) < 1) gset(g, a, k == 15 ? 3 : 1);
+    }
+    // 3 Master Scroll (objeto 64, +1 Skill Cancel cada uno); sheath_max los suma igual que los scripts del juego
+    double scrolls = gnum(g, "item_64");
+    if (scrolls < 3) { gset(g, "item_64", 3); gset(g, "sheath_max", gnum(g, "sheath_max") + (3 - scrolls)); }
+    static bool logged = false;
+    if (!logged) {
+        logged = true;
+        int n = 0; for (int k = 1; k <= 16; k++) if (gnum(g, "armor_" + std::to_string(k)) >= 1) n++;
+        logf("[nivel1] armaduras %d de 16, Master Scroll %.0f, sheath_max %.0f\n", n, gnum(g, "item_64"), gnum(g, "sheath_max"));
+    }
 }
 
 void bossRushModeInit(Game& g) {
@@ -370,18 +525,48 @@ void bossRushModeInit(Game& g) {
 bool bossRushModeInput(Game& g, uint32_t b, bool menuOpen) {
     uint32_t pr = b & ~gPrev; gPrev = b;
     auto clearPad = [&]() { for (bool& x : g.in.gpBtn) x = false; for (float& a : g.in.gpAxis) a = 0; };
-    if (gBlock) { if (b == 0) gBlock = false; else { clearPad(); return gSt == St::Menu || gSt == St::Dead || gSt == St::Done; } }
+    if (gBlock) { if (b == 0) gBlock = false; else { clearPad(); return gMqMenu || gSt == St::Menu || gSt == St::Dead || gSt == St::Done; } }
     if (menuOpen) return false;
     if (gSt == St::Off) {
-        if (!onTitlePage0(g) || !unlocked(g)) { gSel = false; gSelLv1 = false; return false; }
+        if (!onTitlePage0(g) || !unlocked(g)) { gSel = false; gSelLv1 = false; gSelMq = false; gMqMenu = false; return false; }
         Instance* c = gc(g);
+        if (gMqMenu) {   // submenu de Masterquest
+            clearPad();
+            iset(g, c, "menu_level", 0); iset(g, c, "cursor_y", mqCursor(g, c));
+            uint32_t act = pr, dirs = b & 15;
+            if (dirs) { if (++gRepeat > 24 && gRepeat % 4 == 0) act |= dirs; } else gRepeat = 0;
+            if (act & 1) gMqRow = (gMqRow + 4) % 5;
+            if (act & 2) gMqRow = (gMqRow + 1) % 5;
+            int dir = (act & 4) ? -1 : (act & 8) ? 1 : 0;
+            if (dir && gMqRow == 0) gMqSet.mult = (gMqSet.mult - 1 + 3 + dir) % 3 + 1;
+            if (dir && gMqRow == 1) gMqSet.extra = (gMqSet.extra + 7 + dir) % 7;
+            if (dir && gMqRow == 2) gMqSet.any = !gMqSet.any;
+            if ((pr & 16) && gMqRow == 3) {   // empezar: partida nueva normal marcada como Masterquest
+                gMqMenu = false; gSelMq = false; gMqPending = true; gLv1Pending = false;
+                iset(g, c, "menu_level", 1); iset(g, c, "cursor_y", 272); gLv1Inject = 4; gBlock = true;
+                logf("[masterquest] partida nueva: x%d, %d extra, %s\n", gMqSet.mult, gMqSet.extra, gMqSet.any ? "cualquier enemigo" : "de la zona");
+            } else if (((pr & 16) && gMqRow == 4) || (pr & 32)) { gMqMenu = false; gBlock = true; }
+            return true;
+        }
+        if (gSelMq) {
+            clearPad();
+            iset(g, c, "menu_level", 0); iset(g, c, "cursor_y", mqCursor(g, c));
+            if (pr & 1) { gSelMq = false; gSelLv1 = true; iset(g, c, "cursor_y", 548); gBlock = true; }
+            else if (pr & 2) { gSelMq = false; iset(g, c, "menu_level", mqTopLevel(g, c)); iset(g, c, "cursor_y", mqTopCursor(g, c)); gBlock = true; }
+            else if (pr & 16) { gMqMenu = true; gMqRow = 0; gBlock = true; }
+            return true;
+        }
+        if (!gSel && !gSelLv1 && (pr & 1) && ivar(g, c, "menu_level") == mqTopLevel(g, c) && ivar(g, c, "menu_delay") == 0) {
+            gSelMq = true; iset(g, c, "menu_level", 0); iset(g, c, "cursor_y", mqCursor(g, c)); clearPad(); gBlock = true;
+            return true;
+        }
         if (gSelLv1) {
             clearPad();
             iset(g, c, "menu_level", 0); iset(g, c, "cursor_y", 548);
             if (pr & 1) { gSelLv1 = false; gSel = true; iset(g, c, "cursor_y", 502); gBlock = true; }
-            else if (pr & 2) { gSelLv1 = false; bool retry = ivar(g, c, "menu_level_max") == 6; iset(g, c, "menu_level", retry ? 6 : 1); iset(g, c, "cursor_y", retry ? 226 : 272); gBlock = true; }
+            else if (pr & 2) { gSelLv1 = false; gSelMq = true; iset(g, c, "cursor_y", mqCursor(g, c)); gBlock = true; }   // vuelta arriba: "-Masterquest-"
             else if (pr & 16) {
-                gSelLv1 = false; gLv1Pending = true; gLv1NewGame = false;
+                gSelLv1 = false; gLv1Pending = true; gLv1NewGame = false; gMqPending = false;
                 iset(g, c, "menu_level", 1); iset(g, c, "cursor_y", 272); gLv1Inject = 4; gBlock = true;
                 logf("[nivel1] partida nueva en modo Nivel 1\n");
             }
@@ -440,6 +625,7 @@ bool testFileExists(const std::string& saveDir, const std::string& base);   // d
 void bossRushModeStep(Game& g) {
     recorderStep(g);
     lv1Step(g);
+    mqStep(g);
     {   // pruebas en la Vita: save/bossrush_auto arranca el Boss Rush solo en el titulo (Wyatt, modo fiel)
         static int autoState = -1;
         if (autoState < 0) autoState = testFileExists(gSaveDir, "bossrush_auto") ? 1 : 0;
@@ -515,6 +701,27 @@ void bossRushModeStep(Game& g) {
 
 // Capa del runner (pantalla): submenu, marcador y resultados. Devuelve true si dibujo algo.
 bool bossRushModeOverlay(Game& g) {
+    if (gSt == St::Off && gMqMenu) {
+        overlayBegin(g);
+        int W, H; overlaySize(W, H);
+        float x0 = W * 0.5f - 320, y0 = H * 0.5f - 190, x1 = W * 0.5f + 320, y1 = H * 0.5f + 190;
+        overlayRect(0, 0, (float)W, (float)H, 0, 0.5f);
+        overlayRect(x0, y0, x1, y1, 0x201010, 0.94f);
+        overlayRect(x0, y0, x1, y0 + 3, 0x00CCFF, 1);
+        overlayText(g, x0 + 20, y0 + 12, "MASTERQUEST", 0.6, 0x00CCFF, 1);
+        std::string rows[5] = {"Multiplicador de enemigos: < x" + std::to_string(gMqSet.mult) + " >",
+                               "Enemigos extra al azar por sala: < " + std::to_string(gMqSet.extra) + " >",
+                               std::string("Tipos de los extra: < ") + (gMqSet.any ? "Cualquiera" : "De la zona") + " >",
+                               "Empezar partida nueva", "Volver"};
+        for (int k = 0; k < 5; k++) {
+            float y = y0 + 64 + k * 38;
+            if (k == gMqRow) overlayRect(x0 + 10, y - 4, x1 - 10, y + 28, 0x604020, 0.95f);
+            overlayText(g, x0 + 24, y, rows[k], 0.45, k == gMqRow ? 0x00E0FF : 0xFFFFFF, 1);
+        }
+        overlayText(g, x0 + 20, y0 + 268, "Las salas con jefe no cambian. Con muchos enemigos bajan los fps.", 0.36, 0xD0D0D0, 1);
+        overlayText(g, x0 + 20, y1 - 32, "\x11 elegir - Izq/Der cambiar - \x12 volver.", 0.35, 0xB0B0B0, 1);
+        return true;
+    }
     if (gSt == St::Off) return false;
     overlayBegin(g);
     int W, H; overlaySize(W, H);
