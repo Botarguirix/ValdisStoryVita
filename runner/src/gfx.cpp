@@ -788,6 +788,6 @@ void endFrame() {
 // (no depende del codigo). Si vuelve a fallar al convertir a vsvita.velf, cambia el tamano de este array.
 #ifdef VS_HAVE_AOT
 extern "C" __attribute__((used)) const char vs_pad_probe[16384] = {1};
-#else   // la version sin AOT tiene otra disposicion: este tamano evita la caida de vita-elf-create (20-11; 24-11: 24576)
-extern "C" __attribute__((used)) const char vs_pad_probe[24576] = {1};
+#else   // la version sin AOT tiene otra disposicion: este tamano evita la caida de vita-elf-create (20-11; 24-11: 24576, luego 28672)
+extern "C" __attribute__((used)) const char vs_pad_probe[28672] = {1};
 #endif

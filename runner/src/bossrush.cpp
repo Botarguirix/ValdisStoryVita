@@ -15,6 +15,7 @@
 #include "runtime.h"
 #include "bgio.h"
 #include "gfx.h"
+#include "debugtour.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -281,10 +282,83 @@ void viewDraw(Game& g) {
     if (gSel) g.drawText(mx + 200 + tr, my + 482, "-Boss Rush-", 0.75, 0.75, 0, 0xFFB15F, 0xFFB15F, 0x00CCFF, 0x00CCFF, fade, -1, -1);
     else g.drawText(mx + 200 + tr, my + 482, "-Boss Rush-", 0.75, 0.75, 0, 0, 0, 0x404040, 0x404040, fade, -1, -1);
     g.drawHalign = ha;
+    void viewDrawLv1(Game& g); viewDrawLv1(g);
 }
 
 int countSnaps(int ch) { int n = 0; for (auto& b : kBosses) if (fileThere(snapPath(ch, b.n))) n++; return n; }
+
+// ---- Modo Nivel 1 (9.11, pedido del usuario): "-Nivel 1-" debajo de "-Boss Rush-", desbloqueado igual (al terminar el
+// juego). Empieza una partida nueva normal (dificultad, ranura, personaje) en la que nunca se sube de nivel (la
+// experiencia se queda en 0, asi no hay puntos de atributo ni de talento), pero se tienen las armas 1-5 con su hechizo
+// base (Purgatorio, Cuervo, Serafico, Caparazon; lo mismo que el bloque de trucos del propio juego) y el doble salto. Las
+// mejoras de hechizos se siguen comprando. Las ranuras en este modo se anotan en save/nivel1.txt: al cargarlas sigue
+// activo; una partida nueva normal en esa ranura lo quita.
+bool gSelLv1 = false, gLv1Pending = false, gLv1Active = false, gLv1NewGame = false, gLv1Decided = false; int gLv1Inject = 0;
+std::string lv1Path() { return gSaveDir + "/nivel1.txt"; }
+std::vector<int> lv1Slots() {
+    std::vector<int> v; std::string t;
+    if (bgio::read(lv1Path(), t)) { size_t p = 0; while (p < t.size()) { int s = std::atoi(t.c_str() + p); if (s > 0) v.push_back(s); size_t e = t.find('\n', p); if (e == std::string::npos) break; p = e + 1; } }
+    return v;
+}
+void lv1Write(const std::vector<int>& v) {
+    std::string o = "; Ranuras de partida en modo Nivel 1 (9.11)\n";
+    for (int s : v) o += std::to_string(s) + "\n";
+    bgio::write(lv1Path(), o);
+}
+void viewDrawLv1(Game& g) {
+    Instance* c = gc(g);
+    double mx = ivar(g, c, "menu_x"), my = ivar(g, c, "menu_y"), sx = ivar(g, c, "splash_x"), vert = ivar(g, c, "vert");
+    double tr = ivar(g, c, "intro_trans_5"), fade = ivar(g, c, "intro_menu_fade");
+    auto sit = g.d.spriteByName.find("ui_start");
+    if (sit != g.d.spriteByName.end()) g.drawSpriteFrame(sit->second, 1, sx + 92 + tr, vert + 518 - 12, 1, 1, 0, 0xFFFFFF, fade);
+    int ha = g.drawHalign; g.drawHalign = 1;
+    const char* t = gMods.lang == 1 ? "-Nivel 1-" : "-Level 1-";
+    if (gSelLv1) g.drawText(mx + 200 + tr, my + 528, t, 0.75, 0.75, 0, 0x5FB1FF, 0x5FB1FF, 0x00CCFF, 0x00CCFF, fade, -1, -1);
+    else g.drawText(mx + 200 + tr, my + 528, t, 0.75, 0.75, 0, 0, 0, 0x404040, 0x404040, fade, -1, -1);
+    g.drawHalign = ha;
+}
 } // namespace
+
+bool isMenuRoomPub(const std::string& n);   // debugtour.cpp
+bool lv1Active() { return gLv1Active; }   // vm.cpp: experiencia congelada en modo Nivel 1
+// Cada paso: decide si la partida que empieza es de Nivel 1 y aplica sus reglas
+static void lv1Step(Game& g) {
+    if (gSt != St::Off) { gLv1Active = false; return; }   // el Boss Rush carga sus propios estados
+    if (gLv1Inject > 0) {   // "-Nivel 1-" elegido: se pulsa "aceptar" sobre "-Partida nueva-" (flujo normal del juego);
+        Instance* c = gc(g); // aqui, despues de leer el mando, como el modo monkey; el menu solo acepta con menu_delay 0
+        if (!c || roomName(g) != "start_game") gLv1Inject = 0;
+        else if (ivar(g, c, "menu_delay") <= 0 || gLv1Inject < 2) {
+            gLv1Inject--;
+            bool on = gLv1Inject < 2;
+            g.in.gpBtn[0] = on; g.in.down[68] = on; g.in.pressed[68] = gLv1Inject == 1;
+        }
+    }
+    const std::string& rn = roomName(g);
+    if (rn == "start_game") { gLv1Active = false; gLv1Decided = false; if (!gLv1Pending) gLv1NewGame = false; return; }
+    if (rn == "char_room") gLv1NewGame = true;   // seleccion de personaje: es una partida nueva (Continuar no pasa por aqui)
+    if (isMenuRoomPub(rn)) return;
+    int po = objIdx(g, "player_wyatt");
+    if (po < 0 || !g.firstOf(po)) return;
+    if (!gLv1Decided) {
+        gLv1Decided = true;
+        int slot = (int)gnum(g, "save_current");
+        std::vector<int> v = lv1Slots();
+        bool had = std::find(v.begin(), v.end(), slot) != v.end();
+        if (gLv1NewGame) {
+            if (gLv1Pending && !had) v.push_back(slot);
+            if (!gLv1Pending && had) v.erase(std::remove(v.begin(), v.end(), slot), v.end());
+            if (gLv1Pending != had) lv1Write(v);
+            gLv1Active = gLv1Pending;
+        } else gLv1Active = had;
+        if (gLv1Active) logf("[nivel1] modo Nivel 1 activo en la ranura %d (%s)\n", slot, gLv1NewGame ? "partida nueva" : "partida cargada");
+        gLv1Pending = false; gLv1NewGame = false;
+    }
+    if (!gLv1Active) return;
+    if (gnum(g, "xp") != 0) gset(g, "xp", 0);   // nunca se llena la barra: siempre nivel 1
+    for (const char* w : {"wep_1", "wep_2", "wep_3", "wep_4", "wep_5"}) if (gnum(g, w) < 1) gset(g, w, 1);
+    for (const char* s : {"purgatory_lv", "raven_lv", "seraphic_lv", "shell_lv"}) if (gnum(g, s) < 1) gset(g, s, 1);
+    if (gnum(g, "skill_jump") < 1) gset(g, "skill_jump", 1);
+}
 
 void bossRushModeInit(Game& g) {
     gRenameHook = onRename;
@@ -299,8 +373,20 @@ bool bossRushModeInput(Game& g, uint32_t b, bool menuOpen) {
     if (gBlock) { if (b == 0) gBlock = false; else { clearPad(); return gSt == St::Menu || gSt == St::Dead || gSt == St::Done; } }
     if (menuOpen) return false;
     if (gSt == St::Off) {
-        if (!onTitlePage0(g) || !unlocked(g)) { gSel = false; return false; }
+        if (!onTitlePage0(g) || !unlocked(g)) { gSel = false; gSelLv1 = false; return false; }
         Instance* c = gc(g);
+        if (gSelLv1) {
+            clearPad();
+            iset(g, c, "menu_level", 0); iset(g, c, "cursor_y", 548);
+            if (pr & 1) { gSelLv1 = false; gSel = true; iset(g, c, "cursor_y", 502); gBlock = true; }
+            else if (pr & 2) { gSelLv1 = false; bool retry = ivar(g, c, "menu_level_max") == 6; iset(g, c, "menu_level", retry ? 6 : 1); iset(g, c, "cursor_y", retry ? 226 : 272); gBlock = true; }
+            else if (pr & 16) {
+                gSelLv1 = false; gLv1Pending = true; gLv1NewGame = false;
+                iset(g, c, "menu_level", 1); iset(g, c, "cursor_y", 272); gLv1Inject = 4; gBlock = true;
+                logf("[nivel1] partida nueva en modo Nivel 1\n");
+            }
+            return true;
+        }
         if (!gSel) {
             if ((pr & 2) && ivar(g, c, "menu_level") == 5 && ivar(g, c, "menu_delay") == 0) {
                 gSel = true; iset(g, c, "menu_level", 0); iset(g, c, "cursor_y", 502); clearPad(); gBlock = true;
@@ -312,7 +398,7 @@ bool bossRushModeInput(Game& g, uint32_t b, bool menuOpen) {
         clearPad();
         iset(g, c, "menu_level", 0); iset(g, c, "cursor_y", 502);
         if (pr & 1) { gSel = false; iset(g, c, "menu_level", 5); iset(g, c, "cursor_y", 448); gBlock = true; }
-        else if (pr & 2) { gSel = false; bool retry = ivar(g, c, "menu_level_max") == 6; iset(g, c, "menu_level", retry ? 6 : 1); iset(g, c, "cursor_y", retry ? 226 : 272); gBlock = true; }
+        else if (pr & 2) { gSel = false; gSelLv1 = true; iset(g, c, "cursor_y", 548); gBlock = true; }   // abajo: "-Nivel 1-"
         else if (pr & 16) { gSt = St::Menu; gMenuRow = 0; gBlock = true; if (!charAvailable(g, gChar)) gChar = 1; }
         return true;
     }
@@ -353,6 +439,7 @@ bool bossRushModeInput(Game& g, uint32_t b, bool menuOpen) {
 bool testFileExists(const std::string& saveDir, const std::string& base);   // debugtour.cpp
 void bossRushModeStep(Game& g) {
     recorderStep(g);
+    lv1Step(g);
     {   // pruebas en la Vita: save/bossrush_auto arranca el Boss Rush solo en el titulo (Wyatt, modo fiel)
         static int autoState = -1;
         if (autoState < 0) autoState = testFileExists(gSaveDir, "bossrush_auto") ? 1 : 0;

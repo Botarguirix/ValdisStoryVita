@@ -326,6 +326,26 @@ static inline bool vaotEnabled(const std::string& saveDir) {
 // Pantalla de logros (logros.cpp): se dibuja al terminar draw_option_menu_script, en el sitio del mapa
 void logroScreenBeforeMenu(Game& g, Instance* self); void logroScreenDraw(Game& g, Instance* self); bool logroScreenOpen();
 static int gOptMenuCode = -2;
+// Modo Nivel 1 (bossrush.cpp, 9.11): toda la experiencia entra por gain_xp_script; con el modo activo se deja global.xp
+// como estaba antes de llamarlo, asi la barra nunca se llena (ni dentro del mismo paso)
+bool lv1Active(); static int gXpCode = -2, gXpVar = -2;
+struct XpHook {
+    Game* g = nullptr; Value saved;
+    XpHook(Game& gm, int codeId) {
+        if (gXpCode == -2) {
+            gXpCode = -1; for (size_t i = 0; i < gm.d.codes.size(); i++) if (gm.d.codes[i].name == "gml_Script_gain_xp_script") gXpCode = (int)i;
+            gXpVar = -1; for (size_t v = 0; v < gm.d.varNames.size(); v++) if (gm.d.varNames[v] == "xp") gXpVar = (int)v;
+        }
+        if (codeId != gXpCode || gXpVar < 0 || !lv1Active()) return;
+        g = &gm; if (const Value* x = gm.globals.get(gXpVar)) saved = *x; else saved = Value(0.0);
+    }
+    ~XpHook() {
+        if (!g) return;
+        static int logged = 0; const Value* x = g->globals.get(gXpVar);
+        if (logged < 3 && x && x->num() != saved.num()) { logged++; logf("[nivel1] experiencia bloqueada (+%.0f)\n", x->num() - saved.num()); }
+        g->globals[gXpVar] = saved;
+    }
+};
 struct OptMenuHook {
     Game* g = nullptr; Instance* self = nullptr;
     OptMenuHook(Game& gm, int codeId, Instance* s) {
@@ -340,6 +360,7 @@ Value Game::call(int codeId, Ctx ctx, Value* args, int argc) {
     if (codeId < 0 || codeId >= (int)d.codes.size()) return Value();
     HudScope hudScope(*this, codeId);
     OptMenuHook optMenuHook(*this, codeId, ctx.self);
+    XpHook xpHook(*this, codeId);
     SampFnScope sfs(-1);   // dentro del script ya no se esta en la funcion integrada que lo llamo
     if (aotEnabled && aot[codeId] && !(prof && !profCode.empty())) {   // codigo nativo (sin perfilador por script)
         Value* savedArgs = curArgs; int savedArgc = curArgc; int savedCode = curCode;

@@ -82,6 +82,7 @@ std::string testPath(const std::string& dir, const std::string& base) {
 bool testExists(const std::string& dir, const std::string& base) { return !testPath(dir, base).empty(); }
 }  // namespace (reabierto abajo)
 bool testFileExists(const std::string& dir, const std::string& base) { return testExists(dir, base); }
+bool isMenuRoomPub(const std::string& n) { return isMenuRoom(n); }   // bossrush.cpp (modo Nivel 1)
 namespace {
 
 void logStats(const char* tag, const std::string& what, const Stats& s) {
