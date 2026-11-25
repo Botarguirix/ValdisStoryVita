@@ -433,6 +433,19 @@ int main(int, char**) {
         }
         SceCtrlData pad{}; sceCtrlPeekBufferPositive(0, &pad, 1);
         uint32_t b = pad.buttons;
+        {   // lectura extendida (L1/R1/L3/R3): el agente de pruebas inyecta L y R ahi (24-11: no llegaban por la normal)
+            SceCtrlData pad2{};
+            if (sceCtrlPeekBufferPositiveExt2(0, &pad2, 1) >= 0) b |= pad2.buttons;
+        }
+        // L1/R1 cuentan como L/R: el agente de pruebas (vita-agent) envia L y R con esos bits; el L/R fisico de la Vita es
+        // LTRIGGER/RTRIGGER. Sin esto, L y R del agente no cambiaban de pestaña en la pausa.
+        if (b & SCE_CTRL_L1) b |= SCE_CTRL_LTRIGGER;
+        if (b & SCE_CTRL_R1) b |= SCE_CTRL_RTRIGGER;
+        {   // pruebas: save/padlog anota cada cambio de botones (bits crudos) en vsrunner.log
+            static int padlog = -1; static uint32_t lastRaw = 0;
+            if (padlog < 0) padlog = vs::testFileExists(saveDir, "padlog") ? 1 : 0;
+            if (padlog && b != lastRaw) { lastRaw = b; vs::logf("[mando] botones 0x%08X (normal 0x%08X)\n", (unsigned)b, (unsigned)pad.buttons); }
+        }
         bool* g = game.in.gpBtn;
         g[0] = b & SCE_CTRL_CROSS; g[1] = b & SCE_CTRL_CIRCLE; g[2] = b & SCE_CTRL_SQUARE; g[3] = b & SCE_CTRL_TRIANGLE;
         g[4] = false; g[5] = false; g[6] = b & SCE_CTRL_LTRIGGER; g[7] = b & SCE_CTRL_RTRIGGER;
