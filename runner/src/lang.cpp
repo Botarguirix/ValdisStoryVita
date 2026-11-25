@@ -130,6 +130,7 @@ const std::string* langDrawAlias(const std::string& s) {
     // solo si se dibuja al menos 20 veces: el efecto maquina de escribir dibuja frases a medias que cambian cada frame
     static std::unordered_map<uint64_t, int> seen;
     if (gLoggedEn.size() >= 400 || gEsOut.count(h) || gLoggedEn.count(h) || s.back() == ' ' || !looksEnglish(s)) return nullptr;
+    if (s.compare(0, 9, "BOSS RUSH") == 0) return nullptr;   // marcador del propio port (con reloj: cambia cada segundo)
     if (seen.size() > 20000) seen.clear();
     if (++seen[h] == 20 && gLoggedEn.insert(h).second) {
         std::string one = s; for (char& c : one) if (c == '\n' || c == '\r') c = '|';
