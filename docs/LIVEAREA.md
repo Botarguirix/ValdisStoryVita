@@ -88,6 +88,14 @@ vuelve a sellar. El resultado va a `build/<build>/sce_art/` (8 bits con paleta, 
 las imágenes sin sellar. El arte original se rehízo el 24-11 (`tools/make_livearea.py`): ciudad abisal iluminada,
 emblema dorado con la "V" y una espada, y el título VALDIS STORY · ABYSSAL CITY · PS VITA.
 
+## 3c. Arte personal de Valdis desde el 24-11 (pedido del usuario)
+
+`make_livearea_personal.py` usa, si existe, arte promocional oficial en `build/arte_oficial/` (ignorado por git):
+`portada.webp` → `pic0` (la imagen al abrir el juego, con el emblema del .exe y "PS VITA"), `escena.webp` → fondo de la
+LiveArea, `circulo.webp` → botón Iniciar (con el emblema del .exe y "PS VITA"). **La burbuja sale siempre del icono del
+.exe**, con "PS VITA" arriba; el sello pone abajo la versión ("v0.9.0 AOT"). Sin esa carpeta vuelve a la pantalla de título
+(página 65). Nada de esto va en el repo ni en el VPK público.
+
 ## 4. Comprobar en la consola
 
 1. Instalar el VPK (si el juego ya estaba instalado, la LiveArea se actualiza al reinstalar).
