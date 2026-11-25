@@ -7,6 +7,7 @@
 // La lista tiene forma de codigo de maquina (operacion normal, salto condicional, salto, fin) para poder emitirla
 // tal cual como ARM en la Vita (fase 2, mas abajo; opcional con save/vaot_arm).
 #include "aot_rt.h"
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -200,6 +201,29 @@ static void hCall(Fr& F, const Op& o) {
     else F.s[o.a] = F_G.vmCallFn(o.b, F_C, av, na);
 }
 static void hRet(Fr& F, const Op& o) { F.ret = std::move(F.s[o.a]); }
+// superinstrucciones (9.12). Mismo resultado que leer la variable en s[a] y luego cmpK / escribirla: la ranura queda
+// sin usar despues (la pila del juego ya la daba por consumida).
+static inline bool selfCmpK(Fr& F, const Op& o) {
+    Game& g = F_G; Ctx& c = F_C;
+    if (c.self && !g.varBuiltin[o.b]) if (const Value* v = c.self->vars.get(o.b)) {
+        if (v->t == VT::Real) { Value t(v->r); return cmpK(g, o.u, t, o.k); }
+        Value t = *v; return cmpK(g, o.u, t, o.k);
+    }
+    readSelf(g, c, o.b, F.s[o.a]); return cmpK(g, o.u, F.s[o.a], o.k);
+}
+static inline bool globalCmpK(Fr& F, const Op& o) {
+    Game& g = F_G;
+    if (!g.varBuiltin[o.b]) if (const Value* v = g.globals.get(o.b)) {
+        if (v->t == VT::Real) { Value t(v->r); return cmpK(g, o.u, t, o.k); }
+        Value t = *v; return cmpK(g, o.u, t, o.k);
+    }
+    readGlobal(g, F_C, o.b, F.s[o.a]); return cmpK(g, o.u, F.s[o.a], o.k);
+}
+static bool cSelfCmpK(Fr& F, const Op& o) { return selfCmpK(F, o) == (o.t1 != 0); }
+static bool cGlobalCmpK(Fr& F, const Op& o) { return globalCmpK(F, o) == (o.t1 != 0); }
+static void hSelfCmpK(Fr& F, const Op& o) { bool r = selfCmpK(F, o); F.s[o.a] = Value(r ? 1.0 : 0.0); }
+static void hGlobalCmpK(Fr& F, const Op& o) { bool r = globalCmpK(F, o); F.s[o.a] = Value(r ? 1.0 : 0.0); }
+static void hSetSelfK(Fr& F, const Op& o) { Value v(o.k); writeSelf(F_G, F_C, o.b, v); }
 #undef F_G
 #undef F_C
 
@@ -261,6 +285,30 @@ static Prog* build(const GameData& g, const Code& c, const Analysis& A) {
         const Ins& x = c.ins[pc]; const int d = A.depth[pc];
         if (auto gi = guards.find(pc); gi != guards.end()) {
             Op& o = emit((void*)cGuard, K_COND); o.a = d; o.b = gi->second.obj; o.k = gi->second.none; jumpTo(gi->second.callPc + 1);
+        }
+        {   // 9.12, superinstrucciones (las secuencias mas frecuentes, VS_VAOTSTATS): variable propia o global + constante
+            // + comparacion (+ salto) en una sola operacion que compara la variable en su sitio, sin copiarla a la pila
+            double lit;
+            bool selfVar = isPush(x.op) && x.t1 == DT_VAR && x.b == RT_NORMAL && (x.inst == IT_SELF || x.inst == -5);
+            if (selfVar && pc + 2 < n && !need.count(pc + 1) && !need.count(pc + 2) && !guards.count(pc + 1) && !guards.count(pc + 2) &&
+                A.depth[pc + 2] >= 0 && constLit(c.ins[pc + 1], lit) && c.ins[pc + 2].op == OP_CMP) {
+                const Ins& y = c.ins[pc + 2];
+                bool glob = x.inst == -5;
+                if (pc + 3 < n && (c.ins[pc + 3].op == OP_BT || c.ins[pc + 3].op == OP_BF)) {
+                    const Ins& nx = c.ins[pc + 3];
+                    Op& o = emit(glob ? (void*)cGlobalCmpK : (void*)cSelfCmpK, K_COND); o.a = d; o.b = x.a; o.u = y.cmp; o.k = lit; o.t1 = nx.op == OP_BT; jumpTo(nx.a);
+                    emit(nullptr, K_JUMP); jumpTo(pc + 4);
+                } else { Op& o = emit(glob ? (void*)hGlobalCmpK : (void*)hSelfCmpK, K_PLAIN); o.a = d; o.b = x.a; o.u = y.cmp; o.k = lit; }
+                pc += 2; continue;
+            }
+            // constante -> variable propia (x = 3)
+            if (pc + 1 < n && !need.count(pc + 1) && !guards.count(pc + 1) && A.depth[pc + 1] >= 0 && constLit(x, lit)) {
+                const Ins& y = c.ins[pc + 1];
+                if (y.op == OP_POP && !(y.flags & 4) && y.b != RT_ARRAY && y.b != RT_STACKTOP && y.inst == IT_SELF) {
+                    Op& o = emit((void*)hSetSelfK, K_PLAIN); o.a = d; o.b = y.a; o.k = lit;
+                    pc++; continue;
+                }
+            }
         }
         {
             double lit;
@@ -473,6 +521,46 @@ static NativeFn armInstall(const ArmOut& A) {
 }
 #endif
 // ---------------------------------------------------------------- ejecucion
+// Estadisticas de operaciones (VS_VAOTSTATS=archivo): para elegir que secuencias fusionar (9.12)
+static const char* gOpStats = std::getenv("VS_VAOTSTATS");
+static std::map<std::pair<void*, void*>, uint64_t> gPairs; static std::map<void*, uint64_t> gSingles;
+static void opStat(const Op* prev, const Op* o) {
+    void* k = o->fn ? o->fn : (void*)(uintptr_t)(1000 + o->kind);
+    gSingles[k]++;
+    if (prev) { void* pk = prev->fn ? prev->fn : (void*)(uintptr_t)(1000 + prev->kind); gPairs[{pk, k}]++; }
+}
+static const char* fnName(void* f) {
+    struct N { void* f; const char* n; };
+    static const N tab[] = {
+        {(void*)hConst, "const"}, {(void*)hStr, "str"}, {(void*)hLocal, "local"}, {(void*)hSelf, "self"}, {(void*)hGlobal, "global"},
+        {(void*)hOther, "other"}, {(void*)hPushArr, "pusharr"}, {(void*)hPushTop, "pushtop"}, {(void*)hPopArr, "poparr"},
+        {(void*)hPopTop, "poptop"}, {(void*)hPopLocal, "poplocal"}, {(void*)hPopSelf, "popself"}, {(void*)hPopGlobal, "popglobal"},
+        {(void*)hPopOther, "popother"}, {(void*)hPopz, "popz"}, {(void*)hDup, "dup"}, {(void*)hNeg, "neg"}, {(void*)hNot, "not"},
+        {(void*)hCmp, "cmp"}, {(void*)hCmpK, "cmpk"}, {(void*)cCmp, "?cmp"}, {(void*)cCmpK, "?cmpk"}, {(void*)cTruth, "?truth"},
+        {(void*)cGuard, "?guard"}, {(void*)cPushEnv, "?pushenv"}, {(void*)hPopEnvBreak, "popenvbreak"}, {(void*)cPopEnv, "?popenv"},
+        {(void*)hCall, "call"}, {(void*)hRet, "ret"}, {(void*)cSelfCmpK, "?selfcmpk"}, {(void*)cGlobalCmpK, "?globalcmpk"},
+        {(void*)hSelfCmpK, "selfcmpk"}, {(void*)hGlobalCmpK, "globalcmpk"}, {(void*)hSetSelfK, "setselfk"},
+        {(void*)hBin<OP_ADD>, "add"}, {(void*)hBin<OP_SUB>, "sub"}, {(void*)hBin<OP_MUL>, "mul"}, {(void*)hBin<OP_DIV>, "div"},
+        {(void*)hBin<OP_AND>, "and"}, {(void*)hBin<OP_OR>, "or"}, {(void*)hBinK<OP_ADD>, "addk"}, {(void*)hBinK<OP_SUB>, "subk"},
+        {(void*)hBinK<OP_MUL>, "mulk"}, {(void*)hBinK<OP_DIV>, "divk"},
+        {(void*)(uintptr_t)(1000 + K_JUMP), "jump"}, {(void*)(uintptr_t)(1000 + K_RET), "end"},
+    };
+    for (auto& e : tab) if (e.f == f) return e.n;
+    return "otra";
+}
+static void opStatsDump() {
+    if (!gOpStats) return;
+    FILE* f = std::fopen(gOpStats, "w"); if (!f) return;
+    std::vector<std::pair<uint64_t, void*>> s; for (auto& [k, n] : gSingles) s.push_back({n, k});
+    std::sort(s.rbegin(), s.rend());
+    for (auto& [n, k] : s) std::fprintf(f, "%12llu  %s\n", (unsigned long long)n, fnName(k));
+    std::vector<std::pair<uint64_t, std::pair<void*, void*>>> p; for (auto& [k, n] : gPairs) p.push_back({n, k});
+    std::sort(p.rbegin(), p.rend());
+    std::fprintf(f, "--- pares\n");
+    for (size_t i = 0; i < p.size() && i < 60; i++) std::fprintf(f, "%12llu  %s -> %s\n", (unsigned long long)p[i].first, fnName(p[i].second.first), fnName(p[i].second.second));
+    std::fclose(f);
+}
+static struct OpStatsAtExit { ~OpStatsAtExit() { opStatsDump(); } } gOpStatsAtExit;
 // Ranuras de todas las llamadas en curso en un bloque fijo (sin reservar memoria en cada llamada)
 static Value gArena[32768]; static int gTop = 0;
 
@@ -486,6 +574,19 @@ static Value run(const Prog& P, Game& g, Ctx& ctx) {
     if (P.native) { P.native(&F, gFnTab); goto done; }   // fase 2: codigo ARM generado en la consola
     {
     const Op* ops = P.ops.data(); int pc = 0;
+    if (gOpStats) {   // pruebas (VS_VAOTSTATS): cuenta operaciones y pares de operaciones seguidas
+        const Op* prev = nullptr;
+        for (;;) {
+            const Op& o = ops[pc];
+            opStat(prev, &o); prev = &o;
+            switch (o.kind) {
+                case K_PLAIN: ((PlainFn)o.fn)(F, o); pc++; break;
+                case K_COND: pc = ((CondFn)o.fn)(F, o) ? o.jump : pc + 1; break;
+                case K_JUMP: pc = o.jump; break;
+                default: if (o.fn) ((PlainFn)o.fn)(F, o); goto done;
+            }
+        }
+    }
     for (;;) {
         const Op& o = ops[pc];
         switch (o.kind) {

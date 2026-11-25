@@ -488,10 +488,23 @@ int main(int, char**) {
                          game.d.rooms[game.room].name.c_str());
             }
         }
-        if (noDraw) {   // sin dibujo ni vsync: esperar al resto del frame para que el juego siga a 60 pasos por segundo
+        // 9.8 (GFX : Low): plazo acumulado de 16,667 ms por paso. Antes, un frame sin dibujo dormia hasta 16,6 ms desde
+        // su propio inicio aunque el anterior (con dibujo) se hubiera pasado: el retraso nunca se recuperaba y con GFX Low
+        // el juego iba por debajo de 60 pasos por segundo. Ahora solo duerme si va adelantado respecto al plazo; los
+        // frames con dibujo los marca el vsync, y si llegan tarde (menos de 50 ms) el siguiente sin dibujo lo recupera.
+        static uint64_t deadline = 0;
+        uint64_t due = (deadline && t0 < deadline + 50000 && t0 + 50000 > deadline ? deadline : t0) + 16667;
+        if (noDraw) {
             uint64_t tn = sceKernelGetProcessTimeWide();
-            if (tn - t0 < 16600) sceKernelDelayThread((SceUInt)(16600 - (tn - t0)));
+            if (tn < due) sceKernelDelayThread((SceUInt)(due - tn));
         } else if (!discard) vglSwapBuffers(GL_FALSE); else gDiscardFrames++;
+        {
+            uint64_t te = sceKernelGetProcessTimeWide();
+            // El mismo reloj para todos los frames. Medido en la Vita (24-11): con un frame de cada dos sin dibujo, el
+            // cambio de buffer no espera al vsync (hay sitio en la cola) y sincronizarse con su final daba ~79 pasos por
+            // segundo con GFX Low. Solo si se va mas de 50 ms tarde se renuncia a recuperar y se toma el tiempo real.
+            deadline = te > due + 50000 ? te : due;
+        }
         discardNext = !noDraw && !discard && (t2 - t0) > 15500;
         gfx::perf().swapMs += (sceKernelGetProcessTimeWide() - t2) / 1000.0;   // espera a la GPU / vsync
         game.perfFrame((t1 - t0) / 1000.0, (t2 - t1) / 1000.0);
