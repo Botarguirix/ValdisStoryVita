@@ -9,7 +9,7 @@ Marca las cuatro imagenes (icon0, pic0, bg, startup) y las guarda otra vez como 
 (docs/LIVEAREA.md). Si algo falla (sin Pillow, sin fuentes), CMake usa las imagenes sin sellar.
 """
 import os, sys
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageStat
 
 FONTS_B = [r'C:\Windows\Fonts\arialbd.ttf',   # cifras claras (con Georgia el 0 parece una o)
            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf']
@@ -52,6 +52,30 @@ def pill(img, text, size, x, y, anchor, kind, pad=None):
     img.alpha_composite(layer)
 
 
+def pill_size(text, size):
+    f = font(size); d = ImageDraw.Draw(Image.new('RGB', (1, 1)))
+    bb = d.textbbox((0, 0), text, font=f)
+    px, py = max(3, size // 2), max(2, size // 4)
+    return bb[2] - bb[0] + 2 * px, bb[3] - bb[1] + 2 * py
+
+
+def auto(img, text, size, kind, margin=8, centers=True):
+    """Coloca la etiqueta donde la imagen tiene menos detalle (bordes) entre las esquinas y, si centers, los centros
+    de arriba y abajo."""
+    w, h = pill_size(text, size)
+    W, H = img.size
+    edges = img.convert('L').filter(ImageFilter.FIND_EDGES)
+    cands = [(margin, margin, 'lt'), (W - margin, margin, 'rt'), (margin, H - margin, 'lb'), (W - margin, H - margin, 'rb')]
+    if centers:
+        cands += [((W - w) // 2, margin, 'lt'), ((W - w) // 2, H - margin, 'lb')]
+    def box(x, y, a):
+        x0 = x - w if a[0] == 'r' else x
+        y0 = y - h if a[1] == 'b' else y
+        return (x0, y0, x0 + w, y0 + h)
+    best = min(cands, key=lambda c: ImageStat.Stat(edges.crop(box(*c))).mean[0])
+    pill(img, text, size, best[0], best[1], best[2], kind)
+
+
 def main():
     src, dst, ver, kind = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4].upper()
     if kind not in STYLE:
@@ -61,18 +85,12 @@ def main():
     files = {'icon0.png': None, 'pic0.png': None, 'livearea/contents/bg.png': None, 'livearea/contents/startup.png': None}
     for rel in files:
         files[rel] = Image.open(os.path.join(src, rel)).convert('RGBA')
-    # burbuja: banda abajo con version y tipo
-    ic = files['icon0.png']
-    band = Image.new('RGBA', ic.size, (0, 0, 0, 0))
-    ImageDraw.Draw(band).rectangle([4, 104, 123, 123], fill=STYLE[kind][0] + (225,))
-    ic.alpha_composite(band)
-    d = ImageDraw.Draw(ic)
-    d.text((64, 114), f'{vshort} {short}', font=font(13 if kind == 'AOT' else 12), anchor='mm', fill=STYLE[kind][2])
-    d.line([(4, 104), (123, 104)], fill=STYLE[kind][1], width=1)
-    # LiveArea, arranque y boton Iniciar
-    pill(files['livearea/contents/bg.png'], f'v{ver}  ·  {long_}', 17, 830, 490, 'rb', kind)
-    pill(files['pic0.png'], f'v{ver}  ·  {long_}', 18, 944, 530, 'rb', kind)
-    pill(files['livearea/contents/startup.png'], f'{vshort} {short}', 13, 274, 152, 'rb', kind)
+    # 24-11 (pedido del usuario): que el sello no tape nada. Se mide la etiqueta y se pone en la esquina (o centro de
+    # arriba/abajo) con menos detalle de la imagen; en la burbuja, una etiqueta minima.
+    auto(files['icon0.png'], f'{vshort} {"AOT" if kind == "AOT" else "PÚB"}', 8, kind, margin=5, centers=False)   # corto: cabe en la esquina
+    auto(files['livearea/contents/bg.png'], f'v{ver}  ·  {long_}', 15, kind, margin=8)
+    auto(files['pic0.png'], f'v{ver}  ·  {long_}', 16, kind, margin=10)
+    auto(files['livearea/contents/startup.png'], f'{vshort} {short}', 10, kind, margin=4, centers=False)
     for rel, im in files.items():
         save_indexed(im, os.path.join(dst, rel))
     print(f'LiveArea sellada: {vshort} {kind} -> {os.path.normpath(dst)}')

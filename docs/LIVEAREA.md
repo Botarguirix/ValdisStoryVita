@@ -98,6 +98,8 @@ LiveArea, `circulo.webp` → botón Iniciar (con el emblema del .exe y "PS VITA"
 
 Desde el 24-11 (noche) tiene prioridad `build/arte_oficial/livearea/` con las cuatro imágenes ya hechas por el usuario (`icon0.png` 128×128, `pic0.png` 960×544, `startup.png` 280×158, `bg.png` 840×500): se usan tal cual. Venían en modo P pero con transparencia en la paleta (`tRNS`): el script las pone sobre un fondo sólido y las vuelve a guardar en 8 bits con paleta completa, sin `tRNS`. Comprobado en el VPK: tamaño, modo P, paleta de 768, 8 bits y sin `tRNS` en las cuatro.
 
+**Son imágenes originales del usuario** (no sacadas del juego): desde el 24-11 van también en el VPK público, copiadas a `runner/vita/sce_sys/` (ojo: `tools/make_livearea.py` las sobrescribe con el arte dibujado por script si se vuelve a ejecutar). El sello de versión (`livearea_stamp.py`) ya no va en un sitio fijo: mide la etiqueta y la pone en la esquina, o en el centro de arriba o de abajo, con menos detalle, para no tapar nada; en la burbuja va una etiqueta mínima ("v0.9.1 AOT" / "v0.9.1 PÚB").
+
 ## 4. Comprobar en la consola
 
 1. Instalar el VPK (si el juego ya estaba instalado, la LiveArea se actualiza al reinstalar).
