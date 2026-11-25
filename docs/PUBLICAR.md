@@ -14,6 +14,42 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 
 > Commits nuevos: en GitHub Desktop, revisa la lista de cambios antes de **Commit to main** + **Push origin**. Si aparece cualquier archivo del juego, un `.vpk`, un `.dat` o `tools/local.env`, no lo subas.
 
+## Release v0.9.3-alpha (25-11)
+
+Etiqueta `v0.9.3-alpha`, pre-release, título `Valdis Story PSVITA v0.9.3-alpha`. VPK público (intérprete): `build\vita_noaot\vsvita.vpk`, 2 173 535 bytes, SHA-256 `d99279a499067c4001a331649ef67102d8a0f01bb243cf6c6279b46d4e9a4775`. **Este VPK no se ha probado en la Vita** (en la consola se probó la versión AOT del mismo código): se adjunta más tarde. Nunca subir el AOT.
+
+### Notas del release v0.9.3 (copiar y pegar)
+
+```markdown
+## Valdis Story PSVITA v0.9.3-alpha
+
+Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de GameMaker Studio 1.x en C++17. El juego se convierte desde **tu copia de Steam** en la propia consola.
+
+**ULTRA IA VIBECODED!** Todo el código, las herramientas y la documentación los escribió una IA con Claude Code (Claude Opus 5.5 y Claude Sonnet 5.5); el usuario dirige y prueba en una PS Vita real.
+
+> ⚠️ **No incluye el juego.** Necesitas una copia legal de Steam (build 722041, App ID 252030; ver README). Valdis Story es propiedad de Endless Fluff Games; proyecto de fans sin ánimo de lucro.
+
+### Novedades
+- **Modo Masterquest** (encima del menú principal; se desbloquea al terminar el juego): multiplica los enemigos de cada sala (x1, x2 o x3) y añade de 0 a 6 enemigos extra al azar, de la zona o de cualquier tipo. Las salas con jefe no cambian.
+- **Modo Lvl1:** ahora empieza además con las 16 armaduras y 3 Master Scroll.
+
+### Estado de las pruebas
+- Masterquest en la Vita (versión AOT): menú, submenú y partida nueva funcionan. Quedan cosas por resolver. El rendimiento con x3 no está medido; con muchos enemigos se esperan bajadas de fps, sobre todo en esta versión pública.
+- Las novedades de Lvl1 solo se han comprobado en PC.
+- El VPK público de esta versión todavía no se ha probado en la consola.
+
+### Problemas conocidos
+- El submenú de Masterquest está solo en español.
+- Algunas descripciones del bestiario (Lore) siguen en inglés.
+- En las ranuras de partida, "Lv/Time/Crew/Location" siguen en inglés: forman parte del dibujo del juego.
+- Se han visto cierres por error de la GPU con el reloj de la consola subido.
+
+### Instalación
+1. Instala `vsvita.vpk` con VitaShell. Necesitas `ur0:data/libshacccg.suprx` (extráelo con ShaRKBR33D).
+2. Copia `data.win`, `data_1/`, `data_2/`, `data_5/` y los `music_*.ogg` de tu carpeta de Steam a `ux0:data/valdis/game/`.
+3. Abre el juego: el primer arranque convierte los datos. Pulsa SELECT para elegir español y el resto de opciones.
+```
+
 ## 2. Crear el Release v0.9.2-alpha (25-11)
 
 1. En la web del repo: **Releases → Draft a new release** (o abrir el borrador si ya está creado).
