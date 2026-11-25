@@ -287,7 +287,7 @@ void viewDraw(Game& g) {
 
 int countSnaps(int ch) { int n = 0; for (auto& b : kBosses) if (fileThere(snapPath(ch, b.n))) n++; return n; }
 
-// ---- Modo Nivel 1 (9.11, pedido del usuario): "-Nivel 1-" debajo de "-Boss Rush-", desbloqueado igual (al terminar el
+// ---- Modo Nivel 1 (9.11, pedido del usuario): "-Modo Lvl1-" debajo de "-Boss Rush-", desbloqueado igual (al terminar el
 // juego). Empieza una partida nueva normal (dificultad, ranura, personaje) en la que nunca se sube de nivel (la
 // experiencia se queda en 0, asi no hay puntos de atributo ni de talento), pero se tienen las armas 1-5 con su hechizo
 // base (Purgatorio, Cuervo, Serafico, Caparazon; lo mismo que el bloque de trucos del propio juego) y el doble salto. Las
@@ -312,7 +312,7 @@ void viewDrawLv1(Game& g) {
     auto sit = g.d.spriteByName.find("ui_start");
     if (sit != g.d.spriteByName.end()) g.drawSpriteFrame(sit->second, 1, sx + 92 + tr, vert + 518 - 12, 1, 1, 0, 0xFFFFFF, fade);
     int ha = g.drawHalign; g.drawHalign = 1;
-    const char* t = gMods.lang == 1 ? "-Nivel 1-" : "-Level 1-";
+    const char* t = gMods.lang == 1 ? "-Modo Lvl1-" : "-Lvl1 Mode-";
     if (gSelLv1) g.drawText(mx + 200 + tr, my + 528, t, 0.75, 0.75, 0, 0x5FB1FF, 0x5FB1FF, 0x00CCFF, 0x00CCFF, fade, -1, -1);
     else g.drawText(mx + 200 + tr, my + 528, t, 0.75, 0.75, 0, 0, 0, 0x404040, 0x404040, fade, -1, -1);
     g.drawHalign = ha;
@@ -324,7 +324,7 @@ bool lv1Active() { return gLv1Active; }   // vm.cpp: experiencia congelada en mo
 // Cada paso: decide si la partida que empieza es de Nivel 1 y aplica sus reglas
 static void lv1Step(Game& g) {
     if (gSt != St::Off) { gLv1Active = false; return; }   // el Boss Rush carga sus propios estados
-    if (gLv1Inject > 0) {   // "-Nivel 1-" elegido: se pulsa "aceptar" sobre "-Partida nueva-" (flujo normal del juego);
+    if (gLv1Inject > 0) {   // "-Modo Lvl1-" elegido: se pulsa "aceptar" sobre "-Partida nueva-" (flujo normal del juego);
         Instance* c = gc(g); // aqui, despues de leer el mando, como el modo monkey; el menu solo acepta con menu_delay 0
         if (!c || roomName(g) != "start_game") gLv1Inject = 0;
         else if (ivar(g, c, "menu_delay") <= 0 || gLv1Inject < 2) {
@@ -398,7 +398,7 @@ bool bossRushModeInput(Game& g, uint32_t b, bool menuOpen) {
         clearPad();
         iset(g, c, "menu_level", 0); iset(g, c, "cursor_y", 502);
         if (pr & 1) { gSel = false; iset(g, c, "menu_level", 5); iset(g, c, "cursor_y", 448); gBlock = true; }
-        else if (pr & 2) { gSel = false; gSelLv1 = true; iset(g, c, "cursor_y", 548); gBlock = true; }   // abajo: "-Nivel 1-"
+        else if (pr & 2) { gSel = false; gSelLv1 = true; iset(g, c, "cursor_y", 548); gBlock = true; }   // abajo: "-Modo Lvl1-"
         else if (pr & 16) { gSt = St::Menu; gMenuRow = 0; gBlock = true; if (!charAvailable(g, gChar)) gChar = 1; }
         return true;
     }
