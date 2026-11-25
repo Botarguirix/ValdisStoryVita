@@ -268,6 +268,21 @@ void debugTourBeforeStep(Game& g) {
     bossRushStep(g);
     keysStep(g);
     if (gMonkey && !isMenuRoom(g.d.rooms[g.room].name)) monkeyStep(g);
+    {   // pruebas (9.13, save/monkeypausa): ademas de monkey, abre la pausa cada ~15 s, cambia de pestaña con L/R unas
+        // veces y sale con START (el ultimo error de GPU fue con la pausa abierta)
+        static int st = -1, t = 0;
+        if (st < 0) st = testExists(gSaveDir, "monkeypausa") ? 1 : 0;
+        if (st) {
+            bool menu = g.d.rooms[g.room].name == "status_room";
+            t++;
+            if (!menu) { if (t > 900) { t = 0; } if (t >= 897) g.in.gpBtn[9] = true; }
+            else {
+                if (t > 600) t = 0;
+                if (t >= 60 && t < 420 && t % 45 < 3) g.in.gpBtn[(t / 45) % 2 ? 7 : 6] = true;   // L / R: pestañas
+                if (t >= 597) g.in.gpBtn[9] = true;                                          // START: salir
+            }
+        }
+    }
     // unlockchars: el juego pone global.unlock_char = 1 al desbloquear el lore 63 (general_control Step) y lo vuelve a 0
     // en room_settings; aqui se mantiene a 1 para poder elegir a Gilda y Vladyn sin la partida completa
     if (gUnlockChars && gVarUnlockChar >= 0) g.globals[gVarUnlockChar] = Value(1.0);

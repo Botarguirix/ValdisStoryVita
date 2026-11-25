@@ -476,16 +476,19 @@ int main(int, char**) {
         gSampPhase = 0;
         uint64_t t2 = sceKernelGetProcessTimeWide();
         if (sampDumpAt && t2 >= sampDumpAt) { samplerDump(game); sampDumpAt = t2 + 10000000; }
-        {   // memoria cada minuto (sesiones largas: fugas de RAM o VRAM)
-            static uint64_t memAt = 0; static int memMin = 0;
-            if (!memAt) memAt = t2 + 60000000;
-            if (t2 >= memAt) {
-                memAt = t2 + 60000000; memMin++;
+        {   // memoria cada 15 s y en cada cambio de sala (9.13: buscar el error de GPU; antes cada minuto)
+            static uint64_t memAt = 0, bootT = 0; static int memRoom = -2;
+            if (!bootT) bootT = t2;
+            if (!memAt) memAt = t2 + 15000000;
+            if (t2 >= memAt || game.room != memRoom) {
+                if (t2 >= memAt) memAt = t2 + 15000000;
+                memRoom = game.room;
                 struct mallinfo mi = mallinfo();
-                vs::logf("[memoria] min %d | heap usado %u KB (reservado %u KB) | vitaGL libre: VRAM %u KB, RAM %u KB, phycont %u KB | instancias %d | sala %s\n",
-                         memMin, (unsigned)(mi.uordblks >> 10), (unsigned)(mi.arena >> 10), (unsigned)(vglMemFree(VGL_MEM_VRAM) >> 10),
-                         (unsigned)(vglMemFree(VGL_MEM_RAM) >> 10), (unsigned)(vglMemFree(VGL_MEM_PHYCONT) >> 10), (int)game.insts.size(),
-                         game.d.rooms[game.room].name.c_str());
+                int pages = 0; size_t tbytes = 0; gfx::stats(pages, tbytes);
+                vs::logf("[memoria] %us | heap usado %u KB (reservado %u KB) | vitaGL libre: VRAM %u KB, RAM %u KB, phycont %u KB | texturas %d (%u KB) | instancias %d | sala %s\n",
+                         (unsigned)((t2 - bootT) / 1000000), (unsigned)(mi.uordblks >> 10), (unsigned)(mi.arena >> 10), (unsigned)(vglMemFree(VGL_MEM_VRAM) >> 10),
+                         (unsigned)(vglMemFree(VGL_MEM_RAM) >> 10), (unsigned)(vglMemFree(VGL_MEM_PHYCONT) >> 10), pages, (unsigned)(tbytes >> 10),
+                         (int)game.insts.size(), game.d.rooms[game.room].name.c_str());
             }
         }
         // 9.8 (GFX : Low): plazo acumulado de 16,667 ms por paso. Antes, un frame sin dibujo dormia hasta 16,6 ms desde
