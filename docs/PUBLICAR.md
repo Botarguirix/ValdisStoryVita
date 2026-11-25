@@ -14,7 +14,51 @@ El repositorio local ya está listo: la carpeta del repo (`ValdisStoryVita`), ra
 
 > Commits nuevos: en GitHub Desktop, revisa la lista de cambios antes de **Commit to main** + **Push origin**. Si aparece cualquier archivo del juego, un `.vpk`, un `.dat` o `tools/local.env`, no lo subas.
 
-## 2. Crear el Release v0.9.0-alpha (24-11)
+## 2. Crear el Release v0.9.1-alpha (24-11)
+
+1. En la web del repo: **Releases → Draft a new release** (o abrir el borrador si ya está creado).
+2. **Choose a tag:** `v0.9.1-alpha` (ya subida).
+3. **Release title:** `Valdis Story PSVITA v0.9.1-alpha`
+4. Marca **Set as a pre-release**.
+5. Arrastra el VPK **sin código del juego**: `build\vita_noaot\vsvita.vpk` (dentro de la carpeta del repo), 1 763 817 bytes, SHA-256 `f89592fdd94a74ca9133cc5d0da45c472352f5ba63e938e7039932a6c82f9945`.
+   - Probado en la Vita el 24-11: arranca hasta el menú principal, AOT en la consola activo, sin fallos.
+   - **No subas** `build\vita\vsvita.vpk`: es la versión AOT, lleva código derivado del juego y es solo para uso personal.
+6. Pega las notas de abajo en la descripción y pulsa **Publish release**.
+
+### Notas del release v0.9.1 (copiar y pegar)
+
+```markdown
+## Valdis Story PSVITA v0.9.1-alpha
+
+Port nativo de **Valdis Story: Abyssal City** para PS Vita: un runner propio de GameMaker Studio 1.x en C++17 (no es emulador ni YoYo Loader). El juego se convierte desde **tu copia de Steam** en la propia consola.
+
+**ULTRA IA VIBECODED!** Todo el código, las herramientas y la documentación los escribió una IA (Claude Opus 5.5 como modelo principal y Claude Sonnet 5.5 en subagentes, con Claude Code); el usuario dirigió y probó cada build en una PS Vita real.
+
+> ⚠️ **No incluye el juego.** Necesitas una copia legal de Steam (build 722041, App ID 252030; ver README). Este VPK solo trae el motor y la traducción al español (sin el texto original). Valdis Story es propiedad de Endless Fluff Games; proyecto de fans sin ánimo de lucro.
+
+### Novedades
+- **Modo Lvl1:** nueva entrada **-Modo Lvl1-** en el menú principal, debajo de Boss Rush (aparece al terminar el juego). Partida nueva en la que nunca se sube de nivel, pero con las 5 armas y su hechizo base desde el principio y el doble salto. Las mejoras de hechizos se siguen comprando.
+- **Más rápido sin AOT de PC:** la traducción del juego que hace la propia Vita ahora fusiona las operaciones más frecuentes. En El Manawar la lógica baja de 8,1 a **6,5 ms** por frame (el intérprete de v0.8 tardaba 14,6 ms).
+
+### Correcciones
+- **GFX : Low:** el juego iba demasiado rápido (unos 79 pasos por segundo en vez de 60) y a tirones. Ahora va a su velocidad.
+- **Icono de los objetos que sueltan los enemigos:** a veces salía el del objeto siguiente; ahora coincide con el del aviso.
+- **L y R** también se leen por la lectura extendida del mando.
+
+### Problemas conocidos
+- En las ranuras de partida, "Lv/Time/Crew/Location" siguen en inglés: forman parte del dibujo del juego.
+- Se han visto cierres por error de la GPU con el reloj de la consola subido (PSVshell al máximo); si te pasa, prueba con los relojes de serie.
+- Boss Rush: Ruckjahl y Dhistahn poseído solo aparecen si ya los grabaste jugando la historia.
+
+### Instalación
+1. Instala `vsvita.vpk` con VitaShell. Necesitas `ur0:data/libshacccg.suprx` (extráelo con ShaRKBR33D).
+2. Copia `data.win`, `data_1/`, `data_2/`, `data_5/` y los `music_*.ogg` de tu carpeta de Steam a `ux0:data/valdis/game/`.
+3. Abre el juego: el primer arranque convierte los datos (unos minutos). Pulsa SELECT para elegir español y el resto de opciones. Los logros están en la pausa: Mapa/Opc. → Logros.
+```
+
+## Release anterior: v0.9.0-alpha (24-11)
+
+### Pasos que se siguieron (v0.9.0)
 
 1. En la web del repo: **Releases → Draft a new release** (o abrir el borrador si ya está creado).
 2. **Choose a tag:** `v0.9.0-alpha` (ya subida).

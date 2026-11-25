@@ -12,7 +12,7 @@
 
 Port nativo de **Valdis Story: Abyssal City** para PlayStation Vita. Es un *runner* propio de GameMaker Studio 1.x escrito en C++17 desde cero: máquina virtual, eventos, salas, dibujo, partículas y audio. No es un emulador ni usa YoYo Loader. El juego se convierte a partir de **tu propia copia de Steam** directamente en la consola.
 
-**Versión 0.9.0-alpha** · Title ID `VALDIS001` · Estado: jugable, en pruebas. Ver [estado y roadmap](docs/ROADMAP.md).
+**Versión 0.9.1-alpha** · Title ID `VALDIS001` · Estado: jugable, en pruebas. Ver [estado y roadmap](docs/ROADMAP.md).
 
 ### 🤖 Proyecto 100 % "vibecoded"
 
@@ -132,7 +132,7 @@ Por dentro: `build/pc/vsconv` genera `game.vsd` desde tu `data.win`, `build/pc/v
 
 **ULTRA AI VIBECODED!** Native port of **Valdis Story: Abyssal City** to PlayStation Vita: a custom GameMaker Studio 1.x runner written from scratch in C++17 (VM, events, rooms, rendering, particles, audio). It is not an emulator and does not use YoYo Loader. The game is converted from **your own Steam copy** on the console itself.
 
-**Version 0.9.0-alpha** · Title ID `VALDIS001` · Status: playable, under testing. See the [roadmap](docs/ROADMAP.md) (Spanish).
+**Version 0.9.1-alpha** · Title ID `VALDIS001` · Status: playable, under testing. See the [roadmap](docs/ROADMAP.md) (Spanish).
 
 ### 🤖 100 % vibecoded
 
