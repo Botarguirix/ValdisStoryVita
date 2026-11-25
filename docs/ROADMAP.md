@@ -1,8 +1,41 @@
 # Valdis Story PSVITA — Roadmap (lo que falta)
 
-Actualizado: 2026-11-20 (coste por enemigo, arranque de 21,6 a 7,6 s, entradas en frío; partida del usuario hasta el jefe de hielo; menú de trucos; prueba de los 4 personajes en la Vita; menú de MODS con español, fuente del sistema, iconos de la Vita y panel trasero). Objetivo: terminar el juego en la Vita con **todos los personajes** a **60 fps fijos**.
+Actualizado: 2026-11-24 (v0.9.0: AOT en la consola, logros con pantalla en la pausa, GFX Low, cofres, superinstrucciones, modo Lvl1; resumen de lo que falta probar en la Vita justo debajo)
 
 Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendiente · 🔶 mejorado, pero queda algo
+
+## Qué falta (resumen, 24-11)
+
+**Lo puede comprobar Claude en la Vita (con el agente: capturas y entradas)**
+
+| Punto | Qué ver |
+|---|---|
+| 9.4 HUD | En partida, que el HUD al 50 % se vea bien (cada cartel con su texto, hacia su esquina) |
+| 9.9 Fuentes | MODS → Fuente y Tamaño del texto: las 5 fuentes, las no negrita más grandes |
+| 9.10 Logros | Pausa → Mapa/Opc. → Logros (pantalla e iconos de Steam) y el aviso con icono al conseguir uno |
+| 9.11 Modo Lvl1 | Con el juego desbloqueado (truco temporal): la entrada "-Modo Lvl1-", partida nueva y nivel 1 en la pantalla de Estado |
+| 9.7 Cofres | Abrir un cofre y comparar el icono del suelo con el del aviso |
+| 9.2 Tren | Viajar en tren y ver que el personaje queda delante de los edificios (el usuario ya lo dio por corregido) |
+| 9.5 Recompensas del jefe | Vencer un jefe y ver que el panel de puntuación no tapa la recompensa (difícil de forzar con el agente) |
+
+**Necesita al usuario (a mano)**
+
+| Punto | Qué hacer |
+|---|---|
+| 9.6 Traducción | Avisar de textos que sigan en inglés al jugar |
+| 2.1–2.7 Campaña | Jugar la historia completa (los 4 personajes), guardar y cargar, finales, menús, audio |
+| 3.3 Suspender | Suspender y reanudar la Vita en mitad de la partida |
+| 4.1 / 4.4 Controles | Comodidad de L/R y del panel trasero en combate |
+| 1.7 Animaciones | Avisar si algún ataque vuelve a salir sin animación |
+
+**Trabajo que sigue abierto**
+
+| Punto | Estado |
+|---|---|
+| 9.13 Error de GPU | Aparcado (PSVshell al máximo); la telemetría sigue activa |
+| 1.1 / 1.5 / 1.5c / 1.9 / 9.12 Rendimiento | Mejorados; se puede seguir optimizando la versión pública |
+| 5.6 opción ARM | Funciona pero no aporta: queda opcional (`save/vaot_arm`) |
+
 
 ---
 
