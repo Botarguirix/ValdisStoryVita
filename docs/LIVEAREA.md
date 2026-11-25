@@ -96,6 +96,8 @@ LiveArea, `circulo.webp` → botón Iniciar (con el emblema del .exe y "PS VITA"
 .exe**, con "PS VITA" arriba; el sello pone abajo la versión ("v0.9.0 AOT"). Sin esa carpeta vuelve a la pantalla de título
 (página 65). Nada de esto va en el repo ni en el VPK público.
 
+Desde el 24-11 (noche) tiene prioridad `build/arte_oficial/livearea/` con las cuatro imágenes ya hechas por el usuario (`icon0.png` 128×128, `pic0.png` 960×544, `startup.png` 280×158, `bg.png` 840×500): se usan tal cual. Venían en modo P pero con transparencia en la paleta (`tRNS`): el script las pone sobre un fondo sólido y las vuelve a guardar en 8 bits con paleta completa, sin `tRNS`. Comprobado en el VPK: tamaño, modo P, paleta de 768, 8 bits y sin `tRNS` en las cuatro.
+
 ## 4. Comprobar en la consola
 
 1. Instalar el VPK (si el juego ya estaba instalado, la LiveArea se actualiza al reinstalar).

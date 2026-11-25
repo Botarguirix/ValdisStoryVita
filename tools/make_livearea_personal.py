@@ -130,11 +130,27 @@ def with_title_screen(page_png, exe):
     save_indexed(ic, os.path.join(OUT, 'icon0.png'))
 
 
+def with_ready_images(folder):
+    """24-11 (pedido del usuario): imagenes ya hechas para cada pantalla en <arte>/livearea/ (icon0 128x128, pic0
+    960x544, startup 280x158, bg 840x500). Se usan tal cual, ajustadas al tamano exacto y en 8 bits con paleta."""
+    sizes = {'icon0.png': (128, 128), 'pic0.png': (960, 544), 'startup.png': (280, 158), 'bg.png': (840, 500)}
+    dest = {'icon0.png': 'icon0.png', 'pic0.png': 'pic0.png', 'startup.png': 'livearea/contents/startup.png', 'bg.png': 'livearea/contents/bg.png'}
+    for name, size in sizes.items():
+        src = Image.open(os.path.join(folder, name)).convert('RGBA')   # con transparencia: sobre un fondo solido
+        im = Image.new('RGBA', src.size, (8, 30, 60, 255)); im.alpha_composite(src); im = im.convert('RGB')   # (la paleta no guarda alfa)
+        if im.size != size:
+            im = cover(im, *size)
+        save_indexed(im, os.path.join(OUT, dest[name]))
+
+
 def main():
     global ARTE
     if len(sys.argv) > 3:
         ARTE = sys.argv[3]
-    if os.path.exists(os.path.join(ARTE, 'portada.webp')):
+    ready = os.path.join(ARTE, 'livearea')
+    if all(os.path.exists(os.path.join(ready, n)) for n in ('icon0.png', 'pic0.png', 'startup.png', 'bg.png')):
+        with_ready_images(ready); src = 'imagenes del usuario de ' + os.path.normpath(ready)
+    elif os.path.exists(os.path.join(ARTE, 'portada.webp')):
         with_official_art(sys.argv[2]); src = 'arte oficial de ' + os.path.normpath(ARTE)
     else:
         with_title_screen(sys.argv[1], sys.argv[2]); src = 'pantalla de titulo (pagina 65)'
