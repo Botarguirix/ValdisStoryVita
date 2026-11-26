@@ -1,29 +1,57 @@
 # Valdis Story PSVITA — Roadmap (lo que falta)
 
-Actualizado: 2026-11-24 (v0.9.0: AOT en la consola, logros con pantalla en la pausa, GFX Low, cofres, superinstrucciones, modo Lvl1; resumen de lo que falta probar en la Vita justo debajo)
+Actualizado: 2026-11-25 (v0.9.3-alpha: modo Masterquest y Lvl1 con armaduras y Master Scroll; el proyecto sigue desde un PC nuevo; el usuario está probando y anotando errores)
 
 Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendiente · 🔶 mejorado, pero queda algo
 
-## Qué falta (resumen, 24-11)
+## Qué falta (resumen, 25-11)
 
-**Lo puede comprobar Claude en la Vita (con el agente: capturas y entradas)**
+### A. Ahora: lo que está probando el usuario
+
+| Punto | Qué falta |
+|---|---|
+| 10.1 Errores vistos al probar | ⬜ El usuario confirma que Masterquest funciona, pero hay cosas por resolver y sigue revisando. **Pendiente de que las enumere** (sala, personaje, modo y qué pasó). Se anotan en la sección 10 |
+| 10.2 Rendimiento de Masterquest | ⬜ Sin medir en la Vita. Con ~1 ms por enemigo activo (1.9), x3 en salas cargadas puede bajar de 60 fps. Medir las salas más pobladas con x2 y x3 y decidir si hace falta un tope por sala |
+| 10.3 Masterquest en la Vita | 🔶 Vistos en consola: menú, submenú, partida nueva y activación. Falta ver con captura una sala poblada y varias zonas |
+| 10.4 Lvl1 ampliado | 🖥️ 16 armaduras y 3 Master Scroll: confirmado en PC, falta verlo en la Vita |
+
+### B. Entrega de la v0.9.3-alpha
+
+| Punto | Qué falta |
+|---|---|
+| 10.5 VPK público | ⬜ `build/vita_noaot` 0.9.3 compilado, **sin probar en la Vita**. Probarlo antes de adjuntarlo (reemplaza la AOT instalada: reinstalar la AOT después) |
+| 10.6 Release | ⬜ `main` y la etiqueta `v0.9.3-alpha` ya están en GitHub; la publica el usuario (notas en `docs/PUBLICAR.md`). Sin confirmar que esté publicada |
+| 10.7 AOT instalada en la consola | 🔶 La instalada en la Vita ya trae Masterquest, pero se compiló antes de subir el número de versión (sella 0.9.2). Se corrige al recompilar |
+| 10.8 Submenú de Masterquest | ⬜ Solo en español; falta el texto en inglés según el idioma de MODS |
+
+### C. Lo puede comprobar Claude en la Vita (agente: capturas y entradas)
 
 | Punto | Qué ver |
 |---|---|
 | 9.7 Objetos que sueltan los enemigos | Al caer uno, comparar el icono del suelo con el del aviso (con modo dios los jefes no mueren: mejor jugando) |
 | 9.5 Recompensas del jefe | Vencer un jefe y ver que el panel de puntuación no tapa la recompensa (difícil de forzar con el agente) |
+| 9.11 Modo Lvl1 | Una partida completa de arranque en la Vita (junto con 10.4) |
+| 9.1 Cuelgue al abrir cofre | Confirmar con una sesión larga sin cierres |
 
-**Necesita al usuario (a mano)**
+### D. Necesita al usuario (a mano)
 
 | Punto | Qué hacer |
 |---|---|
-| 9.6 Traducción | Avisar de textos que sigan en inglés al jugar |
-| 2.1–2.7 Campaña | Jugar la historia completa (los 4 personajes), guardar y cargar, finales, menús, audio |
+| 9.6 Traducción | Avisar de textos en inglés. Conocido: descripciones del bestiario en Lore |
+| 2.1–2.7 Campaña | Historia completa con los 4 personajes, guardar y cargar, finales, menús, audio |
 | 3.3 Suspender | Suspender y reanudar la Vita en mitad de la partida |
 | 4.1 / 4.4 Controles | Comodidad de L/R y del panel trasero en combate |
 | 1.7 Animaciones | Avisar si algún ataque vuelve a salir sin animación |
 
-**Trabajo que sigue abierto**
+### E. Ideas para después
+
+| Punto | Estado |
+|---|---|
+| 8.3 Randomizer | ⬜ |
+| 8.4 Editor de partida / inventario | ⬜ |
+| 8.5 Boss Rush (pulir) | 🔶 Falta jugarlo a mano, modo aleatorio más fino y jefes finales del castillo |
+
+### F. Trabajo que sigue abierto
 
 | Punto | Estado |
 |---|---|
@@ -189,3 +217,11 @@ Leyenda: ✅ verificado EN LA VITA · 🖥️ solo probado en PC · ⬜ pendient
 | 9.11 | Mejora: **modo Nivel 1**: sin subir de nivel, pero con todas las armas, hechizos y habilidades principales (doble salto, etc.) | ✅ entrada vista en la Vita (24-11: "-Boss Rush-" y "-Modo Lvl1-" en el menú principal con el juego desbloqueado, el cursor llega a las dos); la partida en modo Lvl1 probada en PC. **Hecho** (`runner/src/bossrush.cpp`). Decisiones del usuario: entrada **"-Modo Lvl1-"** (en inglés "-Lvl1 Mode-") en el menú principal debajo de "-Boss Rush-", que aparece al terminar el juego por primera vez (como Boss Rush); da las **armas 1–5 con su hechizo base** (Purgatorio, Cuervo, Seráfico, Caparazón: lo mismo que el bloque de trucos del propio juego) y el **doble salto**; las mejoras de hechizos se siguen comprando. Empieza una partida nueva normal (dificultad, personaje, ranura). La experiencia se congela: toda entra por `gain_xp_script` y con el modo activo `global.xp` vuelve a su valor tras cada llamada (vm.cpp), así nunca se sube de nivel ni hay puntos de atributo o talento. Las ranuras en este modo se guardan en `save/nivel1.txt`: al cargarlas sigue activo; una partida nueva normal en esa ranura lo quita. **PC:** menú → partida nueva → sala de juego: modo activo, armas, hechizos y doble salto dados, experiencia bloqueada en combate (+5, +3, +8), nivel 1; huellas de partidas normales sin cambios. Falta probarlo en la Vita jugando |
 | 9.12 | Seguir optimizando | 🔶 (24-11) **Superinstrucciones en el AOT de consola**: contando las operaciones que más se ejecutan (`VS_VAOTSTATS`), las secuencias "variable propia o global + constante + comparar (+ saltar)" y "constante → variable propia" pasan a ser una sola operación que lee la variable en su sitio. PC, escena de prueba: lógica intérprete 0,83 → AOT de consola 0,56 ms (AOT de PC 0,54); huellas idénticas en el escenario y en 170 salas. **Vita (24-11, versión pública, El Manawar):** lógica 8,1 → **6,5 ms** (intérprete 14,6 ms en la misma build: −55 %); 56,2 fps de media (la pelea ya va casi a 60, el resto es dibujo) |
 | 9.13 | **Error de GPU y la Vita se apaga** (aviso del usuario, 24-11: "me la ha estado dando últimamente") | ⏸️ **Aparcado (24-11, decisión del usuario).** El usuario tiene PSVshell al máximo en el primer parámetro (reloj subido: más probable un error de GPU) y uno de los cierres fue en el menú de logros; los demás, al azar. Si vuelve a pasar, `vsrunner.log` ya anota la memoria cada 15 s. Antes: hay 4 volcados `GPUCRASH` en `ux0:data` (23-11 19:41, 23:30; 24-11 00:31, 09:31): tres de partidas del usuario y el último durante la prueba de la pantalla de logros. El log de esa sesión termina en `status_room` (pausa, página Estado) en Boss Rush, con VRAM libre de solo 10,6 MB (17 MB en El Manawar). El aviso al arrancar no los veía (solo buscaba `eboot.bin`): ya los anota. Siguiente: analizar un volcado GPUCRASH y vigilar la VRAM en los menús. Antes: pasó durante la prueba de la pantalla de logros (pausa abierta en Boss Rush). Siguiente: al volver a encenderla, el runner anota en `vsrunner.log` los volcados nuevos (`[cuelgue]`, 9.1); analizarlos con `tools/vita_core.py` y revisar el uso de VRAM/RAM de vitaGL en las líneas `[memoria]` de esa sesión. Quedaron en `save/` los archivos de prueba `bossrush_auto`, `godmode` y `bossrush_only.txt`: retirarlos (con `bossrush_auto` el juego arranca Boss Rush solo). **24-11 (tarde):** el volcado confirma que es VALDIS001 v00.08 (hilos: principal, recolector de vitaGL, cola de pantalla, audio), pero el formato de `GPU_INFO` no está documentado: no da dirección ni causa. Revisado: el juego no usa superficies ni capturas en la pausa; las subidas DXT de vitaGL copian a memoria temporal propia (seguras). Telemetría nueva: `[memoria]` cada 15 s y en cada cambio de sala, con texturas cargadas; `save/monkeypausa` abre la pausa en las pruebas. Prueba de 40 min sin error (pero se quedó en el menú de hechizos: poco estrés). Dato: la **VRAM libre baja a 4,5 MB** (el total libre de vitaGL sigue en ~110 MB porque las texturas pasan a RAM). |
+
+## 10. Revisión del 25-11 (Masterquest y PC nuevo)
+
+Aquí se anotan los errores que el usuario vaya encontrando al probar la v0.9.3.
+
+| # | Error o mejora | Sala / modo | Estado |
+|---|---|---|---|
+| — | Pendiente de la lista del usuario | | ⬜ |
